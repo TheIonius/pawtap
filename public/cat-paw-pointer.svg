@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
+  <!-- Soft Ambient Drop Shadow -->
+  <g filter="url(#cuteShadowPointer)">
+    <!-- Fluffy Marshmallow White Cat Paw Base -->
+    <path d="M 6 6 
+             C 4 8 4.2 12.5 6.5 15
+             C 5.8 18 7.5 22 11 25.5
+             C 14.5 28.5 19.5 28.5 23 26
+             C 26 23.5 27.5 19.5 26.5 16
+             C 25.5 13 23 10.5 20 8
+             C 17 6 13.5 5.5 10.5 6.5
+             C 8.5 5.5 7 5.5 6 6 Z" 
+          fill="#FFFFFF" 
+          stroke="#3C281C" 
+          stroke-width="1.6" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"/>
+
+    <!-- Puffy Toes Rounded Outlines -->
+    <!-- Toe 1 (Pointer Top-Left) -->
+    <circle cx="7.8" cy="8.2" r="3.4" fill="#FFFFFF" stroke="#3C281C" stroke-width="1.4"/>
+    <!-- Toe 2 (Top-Center) -->
+    <circle cx="13.5" cy="6.2" r="3.4" fill="#FFFFFF" stroke="#3C281C" stroke-width="1.4"/>
+    <!-- Toe 3 (Top-Right) -->
+    <circle cx="19.5" cy="8" r="3.4" fill="#FFFFFF" stroke="#3C281C" stroke-width="1.4"/>
+    <!-- Toe 4 (Right-Side) -->
+    <circle cx="24" cy="13" r="3.1" fill="#FFFFFF" stroke="#3C281C" stroke-width="1.4"/>
+
+    <!-- Cute Chubby Main Heart/Bean Palm Pad (Excited Rosy Pink) -->
+    <path d="M 15.5 15.5 
+             C 13 13 9 15 10 18.8 
+             C 10.8 21.8 14.2 24.5 15.5 25 
+             C 16.8 24.5 20.2 21.8 21 18.8 
+             C 22 15 18 13 15.5 15.5 Z" 
+          fill="#FF8CA3" 
+          stroke="#D85C77" 
+          stroke-width="0.9" 
+          stroke-linejoin="round"/>
+    <!-- Palm Pad Glossy Shine -->
+    <ellipse cx="14" cy="17.5" rx="1.6" ry="1" transform="rotate(-25 14 17.5)" fill="#FFFFFF" opacity="0.75"/>
+
+    <!-- Plump Jelly Toe Beans -->
+    <!-- Bean 1 (Pointer Bean) -->
+    <circle cx="7.8" cy="8.2" r="2.1" fill="#FF8CA3" stroke="#D85C77" stroke-width="0.7"/>
+    <circle cx="7.2" cy="7.4" r="0.65" fill="#FFFFFF" opacity="0.9"/>
+
+    <!-- Bean 2 -->
+    <circle cx="13.5" cy="6.2" r="2.1" fill="#FF8CA3" stroke="#D85C77" stroke-width="0.7"/>
+    <circle cx="12.9" cy="5.4" r="0.65" fill="#FFFFFF" opacity="0.9"/>
+
+    <!-- Bean 3 -->
+    <circle cx="19.5" cy="8" r="2.1" fill="#FF8CA3" stroke="#D85C77" stroke-width="0.7"/>
+    <circle cx="18.9" cy="7.2" r="0.65" fill="#FFFFFF" opacity="0.9"/>
+
+    <!-- Bean 4 -->
+    <circle cx="24" cy="13" r="1.9" fill="#FF8CA3" stroke="#D85C77" stroke-width="0.7"/>
+    <circle cx="23.4" cy="12.3" r="0.55" fill="#FFFFFF" opacity="0.9"/>
+
+    <!-- Adorable Little Floating Heart Pointer at Tip -->
+    <path d="M 3.8 2.2 
+             C 3.8 1 2.5 0.2 1.5 1.1 
+             C 0.8 1.8 1.5 3 2.6 3.9 
+             L 3.8 5 
+             L 5 3.9 
+             C 6.1 3 6.8 1.8 6.1 1.1 
+             C 5.1 0.2 3.8 1 3.8 2.2 Z" 
+          fill="#FF6584" 
+          stroke="#FFFFFF" 
+          stroke-width="0.6" 
+          stroke-linejoin="round"/>
+  </g>
+
+  <!-- Filter for Soft Cozy Shadow -->
+  <defs>
+    <filter id="cuteShadowPointer" x="-15%" y="-15%" width="135%" height="135%">
+      <feDropShadow dx="1" dy="1.4" stdDeviation="1.2" flood-color="#000000" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+</svg>

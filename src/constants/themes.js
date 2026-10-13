@@ -1,0 +1,215 @@
+/**
+ * Cozy & Aesthetic Theme Definitions
+ * Inspired by cozy girl aesthetics, warm neutrals, matcha cafés, and lofi vibes.
+ * Deepened background tones with warm multi-tone harmony to prevent eye glare.
+ */
+
+export const THEMES = {
+  'oat-latte': {
+    id: 'oat-latte',
+    name: 'Oat Milk & Honey',
+    category: 'warm-neutral',
+    badge: 'Cozy Classic',
+    isDark: false,
+    colors: {
+      bg: '#EBE4D8',
+      bgRadial: 'rgba(255, 255, 255, 0.45)',
+      surface: '#DFD6C7',
+      surfaceHover: '#D4C9B8',
+      textSub: '#8D7F6E',
+      textMain: '#2E241B',
+      textError: '#C04E49',
+      textErrorExtra: '#782824',
+      caret: 'rgba(120, 105, 90, 0.72)',
+      accent: '#B87841',
+      accentRgb: '184, 120, 65',
+      border: '#D5CABE',
+      companion: '#B87841',
+      shadow: 'rgba(46, 36, 27, 0.09)',
+    }
+  },
+  'matcha-latte': {
+    id: 'matcha-latte',
+    name: 'Matcha Milk',
+    category: 'pastel',
+    badge: 'Botanical',
+    isDark: false,
+    colors: {
+      bg: '#E3EDE5',
+      bgRadial: 'rgba(255, 255, 255, 0.4)',
+      surface: '#D4E2D7',
+      surfaceHover: '#C5D6C9',
+      textSub: '#6E8573',
+      textMain: '#1E3524',
+      textError: '#CD5B6C',
+      textErrorExtra: '#7F2433',
+      caret: 'rgba(74, 122, 84, 0.75)',
+      accent: '#4A7A54',
+      accentRgb: '74, 122, 84',
+      border: '#C8D8CC',
+      companion: '#4A7A54',
+      shadow: 'rgba(30, 53, 36, 0.09)',
+    }
+  },
+  'strawberry-cream': {
+    id: 'strawberry-cream',
+    name: 'Strawberry Milk',
+    category: 'pastel',
+    badge: 'Sweet',
+    isDark: false,
+    colors: {
+      bg: '#F4E9EB',
+      bgRadial: 'rgba(255, 255, 255, 0.45)',
+      surface: '#EAD8DB',
+      surfaceHover: '#DFC5C9',
+      textSub: '#9C727B',
+      textMain: '#47242D',
+      textError: '#C64552',
+      textErrorExtra: '#7E1B25',
+      caret: 'rgba(200, 82, 108, 0.75)',
+      accent: '#C8526C',
+      accentRgb: '200, 82, 108',
+      border: '#DFC5C9',
+      companion: '#C8526C',
+      shadow: 'rgba(71, 36, 45, 0.09)',
+    }
+  },
+  'cafe-espresso': {
+    id: 'cafe-espresso',
+    name: 'Café Espresso',
+    category: 'cozy-dark',
+    badge: 'Dark Roast',
+    isDark: true,
+    colors: {
+      bg: '#181412',
+      bgRadial: 'rgba(255, 255, 255, 0.05)',
+      surface: '#26201B',
+      surfaceHover: '#332B25',
+      textSub: '#8A7B6F',
+      textMain: '#EDE2D7',
+      textError: '#E56D69',
+      textErrorExtra: '#91322F',
+      caret: 'rgba(216, 158, 98, 0.75)',
+      accent: '#D89E62',
+      accentRgb: '216, 158, 98',
+      border: '#3B322B',
+      companion: '#D89E62',
+      shadow: 'rgba(0, 0, 0, 0.45)',
+    }
+  },
+  'lavender-haze': {
+    id: 'lavender-haze',
+    name: 'Lavender Mist',
+    category: 'pastel',
+    badge: 'Dreamy',
+    isDark: false,
+    colors: {
+      bg: '#ECE7F3',
+      bgRadial: 'rgba(255, 255, 255, 0.4)',
+      surface: '#DDD6E8',
+      surfaceHover: '#CEC4DC',
+      textSub: '#7E7096',
+      textMain: '#2E2442',
+      textError: '#C5526C',
+      textErrorExtra: '#771C33',
+      caret: 'rgba(125, 98, 165, 0.75)',
+      accent: '#7D62A5',
+      accentRgb: '125, 98, 165',
+      border: '#D2C8DF',
+      companion: '#7D62A5',
+      shadow: 'rgba(46, 36, 66, 0.09)',
+    }
+  },
+  'linen-neutro': {
+    id: 'linen-neutro',
+    name: 'Linen & Stone',
+    category: 'warm-neutral',
+    badge: 'Minimal Japandi',
+    isDark: false,
+    colors: {
+      bg: '#E9E5DC',
+      bgRadial: 'rgba(255, 255, 255, 0.4)',
+      surface: '#DDD7CC',
+      surfaceHover: '#D1C9BC',
+      textSub: '#827D72',
+      textMain: '#252320',
+      textError: '#BF4E44',
+      textErrorExtra: '#701F18',
+      caret: 'rgba(120, 110, 100, 0.72)',
+      accent: '#9C7144',
+      accentRgb: '156, 113, 68',
+      border: '#D0C8BB',
+      companion: '#9C7144',
+      shadow: 'rgba(37, 35, 32, 0.08)',
+    }
+  },
+  'boba-tea': {
+    id: 'boba-tea',
+    name: 'Brown Sugar Boba',
+    category: 'warm-neutral',
+    badge: 'Sweet Warmth',
+    isDark: false,
+    colors: {
+      bg: '#EFE5D8',
+      bgRadial: 'rgba(255, 255, 255, 0.4)',
+      surface: '#E2D3BF',
+      surfaceHover: '#D4C1A9',
+      textSub: '#8C715A',
+      textMain: '#3A2011',
+      textError: '#C2442B',
+      textErrorExtra: '#741E0D',
+      caret: 'rgba(145, 95, 60, 0.75)',
+      accent: '#AD6030',
+      accentRgb: '173, 96, 48',
+      border: '#D6C3AB',
+      companion: '#AD6030',
+      shadow: 'rgba(58, 32, 17, 0.09)',
+    }
+  },
+  'midnight-lofi': {
+    id: 'midnight-lofi',
+    name: 'Midnight Lofi',
+    category: 'cozy-dark',
+    badge: 'Night Owl',
+    isDark: true,
+    colors: {
+      bg: '#13151D',
+      bgRadial: 'rgba(255, 255, 255, 0.04)',
+      surface: '#1D212E',
+      surfaceHover: '#282E40',
+      textSub: '#727B9B',
+      textMain: '#E0E5F5',
+      textError: '#EE6B7A',
+      textErrorExtra: '#9A2B38',
+      caret: 'rgba(229, 162, 80, 0.75)',
+      accent: '#E5A250',
+      accentRgb: '229, 162, 80',
+      border: '#2E354A',
+      companion: '#E5A250',
+      shadow: 'rgba(0, 0, 0, 0.5)',
+    }
+  }
+};
+
+export const FONTS = [
+  { id: 'playpen', name: 'Playpen Sans', family: "'Playpen Sans', cursive", vibe: 'Cute & Handcrafted' },
+  { id: 'nunito', name: 'Nunito', family: "'Nunito', sans-serif", vibe: 'Soft & Rounded' },
+  { id: 'lora', name: 'Lora', family: "'Lora', serif", vibe: 'Literary & Romantic' },
+  { id: 'fraunces', name: 'Fraunces', family: "'Fraunces', serif", vibe: 'Warm Editorial' },
+  { id: 'dm-mono', name: 'DM Mono', family: "'DM Mono', monospace", vibe: 'Clean Aesthetic Mono' },
+  { id: 'outfit', name: 'Outfit', family: "'Outfit', sans-serif", vibe: 'Chic Neutral' },
+];
+
+export const CARET_STYLES = [
+  { id: 'line', name: 'Smooth Line', description: 'Fluid vertical line with soft warm glow' },
+  { id: 'underline', name: 'Cozy Underline', description: 'Warm horizontal bar beneath letter' },
+  { id: 'block', name: 'Soft Pill', description: 'Translucent rounded block around active char' },
+  { id: 'pulse-dot', name: 'Bouncing Dot', description: 'Playful floating droplet above letter' },
+];
+
+export const COMPANION_TYPES = [
+  { id: 'cat', name: 'Mochi the Cat', description: 'Typing kitty that purrs and cheers you on' },
+  { id: 'coffee', name: 'Steaming Latte', description: 'Warm ceramic mug with swirling steam hearts' },
+  { id: 'plant', name: 'Sprouting Plant', description: 'Little succulent that sprouts leaves with speed' },
+  { id: 'none', name: 'Off (Minimal)', description: 'Pure zen typing space without companions' },
+];

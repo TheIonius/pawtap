@@ -1,0 +1,422 @@
+/* ==========================================================================
+   Pawtap - Gentle Aesthetic Sanctuary Stylesheet
+   Warm Neutral, Multi-Tone Layered Depth, Upscaled Tactile Controls,
+   Full-Page Blur State & Large Screen / Ultrawide Responsive Typography
+   ========================================================================== */
+
+:root {
+  --bg: #EBE4D8;
+  --bg-radial: rgba(255, 255, 255, 0.45);
+  --surface: #DFD6C7;
+  --surface-hover: #D4C9B8;
+  --text-sub: #8D7F6E;
+  --text-main: #2E241B;
+  --text-error: #C04E49;
+  --text-error-extra: #782824;
+  --caret: rgba(120, 105, 90, 0.72);
+  --accent: #B87841;
+  --accent-rgb: 184, 120, 65;
+  --border: #D5CABE;
+  --shadow: rgba(46, 36, 27, 0.09);
+
+  --font-mono: 'DM Mono', monospace;
+  --font-active: 'Nunito', sans-serif;
+
+  /* Cute White Cat Paw Cursors */
+  --cursor-paw: url('/cat-paw.svg') 5 5, auto;
+  --cursor-paw-pointer: url('/cat-paw-pointer.svg') 4 4, pointer;
+
+  /* Fluid responsive typography for typing stream */
+  --test-font-size: clamp(28px, 2.2vw, 36px);
+  --test-line-height: clamp(48px, 3.8vw, 60px);
+}
+
+/* Large Displays (1440p, 2K, 27"+ Monitors, Ultrawide) */
+@media (min-width: 1440px) {
+  :root {
+    --test-font-size: clamp(34px, 2.4vw, 42px);
+    --test-line-height: clamp(56px, 4vw, 68px);
+  }
+  .settings-bar {
+    padding: 7px 18px !important;
+    font-size: 13.5px !important;
+    border-radius: 18px !important;
+    gap: 6px !important;
+  }
+  .pill-btn {
+    padding: 5px 11px !important;
+    font-size: 13.5px !important;
+    border-radius: 10px !important;
+  }
+  .select-pill {
+    padding: 8px 14px !important;
+    font-size: 13.5px !important;
+    height: 40px !important;
+    border-radius: 10px !important;
+  }
+  .icon-btn {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 10px !important;
+  }
+}
+
+/* 4K Displays & Ultra-wide Monitors (1920px+ and above) */
+@media (min-width: 1920px) {
+  :root {
+    --test-font-size: clamp(38px, 2.3vw, 46px);
+    --test-line-height: clamp(62px, 3.7vw, 76px);
+  }
+  .settings-bar {
+    padding: 8px 20px !important;
+    font-size: 14px !important;
+    border-radius: 20px !important;
+    gap: 8px !important;
+  }
+  .pill-btn {
+    padding: 6px 13px !important;
+    font-size: 14px !important;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(ellipse 90% 60% at 50% -8%, var(--bg-radial, rgba(255, 255, 255, 0.45)) 0%, transparent 68%),
+    radial-gradient(ellipse 75% 55% at 50% 108%, rgba(0, 0, 0, 0.05) 0%, transparent 75%),
+    radial-gradient(circle at 10% 25%, rgba(var(--accent-rgb, 184, 120, 65), 0.045) 0%, transparent 38%),
+    radial-gradient(circle at 90% 75%, rgba(var(--accent-rgb, 184, 120, 65), 0.045) 0%, transparent 38%);
+  background-attachment: fixed;
+  color: var(--text-main);
+  font-family: var(--font-active);
+  min-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
+  cursor: var(--cursor-paw);
+  transition: background-color 0.25s ease, color 0.25s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Full-Page Unfocused Blur Effect */
+.page-blurred {
+  filter: blur(8px);
+  pointer-events: none;
+  user-select: none;
+  transition: filter 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.page-focused {
+  filter: none;
+  transition: filter 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Custom Selection */
+::selection {
+  background: var(--surface-hover);
+  color: var(--accent);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-sub);
+}
+
+/* Hide scrollbar utility (for clean customizer & language modals) */
+.no-scrollbar {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Prevent hover transform jitter and repaint thrashing inside scrollable modals */
+.no-scrollbar .pill-btn:hover:not(.active),
+.modal-content .pill-btn:hover:not(.active) {
+  transform: none !important;
+}
+
+/* Button & Pill Utilities with Cute Cat Paw Pointer Cursor */
+button,
+select,
+input[type="button"],
+input[type="submit"],
+a,
+[role="button"],
+.pill-btn,
+.icon-btn,
+.select-pill,
+.action-btn,
+.companion-container {
+  cursor: var(--cursor-paw-pointer);
+}
+
+button {
+  font-family: inherit;
+  border: none;
+  background: none;
+  outline: none;
+}
+
+/* Tactile pill button */
+.pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  color: var(--text-sub);
+  background-color: transparent;
+  cursor: var(--cursor-paw-pointer);
+  font-size: 13px;
+  font-weight: 500;
+  transition: color 0.12s ease, background-color 0.12s ease, border-color 0.12s ease, transform 0.12s ease, box-shadow 0.12s ease;
+  user-select: none;
+  line-height: 1.2;
+}
+
+.pill-btn:hover:not(.active) {
+  color: var(--text-main);
+  background-color: rgba(var(--accent-rgb, 120, 100, 80), 0.07);
+  transform: translateY(-0.5px);
+}
+
+.pill-btn.active {
+  color: var(--accent);
+  background-color: var(--surface-hover);
+  border-color: var(--border);
+  font-weight: 600;
+  box-shadow: 0 1.5px 6px var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transform: translateY(0);
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  color: var(--text-sub);
+  background-color: var(--surface);
+  border: 1.5px solid var(--border);
+  box-shadow: 0 2px 6px var(--shadow);
+  cursor: var(--cursor-paw-pointer);
+  transition: color 0.12s ease, background-color 0.12s ease, border-color 0.12s ease, transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.icon-btn:hover {
+  color: var(--text-main);
+  background-color: var(--surface-hover);
+  border-color: var(--accent);
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 10px var(--shadow);
+}
+
+.select-pill {
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background-color: var(--surface);
+  box-shadow: 0 2px 6px var(--shadow);
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  outline: none;
+  cursor: var(--cursor-paw-pointer);
+  transition: color 0.12s ease, background-color 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.select-pill:hover,
+.select-pill:focus {
+  color: var(--text-main);
+  border-color: var(--accent);
+  background-color: var(--surface-hover);
+  box-shadow: 0 3px 8px var(--shadow);
+}
+
+.action-btn {
+  transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.action-btn:hover {
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 12px var(--shadow);
+  border-color: var(--accent) !important;
+}
+
+.action-btn:active {
+  transform: translateY(0);
+}
+
+/* Stat Cards in Results */
+.stat-card {
+  background-color: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 18px;
+  padding: 22px 18px;
+  text-align: center;
+  box-shadow: 0 4px 16px var(--shadow);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--text-sub);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 600;
+}
+
+.stat-value {
+  font-size: 42px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--text-main);
+  line-height: 1.1;
+}
+
+/* Keyboard Shortcut Badge */
+.kbd {
+  display: inline-block;
+  padding: 2px 7px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-sub);
+  box-shadow: 0 1px 2px var(--shadow);
+}
+
+/* Caret Blinking Animations */
+@keyframes caretBlink {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 0; }
+}
+
+.caret-blink {
+  animation: caretBlink 1.1s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+/* Breathing & Steam Animations */
+@keyframes cozyBreathing {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes steamSlow {
+  0% { transform: translateY(0) scaleX(1); opacity: 0.4; }
+  50% { transform: translateY(-4px) scaleX(1.1); opacity: 0.8; }
+  100% { transform: translateY(-8px) scaleX(0.9); opacity: 0; }
+}
+
+@keyframes steamFast {
+  0% { transform: translateY(0) scaleX(1); opacity: 0.5; }
+  50% { transform: translateY(-5px) scaleX(1.2); opacity: 0.9; }
+  100% { transform: translateY(-10px) scaleX(0.8); opacity: 0; }
+}
+
+@keyframes floatUp {
+  0% { transform: translate(-50%, 0); opacity: 1; }
+  100% { transform: translate(-50%, -28px); opacity: 0; }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes modalSlideUp {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Word stream letter styling */
+.char-untyped {
+  color: var(--text-sub);
+  opacity: 0.72;
+}
+.char-correct {
+  color: var(--text-main);
+  opacity: 1;
+}
+.char-incorrect {
+  color: var(--text-error);
+  background-color: rgba(192, 78, 73, 0.12);
+  border-radius: 4px;
+  text-decoration: underline;
+  text-decoration-color: var(--text-error);
+  text-underline-offset: 4px;
+}
+.char-extra {
+  color: var(--text-error-extra);
+  background-color: rgba(138, 46, 61, 0.14);
+  border-radius: 4px;
+  opacity: 0.92;
+}
+
+/* Active word indicator */
+.word-active {
+  position: relative;
+}
+
+/* Responsive adjustments for Tablets and Mobile */
+@media (max-width: 768px) {
+  header {
+    padding: 16px 20px 12px 20px !important;
+    justify-content: center !important;
+  }
+  .settings-bar {
+    border-radius: 16px;
+    padding: 6px 10px !important;
+    font-size: 12px !important;
+  }
+  .pill-btn {
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --test-font-size: 24px;
+    --test-line-height: 42px;
+  }
+  header {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+}
