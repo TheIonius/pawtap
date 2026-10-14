@@ -45,13 +45,40 @@ export function TestSettingsBar({
       className="settings-bar"
     >
       {/* 1. Modifiers Section: Punctuation, Numbers, Vocabulary */}
-      {mode !== 'quote' && mode !== 'zen' && (
+      {mode === 'quote' ? (
+        <>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+            <span
+              style={{
+                fontSize: '11.5px',
+                color: 'var(--text-sub)',
+                padding: '3px 8px',
+                opacity: 0.85,
+                fontStyle: 'italic'
+              }}
+              title="Literary quotes naturally feature authentic author punctuation, capitalization, and numbers"
+            >
+              natural text
+            </span>
+          </div>
+
+          <div
+            style={{
+              width: '1px',
+              height: '14px',
+              backgroundColor: 'var(--border)',
+              margin: '0 4px',
+              opacity: 0.85
+            }}
+          />
+        </>
+      ) : mode !== 'zen' ? (
         <>
           <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
             <button
               className={`pill-btn ${punctuation ? 'active' : ''}`}
               onClick={() => setPunctuation(!punctuation)}
-              title="Toggle Punctuation (@)"
+              title="Toggle Punctuation (@) — practice capitalized sentences, commas, and periods"
             >
               <span>@ punctuation</span>
             </button>
@@ -59,7 +86,7 @@ export function TestSettingsBar({
             <button
               className={`pill-btn ${numbers ? 'active' : ''}`}
               onClick={() => setNumbers(!numbers)}
-              title="Toggle Numbers (#)"
+              title="Toggle Numbers (#) — injects digits into the text stream"
             >
               <span># numbers</span>
             </button>
@@ -71,10 +98,10 @@ export function TestSettingsBar({
                   const next = vocabularyMode === 'cozy' ? 'standard' : vocabularyMode === 'standard' ? 'expert' : 'cozy';
                   setVocabularyMode(next);
                 }}
-                title="Vocabulary Complexity: Cozy -> Standard -> Expert (Hard & Polysyllabic)"
+                title="Vocabulary Complexity: Cozy -> Standard -> Expert (click to cycle)"
               >
                 <Sparkles size={12} />
-                <span>{vocabularyMode}</span>
+                <span>vocab: {vocabularyMode}</span>
               </button>
             )}
           </div>
@@ -89,7 +116,7 @@ export function TestSettingsBar({
             }}
           />
         </>
-      )}
+      ) : null}
 
       {/* 2. Mode Selectors: time, words, quote, zen */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>

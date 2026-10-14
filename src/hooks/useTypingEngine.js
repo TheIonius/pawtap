@@ -351,7 +351,7 @@ export function useTypingEngine({
           finishTest();
           return;
         }
-      } else if (mode === 'zen') {
+      } else {
         const displayElapsed = Math.round(elapsed);
         setElapsedSeconds(prev => (prev !== displayElapsed ? displayElapsed : prev));
       }

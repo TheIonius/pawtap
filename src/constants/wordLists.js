@@ -519,26 +519,47 @@ export function getRandomWords(count = 25, options = { punctuation: false, numbe
   }
 
   const result = [];
-  const punctuations = [",", ".", "!", "?", ";", ":", "-", "..."];
+  let newSentence = true;
+  let sentenceLength = Math.floor(Math.random() * 5) + 5; // 5 to 9 words per sentence
+  let currentSentenceWordCount = 0;
 
   for (let i = 0; i < count; i++) {
-    // Occasionally inject a number if enabled
-    if (options.numbers && Math.random() < 0.14) {
-      result.push(String(Math.floor(Math.random() * 900) + 10));
-      continue;
+    let word;
+
+    // 1. Inject a number if numbers option is enabled (approx 12% of the time, not as first word of sentence)
+    if (options.numbers && Math.random() < 0.13 && !newSentence) {
+      word = String(Math.floor(Math.random() * 980) + 1);
+    } else {
+      word = pool[i % pool.length];
     }
 
-    // Wrap pool index gracefully if count exceeds dictionary size
-    let word = pool[i % pool.length];
+    // 2. Format with realistic punctuation & capitalization if punctuation option is enabled
+    if (options.punctuation) {
+      // Capitalize first letter of sentence
+      if (newSentence && typeof word === 'string' && word.length > 0) {
+        word = word.charAt(0).toUpperCase() + word.slice(1);
+        newSentence = false;
+        currentSentenceWordCount = 0;
+      }
 
-    if (options.punctuation && Math.random() < 0.2) {
-      const punct = punctuations[Math.floor(Math.random() * punctuations.length)];
-      if (punct === '...') {
-        word = word + '...';
-      } else if (Math.random() < 0.1) {
-        word = '"' + word + '"';
-      } else {
-        word = word + punct;
+      currentSentenceWordCount++;
+
+      // End of sentence condition (or last word of the test)
+      if (currentSentenceWordCount >= sentenceLength || i === count - 1) {
+        const sentenceEndings = ['.', '.', '.', '!', '?'];
+        const ending = sentenceEndings[Math.floor(Math.random() * sentenceEndings.length)];
+        word = word + ending;
+        newSentence = true;
+        sentenceLength = Math.floor(Math.random() * 5) + 5;
+      } else if (currentSentenceWordCount > 2 && Math.random() < 0.22) {
+        // Mid-sentence punctuation (comma, quotes, or dash)
+        if (Math.random() < 0.15) {
+          word = `"${word}"`;
+        } else if (Math.random() < 0.08) {
+          word = word + ';';
+        } else {
+          word = word + ',';
+        }
       }
     }
 

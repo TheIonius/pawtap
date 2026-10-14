@@ -218,7 +218,7 @@ export function TypingTest({
           )}
 
           {mode === 'words' && status === 'running' && isFocused && (
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', animation: 'fadeInUp 0.15s ease' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', animation: 'fadeInUp 0.15s ease' }}>
               <span
                 style={{
                   fontSize: '30px',
@@ -231,13 +231,38 @@ export function TypingTest({
                 {currentWordIndex}
               </span>
               <span style={{ fontSize: '15px', color: 'var(--text-sub)' }}>/ {words.length}</span>
+              <span style={{ fontSize: '13px', color: 'var(--text-sub)', opacity: 0.8, fontFamily: 'var(--font-mono, monospace)' }}>
+                • {Math.round(elapsedSeconds)}s
+              </span>
             </div>
           )}
 
           {mode === 'quote' && (
-            <span style={{ fontSize: '14px', color: 'var(--text-sub)', fontStyle: 'italic' }}>
-              {engine.quoteInfo ? `"${engine.quoteInfo.source}"` : 'Literary Quote'}
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', animation: 'fadeInUp 0.15s ease' }}>
+              {status === 'running' && isFocused && (
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '5px' }}>
+                  <span
+                    style={{
+                      fontSize: '28px',
+                      fontWeight: 700,
+                      fontFamily: 'var(--font-mono, monospace)',
+                      color: 'var(--accent)',
+                      lineHeight: 1
+                    }}
+                  >
+                    {Math.round(elapsedSeconds)}
+                  </span>
+                  <span style={{ fontSize: '13px', color: 'var(--text-sub)', fontWeight: 500 }}>s</span>
+                  <span style={{ fontSize: '12.5px', color: 'var(--text-sub)', fontFamily: 'var(--font-mono, monospace)', opacity: 0.85 }}>
+                    ({currentWordIndex}/{words.length})
+                  </span>
+                  <span style={{ color: 'var(--border)', margin: '0 2px' }}>•</span>
+                </div>
+              )}
+              <span style={{ fontSize: '13.5px', color: 'var(--text-sub)', fontStyle: 'italic' }}>
+                {engine.quoteInfo ? `"${engine.quoteInfo.source}"` : 'Literary Quote'}
+              </span>
+            </div>
           )}
 
           {mode === 'zen' && status === 'running' && isFocused && (
