@@ -556,7 +556,7 @@ export default function App() {
               <span>@TheIonius</span>
             </a>
             <span>•</span>
-            <span>v1.0 pawtap</span>
+            <span>v1.0.1 pawtap</span>
           </div>
         </footer>
       </div>
