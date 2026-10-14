@@ -44,13 +44,65 @@ export function calculateConsistency(wpmHistory = []) {
 }
 
 /**
- * Returns a cozy, charming title based on final WPM
+ * Returns a cozy, charming title and collectible arcade stamp metadata based on final WPM
  */
 export function getCozyPerformanceTitle(wpm) {
-  if (wpm >= 120) return { title: "Cosmic Scribe", badge: "Celestial Speed" };
-  if (wpm >= 95) return { title: "Matcha Lightning", badge: "Master Artisan" };
-  if (wpm >= 75) return { title: "Bakery Rush Hour", badge: "Swift & Crisp" };
-  if (wpm >= 50) return { title: "Warm Autumn Breeze", badge: "Fluid & Steady" };
-  if (wpm >= 30) return { title: "Gentle Morning Sip", badge: "Peaceful Flow" };
-  return { title: "Sleepy Tea Steeping", badge: "Cozy Beginning" };
+  if (wpm >= 120) {
+    return {
+      title: "Cosmic Scribe",
+      badge: "Celestial Speed",
+      rank: "S+",
+      stamp: "COSMIC",
+      icon: "Sparkles",
+      description: "Transcendent fingers dancing at astronomical velocity."
+    };
+  }
+  if (wpm >= 95) {
+    return {
+      title: "Matcha Lightning",
+      badge: "Master Artisan",
+      rank: "S",
+      stamp: "ARTISAN",
+      icon: "Zap",
+      description: "Razor-sharp rhythm with effortless, crisp mastery."
+    };
+  }
+  if (wpm >= 75) {
+    return {
+      title: "Bakery Rush Hour",
+      badge: "Swift & Crisp",
+      rank: "A",
+      stamp: "BAKERY",
+      icon: "Flame",
+      description: "Warm, brisk momentum like fresh morning pastries."
+    };
+  }
+  if (wpm >= 50) {
+    return {
+      title: "Warm Autumn Breeze",
+      badge: "Fluid & Steady",
+      rank: "B",
+      stamp: "BREEZE",
+      icon: "Wind",
+      description: "Comfortable, soothing cadence with balanced grace."
+    };
+  }
+  if (wpm >= 30) {
+    return {
+      title: "Gentle Morning Sip",
+      badge: "Peaceful Flow",
+      rank: "C",
+      stamp: "GENTLE",
+      icon: "Coffee",
+      description: "Relaxed sips of tea with calm, mindful strokes."
+    };
+  }
+  return {
+    title: "Sleepy Tea Steeping",
+    badge: "Cozy Beginning",
+    rank: "D",
+    stamp: "SLEEPY",
+    icon: "Moon",
+    description: "Taking your time as the cozy tea gently warms up."
+  };
 }
