@@ -138,194 +138,178 @@ function scheduleRaindrops(ctx, destinationGain) {
   spawnDrop();
 }
 
-// Track 2: Midnight Cocoa (Ebmaj9 -> Cm9 -> Fm9 -> Bb13)
-// Deep neo-soul Rhodes chords, sleepy sub-bass, 28ms human strum delay
+// -------------------------------------------------------------
+// TRACK 2: Midnight Cocoa — Mellow Lo-Fi Chillhop Groove (75 BPM)
+// Head-bobbing lofi beat with soft felt kick, tape rim-clicks, and neo-soul keys
+// -------------------------------------------------------------
 const MIDNIGHT_CHORDS = [
-  { sub: 77.78, notes: [196.00, 233.08, 293.66, 349.23] }, // Ebmaj9 (Eb2 sub + G3, Bb3, D4, F4)
-  { sub: 65.41, notes: [196.00, 233.08, 311.13, 392.00] }, // Cm9 (C2 sub + G3, Bb3, Eb4, G4)
-  { sub: 87.31, notes: [207.65, 261.63, 311.13, 392.00] }, // Fm9 (F2 sub + Ab3, C4, Eb4, G4)
-  { sub: 116.54, notes: [207.65, 261.63, 293.66, 392.00] } // Bb13 (Bb2 sub + Ab3, C4, D4, G4)
+  { bass: 58.27, notes: [174.61, 207.65, 261.63, 277.18] }, // Bbm9 (Bb1 bass, F3, Ab3, C4, Db4)
+  { bass: 46.25, notes: [174.61, 207.65, 233.08, 277.18] }, // Gbmaj9 (Gb1 bass, F3, Ab3, Bb3, Db4)
+  { bass: 38.89, notes: [185.00, 233.08, 277.18, 349.23] }, // Ebm9 (Eb1 bass, F#3, Bb3, Db4, F4)
+  { bass: 43.65, notes: [174.61, 220.00, 261.63, 311.13] }  // F7alt (F1 bass, F3, A3, C4, Eb4)
 ];
 
-function playMidnightChord(ctx, destinationGain, chord) {
+function playLofiKick(ctx, dest, time) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.frequency.setValueAtTime(80, time);
+  osc.frequency.exponentialRampToValueAtTime(32, time + 0.11);
+  gain.gain.setValueAtTime(0.001, time);
+  gain.gain.linearRampToValueAtTime(0.22, time + 0.008);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + 0.16);
+  osc.connect(gain);
+  gain.connect(dest);
+  osc.start(time);
+  osc.stop(time + 0.18);
+  registerOsc(osc);
+}
+
+function playLofiRim(ctx, dest, time) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  const filter = ctx.createBiquadFilter();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(420, time);
+  osc.frequency.exponentialRampToValueAtTime(160, time + 0.035);
+  filter.type = 'bandpass';
+  filter.frequency.setValueAtTime(1800, time);
+  filter.Q.setValueAtTime(1.5, time);
+  gain.gain.setValueAtTime(0.001, time);
+  gain.gain.linearRampToValueAtTime(0.09, time + 0.004);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + 0.045);
+  osc.connect(filter);
+  filter.connect(gain);
+  gain.connect(dest);
+  osc.start(time);
+  osc.stop(time + 0.05);
+  registerOsc(osc);
+}
+
+function playMidnightBar(ctx, dest, chord) {
   const now = ctx.currentTime;
-  const duration = 3.8;
 
-  // Gentle vintage tape pitch wow/flutter
-  const lfo = ctx.createOscillator();
-  const lfoGain = ctx.createGain();
-  lfo.type = 'sine';
-  lfo.frequency.setValueAtTime(0.28, now);
-  lfoGain.gain.setValueAtTime(3.8, now); // ±3.8 cents warble
-  lfo.connect(lfoGain);
-  lfo.start(now);
-  lfo.stop(now + duration + 0.1);
-  registerOsc(lfo);
+  // 1. Drum groove: Beat 1 (kick), Beat 2 (rim), Beat 2.5 (kick), Beat 4 (rim)
+  playLofiKick(ctx, dest, now);
+  playLofiRim(ctx, dest, now + 0.8);
+  playLofiKick(ctx, dest, now + 1.2);
+  playLofiRim(ctx, dest, now + 2.4);
 
-  // Sub-Bass fundamental (warm, grounding low end)
-  const subOsc = ctx.createOscillator();
-  const subGain = ctx.createGain();
-  const subFilter = ctx.createBiquadFilter();
-  subOsc.type = 'sine';
-  subOsc.frequency.setValueAtTime(chord.sub, now);
-  subFilter.type = 'lowpass';
-  subFilter.frequency.setValueAtTime(140, now);
+  // 2. Sub bass note on beat 1 and beat 2.5
+  [0, 1.2].forEach((offset) => {
+    const bassOsc = ctx.createOscillator();
+    const bassGain = ctx.createGain();
+    const bassFilter = ctx.createBiquadFilter();
+    bassOsc.type = 'sine';
+    bassOsc.frequency.setValueAtTime(chord.bass, now + offset);
+    bassFilter.type = 'lowpass';
+    bassFilter.frequency.setValueAtTime(130, now + offset);
+    bassGain.gain.setValueAtTime(0.001, now + offset);
+    bassGain.gain.linearRampToValueAtTime(0.18, now + offset + 0.06);
+    bassGain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.9);
+    bassOsc.connect(bassFilter);
+    bassFilter.connect(bassGain);
+    bassGain.connect(dest);
+    bassOsc.start(now + offset);
+    bassOsc.stop(now + offset + 0.95);
+    registerOsc(bassOsc);
+  });
 
-  subGain.gain.setValueAtTime(0.001, now);
-  subGain.gain.linearRampToValueAtTime(0.22, now + 0.12);
-  subGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
-
-  subOsc.connect(subFilter);
-  subFilter.connect(subGain);
-  subGain.connect(destinationGain);
-  subOsc.start(now);
-  subOsc.stop(now + duration);
-  registerOsc(subOsc);
-
-  // Strummed Rhodes chords
-  chord.notes.forEach((freq, idx) => {
-    const noteStart = now + idx * 0.028; // 28ms human strum offset
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const filter = ctx.createBiquadFilter();
-
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(freq, noteStart);
-    lfoGain.connect(osc.detune);
-
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(460, noteStart);
-    filter.frequency.exponentialRampToValueAtTime(340, noteStart + duration);
-
-    gain.gain.setValueAtTime(0.001, noteStart);
-    gain.gain.linearRampToValueAtTime(0.14, noteStart + 0.08);
-    gain.gain.exponentialRampToValueAtTime(0.001, noteStart + duration);
-
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(destinationGain);
-
-    osc.start(noteStart);
-    osc.stop(noteStart + duration);
-    registerOsc(osc);
+  // 3. Rhodes chord on beat 1 (long) & syncopated tap on beat 2.5
+  [
+    { offset: 0, dur: 1.6, vel: 0.12 },
+    { offset: 1.2, dur: 1.8, vel: 0.09 }
+  ].forEach(({ offset, dur, vel }) => {
+    chord.notes.forEach((freq, idx) => {
+      const noteStart = now + offset + idx * 0.02;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, noteStart);
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(450, noteStart);
+      filter.frequency.exponentialRampToValueAtTime(320, noteStart + dur);
+      gain.gain.setValueAtTime(0.001, noteStart);
+      gain.gain.linearRampToValueAtTime(vel, noteStart + 0.06);
+      gain.gain.exponentialRampToValueAtTime(0.001, noteStart + dur);
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(dest);
+      osc.start(noteStart);
+      osc.stop(noteStart + dur);
+      registerOsc(osc);
+    });
   });
 }
 
-// Track 3: Afternoon Reverie (Fmaj9 -> Am9 -> Bbmaj7 -> C9sus4)
-// Dreamy keys with soft pentatonic celesta music-box chimes
+// -------------------------------------------------------------
+// TRACK 3: Afternoon Reverie — Sunny Bossa Nova Acoustic Guitar
+// Breezy Brazilian nylon guitar with syncopated comping & alternating bass
+// -------------------------------------------------------------
 const AFTERNOON_CHORDS = [
-  { sub: 87.31, notes: [220.00, 261.63, 329.63, 392.00] }, // Fmaj9
-  { sub: 110.00, notes: [261.63, 329.63, 392.00, 493.88] }, // Am9
-  { sub: 116.54, notes: [220.00, 293.66, 349.23, 440.00] }, // Bbmaj7
-  { sub: 130.81, notes: [174.61, 233.08, 293.66, 392.00] }  // C9sus4
+  { root: 73.42, fifth: 110.00, notes: [185.00, 220.00, 277.18, 329.63] }, // Dmaj9 (D2, A2 | F#3, A3, C#4, E4)
+  { root: 61.74, fifth: 92.50, notes: [185.00, 220.00, 293.66, 369.99] },  // Bm9 (B1, F#2 | F#3, A3, D4, F#4)
+  { root: 82.41, fifth: 123.47, notes: [196.00, 246.94, 293.66, 369.99] }, // Em9 (E2, B2 | G3, B3, D4, F#4)
+  { root: 55.00, fifth: 82.41, notes: [196.00, 277.18, 369.99, 493.88] }   // A13 (A1, E2 | G3, C#4, F#4, B4)
 ];
 
-const CELESTA_NOTES = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
+function playNylonNote(ctx, dest, freq, time, duration = 0.55, velocity = 0.12) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  const filter = ctx.createBiquadFilter();
 
-function playAfternoonChord(ctx, destinationGain, chord) {
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(freq, time);
+
+  // Resonant nylon acoustic body filter
+  filter.type = 'bandpass';
+  filter.frequency.setValueAtTime(680, time);
+  filter.Q.setValueAtTime(1.4, time);
+
+  gain.gain.setValueAtTime(0.001, time);
+  gain.gain.linearRampToValueAtTime(velocity, time + 0.008);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+
+  osc.connect(filter);
+  filter.connect(gain);
+  gain.connect(dest);
+
+  osc.start(time);
+  osc.stop(time + duration + 0.02);
+  registerOsc(osc);
+}
+
+function playAfternoonBossaBar(ctx, dest, chord) {
   const now = ctx.currentTime;
-  const duration = 3.6;
+  // Bossa nova groove over 2.4s (100 BPM)
+  // Bass: Root on beat 1 (t=0), Fifth on beat 3 (t=1.2)
+  playNylonNote(ctx, dest, chord.root, now, 0.7, 0.18);
+  playNylonNote(ctx, dest, chord.fifth, now + 1.2, 0.7, 0.16);
 
-  // Sub warmth
-  const subOsc = ctx.createOscillator();
-  const subGain = ctx.createGain();
-  subOsc.type = 'sine';
-  subOsc.frequency.setValueAtTime(chord.sub, now);
-  subGain.gain.setValueAtTime(0.001, now);
-  subGain.gain.linearRampToValueAtTime(0.16, now + 0.1);
-  subGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
-  subOsc.connect(subGain);
-  subGain.connect(destinationGain);
-  subOsc.start(now);
-  subOsc.stop(now + duration);
-  registerOsc(subOsc);
-
-  // Soft keys
-  chord.notes.forEach((freq, idx) => {
-    const noteStart = now + idx * 0.022;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const filter = ctx.createBiquadFilter();
-
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(freq, noteStart);
-
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(500, noteStart);
-    filter.frequency.exponentialRampToValueAtTime(380, noteStart + duration);
-
-    gain.gain.setValueAtTime(0.001, noteStart);
-    gain.gain.linearRampToValueAtTime(0.13, noteStart + 0.07);
-    gain.gain.exponentialRampToValueAtTime(0.001, noteStart + duration);
-
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(destinationGain);
-
-    osc.start(noteStart);
-    osc.stop(noteStart + duration);
-    registerOsc(osc);
+  // Syncopated nylon chord plucks: beat 1 (0s), beat 1.75 (0.45s), beat 2.5 (0.9s), beat 3.5 (1.5s), beat 4.25 (1.95s)
+  const compTimes = [0, 0.45, 0.9, 1.5, 1.95];
+  compTimes.forEach((offset, cIdx) => {
+    chord.notes.forEach((freq, nIdx) => {
+      const noteTime = now + offset + nIdx * 0.012; // Finger roll
+      const vel = cIdx === 0 || cIdx === 2 ? 0.09 : 0.065;
+      playNylonNote(ctx, dest, freq, noteTime, 0.45, vel);
+    });
   });
 }
 
-function scheduleCelestaChimes(ctx, destinationGain) {
-  function ringChime() {
-    if (currentAmbientType !== 'afternoon' || !ambientCtx) return;
-    const now = ctx.currentTime;
-    const note = CELESTA_NOTES[Math.floor(Math.random() * CELESTA_NOTES.length)];
+// -------------------------------------------------------------
+// TRACK 4: Starlit Nap — Celestial Ambient Float & Shimmer Chimes
+// Deep meditative Lydian pad drone with drifting crystal bells (zero drums)
+// -------------------------------------------------------------
+const STARLIT_DRONE_FREQS = [36.71, 55.00, 73.42, 110.00, 185.00]; // Open D-A-F# celestial drone
+const CELESTIAL_SCALE = [587.33, 659.25, 739.99, 830.61, 880.00, 987.77, 1174.66]; // D Lydian bells
 
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(note, now);
-
-    const overtone = ctx.createOscillator();
-    const otGain = ctx.createGain();
-    overtone.type = 'sine';
-    overtone.frequency.setValueAtTime(note * 2, now);
-
-    gain.gain.setValueAtTime(0.001, now);
-    gain.gain.linearRampToValueAtTime(0.055, now + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.0);
-
-    otGain.gain.setValueAtTime(0.001, now);
-    otGain.gain.linearRampToValueAtTime(0.018, now + 0.015);
-    otGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
-
-    osc.connect(gain);
-    gain.connect(destinationGain);
-    overtone.connect(otGain);
-    otGain.connect(destinationGain);
-
-    osc.start(now);
-    osc.stop(now + 2.1);
-    overtone.start(now);
-    overtone.stop(now + 1.3);
-
-    registerOsc(osc);
-    registerOsc(overtone);
-
-    embellishmentTimer = setTimeout(ringChime, 1800 + Math.random() * 2200);
-  }
-  embellishmentTimer = setTimeout(ringChime, 1200);
-}
-
-// Track 4: Starlit Nap (Dmaj9 -> Gmaj7#11 -> Bm9 -> Asus4add9)
-// Weightless ambient pad swells, dual detuned chorus, slow breathing filter
-const STARLIT_CHORDS = [
-  [73.42, 146.83, 185.00, 277.18, 329.63], // Dmaj9
-  [98.00, 146.83, 246.94, 277.18, 369.99], // Gmaj7#11
-  [123.47, 185.00, 293.66, 369.99, 440.00], // Bm9
-  [110.00, 164.81, 293.66, 329.63, 493.88]  // Asus4add9
-];
-
-function playStarlitPad(ctx, destinationGain, notes) {
+function playStarlitDrone(ctx, dest) {
   const now = ctx.currentTime;
-  const duration = 5.6;
+  const duration = 7.0;
 
-  notes.forEach((freq) => {
-    // Dual oscillators with ±4 cents detune for lush analog chorusing
-    [-4, 4].forEach((cents) => {
+  STARLIT_DRONE_FREQS.forEach((freq) => {
+    [-3.5, 3.5].forEach((cents) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       const filter = ctx.createBiquadFilter();
@@ -334,20 +318,18 @@ function playStarlitPad(ctx, destinationGain, notes) {
       osc.frequency.setValueAtTime(freq, now);
       osc.detune.setValueAtTime(cents, now);
 
-      // Slow breathing filter sweep (240Hz -> 460Hz -> 220Hz)
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(240, now);
-      filter.frequency.linearRampToValueAtTime(460, now + 2.2);
-      filter.frequency.linearRampToValueAtTime(220, now + duration);
+      filter.frequency.setValueAtTime(180, now);
+      filter.frequency.linearRampToValueAtTime(380, now + 3.2);
+      filter.frequency.linearRampToValueAtTime(190, now + duration);
 
-      // Slow breathing envelope: 1.8s attack, 2.0s sustain, gentle release
       gain.gain.setValueAtTime(0.001, now);
-      gain.gain.linearRampToValueAtTime(0.09, now + 1.8);
+      gain.gain.linearRampToValueAtTime(0.08, now + 2.5);
       gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
       osc.connect(filter);
       filter.connect(gain);
-      gain.connect(destinationGain);
+      gain.connect(dest);
 
       osc.start(now);
       osc.stop(now + duration);
@@ -356,8 +338,49 @@ function playStarlitPad(ctx, destinationGain, notes) {
   });
 }
 
-// Track 5: Café Corner (Dm9 -> G13 -> Cmaj9 -> A7#9)
+function scheduleCelestialChimes(ctx, dest) {
+  function spawnChime() {
+    if (currentAmbientType !== 'starlit' || !ambientCtx) return;
+    const now = ctx.currentTime;
+    const note = CELESTIAL_SCALE[Math.floor(Math.random() * CELESTIAL_SCALE.length)];
+
+    // Fundamental bell
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(note, now);
+    gain1.gain.setValueAtTime(0.001, now);
+    gain1.gain.linearRampToValueAtTime(0.045, now + 0.015);
+    gain1.gain.exponentialRampToValueAtTime(0.0001, now + 2.8);
+    osc1.connect(gain1);
+    gain1.connect(dest);
+    osc1.start(now);
+    osc1.stop(now + 2.9);
+    registerOsc(osc1);
+
+    // Shimmer harmonic (2x)
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(note * 2, now);
+    gain2.gain.setValueAtTime(0.001, now);
+    gain2.gain.linearRampToValueAtTime(0.016, now + 0.01);
+    gain2.gain.exponentialRampToValueAtTime(0.0001, now + 1.6);
+    osc2.connect(gain2);
+    gain2.connect(dest);
+    osc2.start(now);
+    osc2.stop(now + 1.7);
+    registerOsc(osc2);
+
+    embellishmentTimer = setTimeout(spawnChime, 1800 + Math.random() * 2400);
+  }
+  embellishmentTimer = setTimeout(spawnChime, 800);
+}
+
+// -------------------------------------------------------------
+// TRACK 5: Café Corner (Dm9 -> G13 -> Cmaj9 -> A7#9) [UNTOUCHED]
 // Vintage 70s electric piano, cassette tape flutter, warm muted harmonics
+// -------------------------------------------------------------
 const CAFE_CHORDS = [
   { sub: 73.42, notes: [174.61, 220.00, 261.63, 329.63] }, // Dm9
   { sub: 98.00, notes: [174.61, 246.94, 329.63, 440.00] }, // G13
@@ -424,44 +447,58 @@ function playCafeChord(ctx, destinationGain, chord) {
   });
 }
 
-// Track 6: Sunbeam Drowse (Gmaj7 -> Cmaj9 -> Em9 -> Dadd9)
-// Relaxed rolled picking arpeggios, warm acoustic tone, comforting golden warmth
-const SUNBEAM_CHORDS = [
-  [98.00, 146.83, 246.94, 293.66, 369.99], // Gmaj7
-  [65.41, 130.81, 196.00, 246.94, 293.66], // Cmaj9
-  [82.41, 123.47, 196.00, 293.66, 369.99], // Em9
-  [73.42, 110.00, 185.00, 293.66, 329.63]  // Dadd9
+// -------------------------------------------------------------
+// TRACK 6: Sunbeam Drowse — Acoustic Fingerstyle Folk Waltz (3/4)
+// Intimate picked acoustic guitar in golden 3/4 waltz time (One-two-three)
+// -------------------------------------------------------------
+const SUNBEAM_WALTZ = [
+  { bass: 65.41, dyad1: [164.81, 246.94], dyad2: [196.00, 293.66] }, // Cmaj7 (C2 bass, E3+B3, G3+D4)
+  { bass: 55.00, dyad1: [130.81, 196.00], dyad2: [164.81, 246.94] }, // Am9 (A1 bass, C3+G3, E3+B3)
+  { bass: 43.65, dyad1: [110.00, 164.81], dyad2: [130.81, 196.00] }, // Fmaj7 (F1 bass, A2+E3, C3+G3)
+  { bass: 49.00, dyad1: [123.47, 164.81], dyad2: [146.83, 220.00] }  // G6add9 (G1 bass, B2+E3, D3+A3)
 ];
 
-function playSunbeamChord(ctx, destinationGain, notes) {
+function playAcousticPluck(ctx, dest, freq, time, duration = 0.6, velocity = 0.11) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  const filter = ctx.createBiquadFilter();
+
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(freq, time);
+
+  // Warm acoustic body resonance
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(560, time);
+  filter.frequency.exponentialRampToValueAtTime(320, time + duration);
+
+  gain.gain.setValueAtTime(0.001, time);
+  gain.gain.linearRampToValueAtTime(velocity, time + 0.012);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+
+  osc.connect(filter);
+  filter.connect(gain);
+  gain.connect(dest);
+
+  osc.start(time);
+  osc.stop(time + duration + 0.02);
+  registerOsc(osc);
+}
+
+function playSunbeamMeasure(ctx, dest, measure) {
   const now = ctx.currentTime;
-  const duration = 4.2;
+  const beat = 0.65; // ~92 BPM 3/4 waltz (0.65s per beat, 1.95s per measure)
 
-  // Strum notes sequentially with lazy 55ms acoustic roll delay
-  notes.forEach((freq, idx) => {
-    const noteStart = now + idx * 0.055;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const filter = ctx.createBiquadFilter();
+  // Beat 1: Thumbed bass note
+  playAcousticPluck(ctx, dest, measure.bass, now, 1.2, 0.18);
 
-    osc.type = idx === 0 ? 'sine' : 'triangle';
-    osc.frequency.setValueAtTime(freq, noteStart);
+  // Beat 2: Plucked mid dyad
+  measure.dyad1.forEach((freq, idx) => {
+    playAcousticPluck(ctx, dest, freq, now + beat + idx * 0.018, 0.7, 0.08);
+  });
 
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(540, noteStart);
-    filter.frequency.exponentialRampToValueAtTime(320, noteStart + (duration - idx * 0.055));
-
-    gain.gain.setValueAtTime(0.001, noteStart);
-    gain.gain.linearRampToValueAtTime(0.14, noteStart + 0.06);
-    gain.gain.exponentialRampToValueAtTime(0.001, noteStart + (duration - idx * 0.055));
-
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(destinationGain);
-
-    osc.start(noteStart);
-    osc.stop(noteStart + duration);
-    registerOsc(osc);
+  // Beat 3: Plucked high dyad
+  measure.dyad2.forEach((freq, idx) => {
+    playAcousticPluck(ctx, dest, freq, now + beat * 2 + idx * 0.018, 0.7, 0.075);
   });
 }
 
@@ -504,45 +541,45 @@ export function setAmbientSound(type = 'none', volume = 0.25) {
       type: 'vinyl',
       filterFreq: 400,
       filterQ: 0.9,
-      gainVal: 0.14
+      gainVal: 0.12
     });
-    playMidnightChord(ctx, ambientMasterGain, MIDNIGHT_CHORDS[0]);
+    playMidnightBar(ctx, ambientMasterGain, MIDNIGHT_CHORDS[0]);
     sequenceTimer = setInterval(() => {
       chordIndex = (chordIndex + 1) % MIDNIGHT_CHORDS.length;
       if (currentAmbientType === 'midnight' && ambientCtx && ambientMasterGain) {
-        playMidnightChord(ambientCtx, ambientMasterGain, MIDNIGHT_CHORDS[chordIndex]);
+        playMidnightBar(ambientCtx, ambientMasterGain, MIDNIGHT_CHORDS[chordIndex]);
       }
-    }, 3800);
+    }, 3200);
   } else if (resolvedType === 'afternoon') {
     startTextureNoise(ctx, ambientMasterGain, {
       type: 'vinyl',
       filterFreq: 460,
       filterQ: 0.8,
-      gainVal: 0.12
+      gainVal: 0.09
     });
-    playAfternoonChord(ctx, ambientMasterGain, AFTERNOON_CHORDS[0]);
-    scheduleCelestaChimes(ctx, ambientMasterGain);
+    playAfternoonBossaBar(ctx, ambientMasterGain, AFTERNOON_CHORDS[0]);
     sequenceTimer = setInterval(() => {
       chordIndex = (chordIndex + 1) % AFTERNOON_CHORDS.length;
       if (currentAmbientType === 'afternoon' && ambientCtx && ambientMasterGain) {
-        playAfternoonChord(ambientCtx, ambientMasterGain, AFTERNOON_CHORDS[chordIndex]);
+        playAfternoonBossaBar(ambientCtx, ambientMasterGain, AFTERNOON_CHORDS[chordIndex]);
       }
-    }, 3600);
+    }, 2400);
   } else if (resolvedType === 'starlit') {
     startTextureNoise(ctx, ambientMasterGain, {
       type: 'vinyl',
-      filterFreq: 320,
-      filterQ: 0.7,
-      gainVal: 0.08
+      filterFreq: 260,
+      filterQ: 0.6,
+      gainVal: 0.06
     });
-    playStarlitPad(ctx, ambientMasterGain, STARLIT_CHORDS[0]);
+    playStarlitDrone(ctx, ambientMasterGain);
+    scheduleCelestialChimes(ctx, ambientMasterGain);
     sequenceTimer = setInterval(() => {
-      chordIndex = (chordIndex + 1) % STARLIT_CHORDS.length;
       if (currentAmbientType === 'starlit' && ambientCtx && ambientMasterGain) {
-        playStarlitPad(ambientCtx, ambientMasterGain, STARLIT_CHORDS[chordIndex]);
+        playStarlitDrone(ambientCtx, ambientMasterGain);
       }
-    }, 5600);
+    }, 7000);
   } else if (resolvedType === 'cafe') {
+    // 100% UNTOUCHED
     startTextureNoise(ctx, ambientMasterGain, {
       type: 'vinyl',
       filterFreq: 380,
@@ -561,15 +598,15 @@ export function setAmbientSound(type = 'none', volume = 0.25) {
       type: 'vinyl',
       filterFreq: 480,
       filterQ: 0.75,
-      gainVal: 0.11
+      gainVal: 0.08
     });
-    playSunbeamChord(ctx, ambientMasterGain, SUNBEAM_CHORDS[0]);
+    playSunbeamMeasure(ctx, ambientMasterGain, SUNBEAM_WALTZ[0]);
     sequenceTimer = setInterval(() => {
-      chordIndex = (chordIndex + 1) % SUNBEAM_CHORDS.length;
+      chordIndex = (chordIndex + 1) % SUNBEAM_WALTZ.length;
       if (currentAmbientType === 'sunbeam' && ambientCtx && ambientMasterGain) {
-        playSunbeamChord(ambientCtx, ambientMasterGain, SUNBEAM_CHORDS[chordIndex]);
+        playSunbeamMeasure(ambientCtx, ambientMasterGain, SUNBEAM_WALTZ[chordIndex]);
       }
-    }, 4200);
+    }, 1950);
   }
 }
 
