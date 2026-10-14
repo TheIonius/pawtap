@@ -12,6 +12,9 @@ import {
   Headphones,
   Sparkles,
   CloudRain,
+  Moon,
+  Sun,
+  Music,
   Gauge,
   Skull,
   EyeOff,
@@ -48,6 +51,19 @@ export function SettingsModal({
   challengeMode = 'normal',
   setChallengeMode = null
 }) {
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const activeModsList = Array.isArray(challengeMods)
@@ -563,7 +579,12 @@ export function SettingsModal({
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                       {ap.id === 'none' && <VolumeX size={13} />}
                       {ap.id === 'rain' && <CloudRain size={13} />}
-                      {ap.id === 'lofi' && <Headphones size={13} />}
+                      {ap.id === 'midnight' && <Moon size={13} />}
+                      {ap.id === 'afternoon' && <Sun size={13} />}
+                      {ap.id === 'starlit' && <Sparkles size={13} />}
+                      {ap.id === 'cafe' && <Coffee size={13} />}
+                      {ap.id === 'sunbeam' && <Music size={13} />}
+                      {['none', 'rain', 'midnight', 'afternoon', 'starlit', 'cafe', 'sunbeam'].indexOf(ap.id) === -1 && <Headphones size={13} />}
                       <span>{ap.name}</span>
                     </span>
                   </button>

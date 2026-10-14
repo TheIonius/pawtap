@@ -423,6 +423,37 @@ export const EXPERT_WORDS = [
   "vociferation", "weltanschauung", "xenodochial", "xylotomous", "zarzuela", "zenithal"
 ];
 
+export const KOREAN_WORDS = [
+  "사랑", "마음", "하늘", "바다", "시간", "생각", "사람", "우리", "친구", "가족",
+  "커피", "차", "고양이", "강아지", "음악", "책", "바람", "구름", "봄", "여름",
+  "가을", "겨울", "집", "이야기", "노래", "세상", "오늘", "내일", "어제", "하루",
+  "기억", "미소", "햇살", "따뜻함", "행복", "고요", "평화", "별", "달", "태양",
+  "나무", "꽃", "길", "거리", "창문", "문", "방", "테이블", "의자", "편지",
+  "글", "말", "눈물", "희망", "꿈", "잠", "아침", "저녁", "밤", "새벽",
+  "빛", "어둠", "비", "눈", "계절", "순간", "추억", "산", "강", "물",
+  "숲", "들판", "잎", "새", "나비", "바위", "모래", "파도", "향기", "차분함",
+  "위로", "감사", "다정함", "포근함", "설렘", "온기", "발걸음", "그림", "사진", "소리",
+  "속삭임", "숨결", "휴식", "쉼터", "정원", "작은", "아름다운", "좋은", "맑은", "푸른",
+  "깊은", "조용한", "넓은", "새로운", "오래된", "밝은", "부드러운", "달콤한", "반짝이는", "소중한",
+  "걷다", "보다", "듣다", "말하다", "생각하다", "느끼다", "기억하다", "꿈꾸다", "쉬다", "웃다",
+  "사랑하다", "기다리다", "바라보다", "그리워하다", "머물다", "떠나다", "시작하다", "노래하다", "읽다", "쓰다"
+];
+
+export const CHINESE_WORDS = [
+  "de", "shi", "zai", "he", "you", "wo", "men", "bu", "zhe", "yi",
+  "ge", "ren", "da", "shuo", "dao", "kan", "qu", "lai", "ta", "shang",
+  "kafei", "cha", "wenxing", "shufu", "maomi", "yinyue", "tiankong", "huanxi", "meili", "shiguang",
+  "yangguang", "chuan", "shuben", "xuexi", "pengyou", "jiating", "wenrou", "anjing", "shenghuo", "xihuan",
+  "kuaile", "xingfu", "xintian", "weixiao", "chuntian", "xiatian", "qiutian", "dongtian", "huaduo", "senlin",
+  "haiyang", "xingxing", "yueliang", "taiyang", "weifeng", "baiyun", "xuehua", "yuanshan", "heliu", "lutu",
+  "gushi", "gequ", "mengxiang", "xiwang", "wanshang", "zaoshang", "mingtian", "jintian", "zuotian", "shunjian",
+  "huiyi", "ganxie", "wenming", "qingche", "xiangqi", "huxi", "qingsong", "ziran", "youmei", "wenhao",
+  "shuijiao", "pinwei", "huanxiang", "yanzhao", "huaiyou", "zhuanzhu", "xinqing", "tianmi", "shiyi", "nuanyi",
+  "mianbao", "niunai", "dianxin", "chabei", "kuaizi", "zhuozi", "yizi", "chuanghu", "fangjian", "jiayuan",
+  "kanjian", "tingdao", "xiangqi", "liaotian", "sanbu", "dushu", "xiezi", "huahua", "changge", "tiaowu",
+  "yongbao", "fenxiang", "peihe", "jianchi", "zixin", "pingan", "ningjing", "qizhi", "guangmang", "chutai"
+];
+
 export const SUPPORTED_LANGUAGES = [
   { id: 'english', name: 'English', nativeName: 'English', code: 'EN', wordCount: '1,000+' },
   { id: 'english_cozy', name: 'English (Cozy)', nativeName: 'Cozy English', code: 'CZ', wordCount: '500+' },
@@ -435,6 +466,8 @@ export const SUPPORTED_LANGUAGES = [
   { id: 'polish', name: 'Polish', nativeName: 'Polski', code: 'PL', wordCount: '250+' },
   { id: 'russian', name: 'Russian', nativeName: 'Русский', code: 'RU', wordCount: '250+' },
   { id: 'japanese_romaji', name: 'Japanese (Romaji)', nativeName: '日本語 (Romaji)', code: 'JA', wordCount: '300+' },
+  { id: 'korean', name: 'Korean', nativeName: '한국어', code: 'KO', wordCount: '250+' },
+  { id: 'chinese', name: 'Chinese (Pinyin)', nativeName: '中文 (Pinyin)', code: 'ZH', wordCount: '300+' },
   { id: 'indonesian', name: 'Indonesian', nativeName: 'Bahasa Indonesia', code: 'ID', wordCount: '250+' },
   { id: 'swedish', name: 'Swedish', nativeName: 'Svenska', code: 'SV', wordCount: '250+' },
   { id: 'turkish', name: 'Turkish', nativeName: 'Türkçe', code: 'TR', wordCount: '250+' },
@@ -452,6 +485,8 @@ export const LANGUAGE_DICTIONARIES = {
   polish: POLISH_WORDS,
   russian: RUSSIAN_WORDS,
   japanese_romaji: JAPANESE_ROMAJI_WORDS,
+  korean: KOREAN_WORDS,
+  chinese: CHINESE_WORDS,
   indonesian: INDONESIAN_WORDS,
   swedish: SWEDISH_WORDS,
   turkish: TURKISH_WORDS,

@@ -28,9 +28,14 @@ export function Header({
   const [openMenu, setOpenMenu] = useState(null); // 'theme' | 'font' | 'sound' | null
   const dockRef = useRef(null);
 
-  const activeTheme = THEMES[activeThemeId] || THEMES['oat-latte'];
+  const activeTheme = THEMES[activeThemeId] || THEMES['boba-tea'] || THEMES['oat-latte'];
   const activeFont = FONTS.find(f => f.id === activeFontId) || FONTS[1];
-  const currentSound = SOUND_PRESETS.find(p => p.id === soundPreset) || SOUND_PRESETS[0];
+  const currentSound = SOUND_PRESETS.find(p => p.id === soundPreset) || SOUND_PRESETS.find(p => p.id === 'matcha') || SOUND_PRESETS[0];
+
+  const openMenuRef = useRef(openMenu);
+  useEffect(() => {
+    openMenuRef.current = openMenu;
+  }, [openMenu]);
 
   // Close floating menus when clicking outside or pressing Escape
   useEffect(() => {
@@ -40,7 +45,8 @@ export function Header({
       }
     };
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && openMenuRef.current) {
+        e.stopPropagation();
         setOpenMenu(null);
       }
     };

@@ -54,7 +54,7 @@ export function useTypingEngine({
   vocabularyMode = 'cozy', // 'cozy' | 'standard' | 'expert'
   challengeMods = [],      // array of active mods: ['sudden_death', 'disappearing', 'flashlight']
   challengeMode = null,    // backwards compatibility fallback
-  soundPreset = 'creamy',
+  soundPreset = 'matcha',
   soundVolume = 0.65,
   isPaused = false,
   onRestart = null,
@@ -165,9 +165,9 @@ export function useTypingEngine({
     }
 
     if (mode === 'quote') {
-      const q = getRandomQuote(quoteLength);
+      const q = getRandomQuote(quoteLength, language);
       setQuoteInfo(q);
-      setWords(q.text.split(' '));
+      setWords(q.text.trim().split(/\s+/).filter(Boolean));
     } else {
       setQuoteInfo(null);
       const count = mode === 'words' ? wordLimit : Math.max(90, Math.ceil(timeLimit * 2.8));

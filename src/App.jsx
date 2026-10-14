@@ -19,11 +19,11 @@ import { GithubIcon } from './components/GithubIcon';
 
 export default function App() {
   // 1. Persistent User Preferences
-  const [activeThemeId, setThemeId] = useLocalStorage('pawtap_theme', 'oat-latte');
+  const [activeThemeId, setThemeId] = useLocalStorage('pawtap_theme', 'boba-tea');
   const [activeFontId, setFontId] = useLocalStorage('pawtap_font', 'nunito');
-  const [caretStyle, setCaretStyle] = useLocalStorage('pawtap_caret', 'line');
+  const [caretStyle, setCaretStyle] = useLocalStorage('pawtap_caret', 'underline');
   const [companionType, setCompanionType] = useLocalStorage('pawtap_companion', 'cat');
-  const [soundPreset, setSoundPreset] = useLocalStorage('pawtap_sound_preset', 'creamy');
+  const [soundPreset, setSoundPreset] = useLocalStorage('pawtap_sound_preset', 'matcha');
   const [soundVolume, setSoundVolume] = useLocalStorage('pawtap_sound_vol', 0.65);
   const [ambientSound, setAmbientSoundType] = useLocalStorage('pawtap_ambient_type', 'none');
   const [ambientVolume, setAmbientVolume] = useLocalStorage('pawtap_ambient_vol', 0.25);
@@ -59,7 +59,7 @@ export default function App() {
   const typingInputRef = useRef(null);
 
   // 2. Resolve Active Theme & Font
-  const activeTheme = THEMES[activeThemeId] || THEMES['oat-latte'];
+  const activeTheme = THEMES[activeThemeId] || THEMES['boba-tea'] || THEMES['oat-latte'];
   const activeFont = FONTS.find(f => f.id === activeFontId) || FONTS[1];
 
   // Apply CSS Variables to Document Root
@@ -312,7 +312,7 @@ export default function App() {
     engine.initializeTest(practiceWords);
   };
 
-  // Keyboard Navigation: Esc for modals
+  // Keyboard Navigation: Esc to toggle Customizer & Themes modal (or close open modal)
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
       if (e.key === 'Escape') {
@@ -323,6 +323,8 @@ export default function App() {
         } else if (isSettingsOpen) {
           setIsSettingsOpen(false);
           restoreFocus();
+        } else {
+          setIsSettingsOpen(true);
         }
       }
     };

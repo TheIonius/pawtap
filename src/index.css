@@ -5,19 +5,19 @@
    ========================================================================== */
 
 :root {
-  --bg: #EBE4D8;
-  --bg-radial: rgba(255, 255, 255, 0.45);
-  --surface: #DFD6C7;
-  --surface-hover: #D4C9B8;
-  --text-sub: #8D7F6E;
-  --text-main: #2E241B;
-  --text-error: #C04E49;
-  --text-error-extra: #782824;
-  --caret: rgba(120, 105, 90, 0.72);
-  --accent: #B87841;
-  --accent-rgb: 184, 120, 65;
-  --border: #D5CABE;
-  --shadow: rgba(46, 36, 27, 0.09);
+  --bg: #EFE5D8;
+  --bg-radial: rgba(255, 255, 255, 0.4);
+  --surface: #E2D3BF;
+  --surface-hover: #D4C1A9;
+  --text-sub: #8C715A;
+  --text-main: #3A2011;
+  --text-error: #C2442B;
+  --text-error-extra: #741E0D;
+  --caret: rgba(145, 95, 60, 0.75);
+  --accent: #AD6030;
+  --accent-rgb: 173, 96, 48;
+  --border: #D6C3AB;
+  --shadow: rgba(58, 32, 17, 0.09);
 
   --font-mono: 'DM Mono', monospace;
   --font-active: 'Nunito', sans-serif;

@@ -6,7 +6,7 @@ import { FlagIcon } from './FlagIcon';
 export function TypingTest({
   engine,
   mode,
-  caretStyle = 'line',
+  caretStyle = 'underline',
   fontFamily = "'Nunito', sans-serif",
   isFocused = true,
   setIsFocused = () => {},
@@ -526,7 +526,7 @@ export function TypingTest({
                         backgroundColor: charBg,
                         borderRadius: charBg !== 'transparent' ? '4px' : undefined,
                         padding: charBg !== 'transparent' ? '0 1px' : undefined,
-                        textDecoration: charTextDeco,
+                        textDecorationLine: charTextDeco,
                         textUnderlineOffset: '4px',
                         textDecorationColor: 'var(--text-error)',
                         opacity: charOpacity,

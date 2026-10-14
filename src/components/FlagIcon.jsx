@@ -229,6 +229,57 @@ export function FlagIcon({ langId, width = 24, height = 16, style = {} }) {
         </span>
       );
 
+    case 'korean':
+      // South Korea Flag (Taegeukgi)
+      return (
+        <span style={containerStyle} title="Korean (한국어)">
+          <svg viewBox="0 0 60 40" width="100%" height="100%">
+            <rect width="60" height="40" fill="#FFFFFF" />
+            {/* Center Taegeuk S-curve */}
+            <path d="M 30,10 A 10,10 0 0,1 30,30 A 5,5 0 0,1 30,20 A 5,5 0 0,0 30,10 Z" fill="#CD2E3A" />
+            <path d="M 30,30 A 10,10 0 0,1 30,10 A 5,5 0 0,1 30,20 A 5,5 0 0,0 30,30 Z" fill="#0047A0" />
+            {/* Corner Trigram bars */}
+            <g stroke="#000000" strokeWidth="1.2">
+              <line x1="12" y1="9" x2="18" y2="13" />
+              <line x1="10.5" y1="11" x2="16.5" y2="15" />
+              <line x1="9" y1="13" x2="15" y2="17" />
+              <line x1="42" y1="23" x2="44.5" y2="25" />
+              <line x1="45.5" y1="25.5" x2="48" y2="27" />
+              <line x1="40.5" y1="25" x2="43" y2="27" />
+              <line x1="44" y1="27.5" x2="46.5" y2="29" />
+              <line x1="39" y1="27" x2="41.5" y2="29" />
+              <line x1="42.5" y1="29.5" x2="45" y2="31" />
+              <line x1="42" y1="13" x2="44.5" y2="11" />
+              <line x1="45.5" y1="10.5" x2="48" y2="9" />
+              <line x1="40.5" y1="15" x2="46.5" y2="11" />
+              <line x1="39" y1="17" x2="41.5" y2="15" />
+              <line x1="42.5" y1="14.5" x2="45" y2="13" />
+              <line x1="12" y1="27" x2="18" y2="23" />
+              <line x1="10.5" y1="29" x2="13" y2="27.5" />
+              <line x1="14" y1="27" x2="16.5" y2="25.5" />
+              <line x1="9" y1="31" x2="15" y2="27" />
+            </g>
+          </svg>
+        </span>
+      );
+
+    case 'chinese':
+      // China Flag
+      return (
+        <span style={containerStyle} title="Chinese (中文)">
+          <svg viewBox="0 0 60 40" width="100%" height="100%">
+            <rect width="60" height="40" fill="#DE2910" />
+            <polygon points="10,6 12,12 18,12 13,16 15,22 10,18 5,22 7,16 2,12 8,12" fill="#FFDE00" />
+            <g fill="#FFDE00">
+              <polygon points="20,5 21,7.5 23.5,7.5 21.5,9.1 22.3,11.5 20,10 17.7,11.5 18.5,9.1 16.5,7.5 19,7.5" transform="scale(0.5) translate(20, 2)" />
+              <polygon points="20,5 21,7.5 23.5,7.5 21.5,9.1 22.3,11.5 20,10 17.7,11.5 18.5,9.1 16.5,7.5 19,7.5" transform="scale(0.5) translate(28, 8)" />
+              <polygon points="20,5 21,7.5 23.5,7.5 21.5,9.1 22.3,11.5 20,10 17.7,11.5 18.5,9.1 16.5,7.5 19,7.5" transform="scale(0.5) translate(28, 18)" />
+              <polygon points="20,5 21,7.5 23.5,7.5 21.5,9.1 22.3,11.5 20,10 17.7,11.5 18.5,9.1 16.5,7.5 19,7.5" transform="scale(0.5) translate(20, 24)" />
+            </g>
+          </svg>
+        </span>
+      );
+
     default:
       // Stylized international globe badge fallback
       return (

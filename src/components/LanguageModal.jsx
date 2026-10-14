@@ -33,6 +33,7 @@ export function LanguageModal({
       if (!isOpen) return;
       if (e.key === 'Escape') {
         e.preventDefault();
+        e.stopPropagation();
         handleClose();
       }
     };
@@ -47,7 +48,8 @@ export function LanguageModal({
     return (
       lang.name.toLowerCase().includes(term) ||
       lang.nativeName.toLowerCase().includes(term) ||
-      lang.id.toLowerCase().includes(term)
+      lang.id.toLowerCase().includes(term) ||
+      (lang.code && lang.code.toLowerCase().includes(term))
     );
   });
 
