@@ -12,7 +12,6 @@ import { SettingsModal } from './components/SettingsModal';
 import { LanguageModal } from './components/LanguageModal';
 import { KeyboardVisualizer } from './components/KeyboardVisualizer';
 import { setAmbientSound, updateAmbientVolume, stopAmbientSound } from './audio/ambientEngine';
-import { playRecordFanfare } from './audio/soundEngine';
 import { getWordsTargetingKeys } from './constants/wordLists';
 import { Keyboard } from 'lucide-react';
 import { GithubIcon } from './components/GithubIcon';
@@ -138,10 +137,7 @@ export default function App() {
     if (isNewRecord) {
       setPersonalBestWpm(result.wpm);
 
-      // 1. Play victory fanfare sound ONLY when setting a new record / BPM
-      playRecordFanfare(soundVolume);
-
-      // 2. Launch celebratory confetti ONLY when setting a new record / BPM
+      // Launch celebratory confetti ONLY when setting a new record / BPM (sound removed per user preference)
       try {
         confetti({
           particleCount: 65,
@@ -162,7 +158,7 @@ export default function App() {
         // Ignored if canvas-confetti unavailable
       }
     }
-  }, [personalBestWpm, soundVolume, activeTheme, setTestsCompleted, setPersonalBestWpm]);
+  }, [personalBestWpm, activeTheme, setTestsCompleted, setPersonalBestWpm]);
 
   const savedModeConfigRef = useRef(null);
   const engineRef = useRef(null);
