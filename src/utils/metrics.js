@@ -26,21 +26,23 @@ export function calculateAccuracy(correctChars, totalTypedChars) {
  * sampled across 1-second WPM intervals.
  */
 export function calculateConsistency(wpmHistory = []) {
-  if (!wpmHistory || wpmHistory.length < 2) return 100;
+  if (!wpmHistory || !Array.isArray(wpmHistory) || wpmHistory.length < 2) return 100;
 
-  const validWpms = wpmHistory.map(p => p.wpm).filter(v => v > 0);
+  const validWpms = wpmHistory
+    .map(p => (p && typeof p.wpm === 'number' ? p.wpm : 0))
+    .filter(v => v > 0 && !isNaN(v) && isFinite(v));
   if (validWpms.length < 2) return 100;
 
   const n = validWpms.length;
   const mean = validWpms.reduce((a, b) => a + b, 0) / n;
-  if (mean <= 0) return 100;
+  if (!isFinite(mean) || mean <= 0) return 100;
 
   const variance = validWpms.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / (n - 1);
-  const stdDev = Math.sqrt(variance);
+  const stdDev = Math.sqrt(Math.max(0, variance));
   const cv = stdDev / mean;
 
   const consistency = Math.max(0, Math.min(100, Math.round(100 * (1 - cv))));
-  return consistency;
+  return isNaN(consistency) || !isFinite(consistency) ? 100 : consistency;
 }
 
 /**

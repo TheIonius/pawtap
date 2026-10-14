@@ -50,6 +50,32 @@ export function TypingTest({
 
   const [caretPos, setCaretPos] = useState({ top: 0, left: 0, height: 32, width: 2 });
   const [lineOffsetY, setLineOffsetY] = useState(0);
+  const [isCapsLock, setIsCapsLock] = useState(false);
+  const [, setResizeTick] = useState(0);
+
+  // Detect Caps Lock state globally to prevent accidental typos
+  useEffect(() => {
+    const handleKeyMod = (e) => {
+      if (typeof e.getModifierState === 'function') {
+        setIsCapsLock(e.getModifierState('CapsLock'));
+      }
+    };
+    window.addEventListener('keydown', handleKeyMod);
+    window.addEventListener('keyup', handleKeyMod);
+    return () => {
+      window.removeEventListener('keydown', handleKeyMod);
+      window.removeEventListener('keyup', handleKeyMod);
+    };
+  }, []);
+
+  // Re-calculate caret position on window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setResizeTick(t => t + 1);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Reset line cache when word set changes
   useEffect(() => {
@@ -269,6 +295,29 @@ export function TypingTest({
             <span style={{ fontSize: '14px', color: 'var(--text-sub)', fontWeight: 500, animation: 'fadeInUp 0.15s ease' }}>
               zen mode • {Math.round(elapsedSeconds)}s
             </span>
+          )}
+
+          {/* CapsLock Warning Badge */}
+          {isCapsLock && (
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '3px 10px',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                border: '1px solid rgba(239, 68, 68, 0.35)',
+                color: 'var(--text-error)',
+                fontSize: '11.5px',
+                fontWeight: 700,
+                letterSpacing: '0.4px',
+                animation: 'pulseGlow 1.8s infinite'
+              }}
+              title="Caps Lock is active"
+            >
+              <span>⇪ Caps Lock ON</span>
+            </div>
           )}
 
           {/* Streak Flame Pill */}

@@ -78,6 +78,15 @@ export function playKeySound(preset = 'creamy', volume = 0.65, key = '') {
   masterGain.gain.setValueAtTime(Math.min(1, volume * 1.1), now);
   masterGain.connect(ctx.destination);
 
+  // Automatically disconnect masterGain once the brief switch acoustic decays to prevent audio graph accumulation
+  setTimeout(() => {
+    try {
+      masterGain.disconnect();
+    } catch {
+      // Ignored
+    }
+  }, 160);
+
   // Key-specific characteristics
   const isSpace = key === ' ';
   const isBackspace = key === 'Backspace';
