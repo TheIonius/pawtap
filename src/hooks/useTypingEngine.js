@@ -54,6 +54,7 @@ export function useTypingEngine({
   vocabularyMode = 'cozy', // 'cozy' | 'standard' | 'expert'
   challengeMods = [],      // array of active mods: ['sudden_death', 'disappearing', 'flashlight']
   challengeMode = null,    // backwards compatibility fallback
+  customWords = null,      // array of words for custom mode
   soundPreset = 'matcha',
   soundVolume = 0.65,
   isPaused = false,
@@ -83,6 +84,7 @@ export function useTypingEngine({
   const [isActivelyTyping, setIsActivelyTyping] = useState(false);
   const [timeLeft, setTimeLeft] = useState(timeLimit);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [startTime, setStartTime] = useState(null);
 
   // Live stats & metrics
   const [liveWpm, setLiveWpm] = useState(0);
@@ -154,6 +156,7 @@ export function useTypingEngine({
     setHasRecentError(false);
     setTimeLeft(timeLimit);
     setElapsedSeconds(0);
+    setStartTime(null);
     startTimeRef.current = null;
     pausedAtRef.current = null;
     lastLoggedSecRef.current = 0;
@@ -161,6 +164,15 @@ export function useTypingEngine({
     if (overrideWords && Array.isArray(overrideWords) && overrideWords.length > 0) {
       setQuoteInfo(null);
       setWords(overrideWords);
+      return;
+    }
+
+    if (mode === 'custom') {
+      setQuoteInfo(null);
+      const wordsToUse = customWords && customWords.length > 0
+        ? customWords
+        : ['pawtap', 'custom', 'text', 'mode'];
+      setWords(wordsToUse);
       return;
     }
 
@@ -174,7 +186,7 @@ export function useTypingEngine({
       const generated = getRandomWords(count, { punctuation, numbers, language, mode: vocabularyMode });
       setWords(generated);
     }
-  }, [mode, timeLimit, wordLimit, quoteLength, punctuation, numbers, language, vocabularyMode]);
+  }, [mode, timeLimit, wordLimit, quoteLength, punctuation, numbers, language, vocabularyMode, customWords]);
 
   useEffect(() => {
     // oxlint-disable-next-line react/set-state-in-effect
@@ -351,10 +363,10 @@ export function useTypingEngine({
           finishTest();
           return;
         }
-      } else {
-        const displayElapsed = Math.round(elapsed);
-        setElapsedSeconds(prev => (prev !== displayElapsed ? displayElapsed : prev));
       }
+
+      const displayElapsed = Math.round(elapsed);
+      setElapsedSeconds(prev => (prev !== displayElapsed ? displayElapsed : prev));
 
       // Record second-by-second telemetry snapshot for SVG chart
       const currentSecond = Math.floor(elapsed);
@@ -440,7 +452,9 @@ export function useTypingEngine({
       }
       setStatus('running');
       statusRef.current = 'running';
-      startTimeRef.current = Date.now();
+      const now = Date.now();
+      startTimeRef.current = now;
+      setStartTime(now);
       lastLoggedSecRef.current = 0;
     }
 
@@ -514,8 +528,8 @@ export function useTypingEngine({
         return;
       }
 
-      // In Words mode, finish when total target word count reached
-      if (nextWordIdx >= words.length) {
+      // In Words or Custom mode, finish when total target word count reached
+      if ((mode === 'words' || mode === 'custom') && nextWordIdx >= words.length) {
         finishTest();
         return;
       }
@@ -552,8 +566,8 @@ export function useTypingEngine({
 
       setCurrentInput(nextInput);
 
-      // In quote mode or words mode: check if last word completed exactly
-      if ((mode === 'words' || mode === 'quote') && currentWordIndex === words.length - 1 && nextInput === targetWord) {
+      // In quote, words, or custom mode: check if last word completed exactly
+      if ((mode === 'words' || mode === 'quote' || mode === 'custom') && currentWordIndex === words.length - 1 && nextInput === targetWord) {
         finishTest();
       }
     }
@@ -587,6 +601,7 @@ export function useTypingEngine({
     isActivelyTyping,
     timeLeft,
     elapsedSeconds,
+    startTime,
     liveWpm,
     liveAccuracy,
     wpmHistory,

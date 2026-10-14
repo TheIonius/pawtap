@@ -10,9 +10,11 @@ import { ResultsView } from './components/ResultsView';
 import { Companion } from './components/Companion';
 import { SettingsModal } from './components/SettingsModal';
 import { LanguageModal } from './components/LanguageModal';
+import { CustomTextModal } from './components/CustomTextModal';
 import { KeyboardVisualizer } from './components/KeyboardVisualizer';
 import { setAmbientSound, updateAmbientVolume, stopAmbientSound } from './audio/ambientEngine';
 import { getWordsTargetingKeys } from './constants/wordLists';
+import { DEFAULT_CUSTOM_TEXT } from './constants/codeSnippets';
 import { Keyboard } from 'lucide-react';
 import { GithubIcon } from './components/GithubIcon';
 
@@ -21,6 +23,7 @@ export default function App() {
   const [activeThemeId, setThemeId] = useLocalStorage('pawtap_theme', 'boba-tea');
   const [activeFontId, setFontId] = useLocalStorage('pawtap_font', 'nunito');
   const [caretStyle, setCaretStyle] = useLocalStorage('pawtap_caret', 'underline');
+  const [paceCaret, setPaceCaret] = useLocalStorage('pawtap_pace_caret', 'off');
   const [companionType, setCompanionType] = useLocalStorage('pawtap_companion', 'cat');
   const [soundPreset, setSoundPreset] = useLocalStorage('pawtap_sound_preset', 'matcha');
   const [soundVolume, setSoundVolume] = useLocalStorage('pawtap_sound_vol', 0.65);
@@ -28,6 +31,7 @@ export default function App() {
   const [ambientVolume, setAmbientVolume] = useLocalStorage('pawtap_ambient_vol', 0.25);
   const [showKeyboard, setShowKeyboard] = useLocalStorage('pawtap_show_keyboard', false);
   const [language, setLanguage] = useLocalStorage('pawtap_language', 'english');
+  const [customText, setCustomText] = useLocalStorage('pawtap_custom_text', DEFAULT_CUSTOM_TEXT);
 
   // Statistics & History Persistence
   const [, setTestsCompleted] = useLocalStorage('pawtap_tests_count', 0);
@@ -51,6 +55,7 @@ export default function App() {
   // Modals & Results State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
+  const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
   const [lastResult, setLastResult] = useState(null);
 
   // Full-Page Focus & Window Blur Tracking
@@ -163,6 +168,10 @@ export default function App() {
   const savedModeConfigRef = useRef(null);
   const engineRef = useRef(null);
 
+  const customWords = React.useMemo(() => {
+    return (customText || DEFAULT_CUSTOM_TEXT).trim().split(/\s+/).filter(Boolean);
+  }, [customText]);
+
   const handleRestart = useCallback(() => {
     setLastResult(null);
     if (savedModeConfigRef.current) {
@@ -175,10 +184,12 @@ export default function App() {
       if (prev.mode === mode && prev.wordLimit === wordLimit) {
         engineRef.current?.initializeTest();
       }
+    } else if (mode === 'custom') {
+      engineRef.current?.initializeTest(customWords);
     } else {
       engineRef.current?.initializeTest();
     }
-  }, [mode, wordLimit]);
+  }, [mode, wordLimit, customWords]);
 
   // 4. Initialize Core Typing Engine (pauses when browser window/tab is unfocused)
   const engine = useTypingEngine({
@@ -191,6 +202,7 @@ export default function App() {
     language,
     vocabularyMode,
     challengeMods: normalizedChallengeMods,
+    customWords,
     soundPreset,
     soundVolume,
     isPaused: !isFocused,
@@ -201,6 +213,16 @@ export default function App() {
   useEffect(() => {
     engineRef.current = engine;
   });
+
+  // Apply custom text handler
+  const handleApplyCustomText = useCallback((text) => {
+    setCustomText(text);
+    const parsed = text.trim().split(/\s+/).filter(Boolean);
+    savedModeConfigRef.current = null;
+    setMode('custom');
+    setLastResult(null);
+    engine.initializeTest(parsed);
+  }, [setCustomText, engine]);
 
   // Restore focus helper for clicking anywhere or pressing any key
   const restoreFocus = useCallback((e) => {
@@ -217,13 +239,13 @@ export default function App() {
   // Browser Window Blur & Tab Switching Handlers
   useEffect(() => {
     const handleWindowBlur = () => {
-      if (engine.status !== 'finished' && !isSettingsOpen && !isLanguageModalOpen) {
+      if (engine.status !== 'finished' && !isSettingsOpen && !isLanguageModalOpen && !isCustomModalOpen) {
         setIsFocused(false);
       }
     };
 
     const handleVisibilityChange = () => {
-      if (document.hidden && engine.status !== 'finished' && !isSettingsOpen && !isLanguageModalOpen) {
+      if (document.hidden && engine.status !== 'finished' && !isSettingsOpen && !isLanguageModalOpen && !isCustomModalOpen) {
         setIsFocused(false);
       }
     };
@@ -234,20 +256,20 @@ export default function App() {
       window.removeEventListener('blur', handleWindowBlur);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [engine.status, isSettingsOpen, isLanguageModalOpen]);
+  }, [engine.status, isSettingsOpen, isLanguageModalOpen, isCustomModalOpen]);
 
   // Global Pointer & Keydown Listeners to Re-Focus
   useEffect(() => {
     const handleGlobalPointerDown = (e) => {
       // Allow interaction with buttons, selects, modals, etc.
-      if (e.target.closest && e.target.closest('button, select, input, [role="dialog"], .modal-content, a')) {
+      if (e.target.closest && e.target.closest('button, select, input, [role="dialog"], .modal-content, a, textarea')) {
         return;
       }
       restoreFocus(e);
     };
 
     const handleGlobalKeyDown = (e) => {
-      if (isSettingsOpen || isLanguageModalOpen) return;
+      if (isSettingsOpen || isLanguageModalOpen || isCustomModalOpen) return;
 
       // Allow browser shortcuts (like Ctrl+R, Ctrl+W, Cmd+R) to pass through untouched
       if ((e.ctrlKey || e.metaKey) && e.key !== 'Backspace') {
@@ -277,12 +299,12 @@ export default function App() {
       window.removeEventListener('pointerdown', handleGlobalPointerDown);
       window.removeEventListener('keydown', handleGlobalKeyDown);
     };
-  }, [isFocused, isSettingsOpen, isLanguageModalOpen, restoreFocus, engine]);
+  }, [isFocused, isSettingsOpen, isLanguageModalOpen, isCustomModalOpen, restoreFocus, engine]);
 
-  // Handle Practice Missed Words
-  const handlePracticeErrors = () => {
+  // Handle Practice Missed Words (all errors or specific target keys)
+  const handlePracticeErrors = useCallback((targetKeys = null) => {
     if (!lastResult || !lastResult.keyErrors) return;
-    const errorKeys = Object.keys(lastResult.keyErrors);
+    const errorKeys = targetKeys && targetKeys.length > 0 ? targetKeys : Object.keys(lastResult.keyErrors);
     if (errorKeys.length === 0) return;
 
     // Save previous configuration so restarting restores previous mode (e.g. time 30s)
@@ -306,14 +328,17 @@ export default function App() {
     setWordLimit(15);
     setLastResult(null);
     engine.initializeTest(practiceWords);
-  };
+  }, [lastResult, mode, timeLimit, wordLimit, quoteLength, punctuation, numbers, language, vocabularyMode, engine]);
 
   // Keyboard Navigation: Esc to toggle Customizer & Themes modal (or close open modal)
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        if (isLanguageModalOpen) {
+        if (isCustomModalOpen) {
+          setIsCustomModalOpen(false);
+          restoreFocus();
+        } else if (isLanguageModalOpen) {
           setIsLanguageModalOpen(false);
           restoreFocus();
         } else if (isSettingsOpen) {
@@ -326,9 +351,9 @@ export default function App() {
     };
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [isLanguageModalOpen, isSettingsOpen, restoreFocus]);
+  }, [isCustomModalOpen, isLanguageModalOpen, isSettingsOpen, restoreFocus]);
 
-  const shouldShowFullPageBlur = !isFocused && engine.status !== 'finished' && !isSettingsOpen && !isLanguageModalOpen;
+  const shouldShowFullPageBlur = !isFocused && engine.status !== 'finished' && !isSettingsOpen && !isLanguageModalOpen && !isCustomModalOpen;
 
   return (
     <div
@@ -418,6 +443,7 @@ export default function App() {
                 setNumbers={setNumbers}
                 vocabularyMode={vocabularyMode}
                 setVocabularyMode={setVocabularyMode}
+                onOpenCustomModal={() => setIsCustomModalOpen(true)}
               />
 
               {/* Interactive Animated Companion (Mochi the Cat / Steaming Latte) */}
@@ -448,6 +474,8 @@ export default function App() {
                 challengeMods={normalizedChallengeMods}
                 onOpenLanguageModal={() => setIsLanguageModalOpen(true)}
                 onRestart={handleRestart}
+                paceCaret={paceCaret}
+                personalBestWpm={personalBestWpm}
               />
 
               {/* Optional On-Screen Aesthetic Keyboard */}
@@ -608,6 +636,9 @@ export default function App() {
         setVocabularyMode={setVocabularyMode}
         challengeMods={normalizedChallengeMods}
         setChallengeMods={setChallengeMods}
+        paceCaret={paceCaret}
+        setPaceCaret={setPaceCaret}
+        personalBestWpm={personalBestWpm}
       />
 
       {/* 7. Language Switcher Modal */}
@@ -624,6 +655,17 @@ export default function App() {
           setIsLanguageModalOpen(false);
           restoreFocus();
         }}
+      />
+
+      {/* 8. Custom Text & Code Snippets Modal */}
+      <CustomTextModal
+        isOpen={isCustomModalOpen}
+        onClose={() => {
+          setIsCustomModalOpen(false);
+          restoreFocus();
+        }}
+        customText={customText}
+        onApplyCustomText={handleApplyCustomText}
       />
     </div>
   );

@@ -15,6 +15,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { getCozyPerformanceTitle } from '../utils/metrics';
+import { generateScorecardBlob } from '../utils/scorecardGenerator';
 
 export function ResultsView({
   result,
@@ -43,11 +44,12 @@ export function ResultsView({
     if (mode === 'time') return `${timeLimit}s`;
     if (mode === 'words') return `${wordLimit} words`;
     if (mode === 'quote') return quoteInfo?.source ? `quote ("${quoteInfo.source}")` : 'quote';
+    if (mode === 'custom') return `custom (${result.wordsCompleted || ''} words)`;
     return mode || 'custom';
   }, [result]);
 
-  // Copy aesthetic minimalist scorecard to clipboard
-  const handleCopySummary = useCallback(() => {
+  // Copy aesthetic minimalist scorecard image to clipboard (PNG) using existing Share button
+  const handleCopySummary = useCallback(async () => {
     if (!result) return;
     const {
       wpm,
@@ -63,7 +65,7 @@ export function ResultsView({
 
     const tier = getCozyPerformanceTitle(wpm);
 
-    const text = failed
+    const fallbackText = failed
       ? `pawtap • sudden death
 ━━━━━━━━━━━━━━━━━━━━━━━━━
 Status: Terminated by Typo
@@ -85,9 +87,45 @@ Rank: [${tier.rank}] ${tier.title} (${tier.stamp})
 ━━━━━━━━━━━━━━━━━━━━━━━━━
 take a sip & type gently ~`;
 
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      const blob = await generateScorecardBlob(result, modeLabel);
+      if (blob && typeof window !== 'undefined' && navigator.clipboard && window.ClipboardItem) {
+        try {
+          const item = new ClipboardItem({ 'image/png': blob });
+          await navigator.clipboard.write([item]);
+          setCopied('image');
+          setTimeout(() => setCopied(false), 2200);
+          return;
+        } catch (clipErr) {
+          console.warn('Direct image clipboard copy failed, falling back:', clipErr);
+        }
+      }
+
+      // Fallback: download PNG file + copy text to clipboard
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `pawtap-${wpm}wpm.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        setCopied('downloaded');
+        setTimeout(() => setCopied(false), 2200);
+      }
+
+      try {
+        await navigator.clipboard.writeText(fallbackText);
+      } catch {}
+    } catch (err) {
+      console.error('Error generating scorecard image:', err);
+      try {
+        await navigator.clipboard.writeText(fallbackText);
+        setCopied('text');
+        setTimeout(() => setCopied(false), 2000);
+      } catch {}
+    }
   }, [result, modeLabel]);
 
   // Keyboard shortcuts: Tab/Enter restart, P for practice missed, S for share
@@ -372,10 +410,19 @@ take a sip & type gently ~`;
               fontWeight: 500,
               cursor: 'pointer'
             }}
-            title="Copy scorecard to clipboard (S)"
+            title="Copy scorecard image to clipboard (S)"
           >
-            {copied ? <Check size={14} color="var(--accent)" /> : <Share2 size={14} />}
-            <span>{copied ? 'Copied' : 'Share'}</span>
+            {copied ? (
+              <>
+                <Check size={14} color="var(--accent)" />
+                <span>{copied === 'image' ? 'Image Copied!' : copied === 'downloaded' ? 'Image Saved!' : 'Copied!'}</span>
+              </>
+            ) : (
+              <>
+                <Share2 size={14} />
+                <span>Share</span>
+              </>
+            )}
           </button>
 
           {hasErrors && onPracticeErrors && (
@@ -943,19 +990,30 @@ take a sip & type gently ~`;
               {topErrors.map(([keyChar, count]) => {
                 const displayChar = keyChar === ' ' ? '␣ space' : keyChar;
                 return (
-                  <span
+                  <button
                     key={keyChar}
+                    onClick={() => onPracticeErrors && onPracticeErrors([keyChar])}
                     className="minimal-keycap"
                     style={{
                       backgroundColor: count >= 3 ? 'rgba(239, 68, 68, 0.16)' : 'rgba(239, 68, 68, 0.08)',
                       border: '1px solid rgba(239, 68, 68, 0.28)',
-                      color: 'var(--text-error)'
+                      color: 'var(--text-error)',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      transition: 'all 0.15s ease',
+                      fontFamily: 'inherit',
+                      outline: 'none'
                     }}
-                    title={`Missed '${displayChar}' ${count} time(s)`}
+                    title={`Click to practice 15-word drill targeting '${displayChar}'`}
                   >
                     <strong>&apos;{displayChar}&apos;</strong>
                     <span style={{ opacity: 0.75, fontSize: '10.5px' }}>×{count}</span>
-                  </span>
+                    <span style={{ fontSize: '9px', opacity: 0.6, marginLeft: '2px' }}>drill ➔</span>
+                  </button>
                 );
               })}
             </div>

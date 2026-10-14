@@ -4,7 +4,8 @@ import {
   FileText,
   Quote,
   Infinity as InfinityIcon,
-  Sparkles
+  Sparkles,
+  Code
 } from 'lucide-react';
 
 export function TestSettingsBar({
@@ -21,7 +22,8 @@ export function TestSettingsBar({
   numbers,
   setNumbers,
   vocabularyMode,
-  setVocabularyMode
+  setVocabularyMode,
+  onOpenCustomModal
 }) {
   return (
     <div
@@ -45,7 +47,7 @@ export function TestSettingsBar({
       className="settings-bar"
     >
       {/* 1. Modifiers Section: Punctuation, Numbers, Vocabulary */}
-      {mode === 'quote' ? (
+      {mode === 'quote' || mode === 'custom' ? (
         <>
           <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
             <span
@@ -56,9 +58,9 @@ export function TestSettingsBar({
                 opacity: 0.85,
                 fontStyle: 'italic'
               }}
-              title="Literary quotes naturally feature authentic author punctuation, capitalization, and numbers"
+              title={mode === 'custom' ? "Custom texts and code snippets preserve authentic syntax" : "Literary quotes naturally feature authentic author punctuation, capitalization, and numbers"}
             >
-              natural text
+              {mode === 'custom' ? 'custom passage' : 'natural text'}
             </span>
           </div>
 
@@ -118,7 +120,7 @@ export function TestSettingsBar({
         </>
       ) : null}
 
-      {/* 2. Mode Selectors: time, words, quote, zen */}
+      {/* 2. Mode Selectors: time, words, quote, custom, zen */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
         <button
           className={`pill-btn ${mode === 'time' ? 'active' : ''}`}
@@ -145,6 +147,18 @@ export function TestSettingsBar({
         >
           <Quote size={13} />
           <span>quote</span>
+        </button>
+
+        <button
+          className={`pill-btn ${mode === 'custom' ? 'active' : ''}`}
+          onClick={() => {
+            setMode('custom');
+            if (onOpenCustomModal) onOpenCustomModal();
+          }}
+          title="Custom Text & Code Snippets"
+        >
+          <Code size={13} />
+          <span>custom</span>
         </button>
 
         <button
@@ -212,6 +226,20 @@ export function TestSettingsBar({
                   {q}
                 </button>
               ))}
+            </div>
+          )}
+
+          {mode === 'custom' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+              <button
+                className="pill-btn active"
+                onClick={() => onOpenCustomModal && onOpenCustomModal()}
+                title="Change custom text or choose code snippet"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+              >
+                <Code size={12} />
+                <span>change</span>
+              </button>
             </div>
           )}
         </>

@@ -14,7 +14,9 @@ export function TypingTest({
   language = 'english',
   challengeMods = [],
   challengeMode = 'normal',
-  onOpenLanguageModal = () => {}
+  onOpenLanguageModal = () => {},
+  paceCaret = 'off',
+  personalBestWpm = 0
 }) {
   const activeMods = Array.isArray(challengeMods) && challengeMods.length > 0
     ? challengeMods
@@ -49,6 +51,7 @@ export function TypingTest({
   const lastActiveTopRef = useRef(-1);
 
   const [caretPos, setCaretPos] = useState({ top: 0, left: 0, height: 32, width: 2 });
+  const [ghostCaretPos, setGhostCaretPos] = useState(null);
   const [lineOffsetY, setLineOffsetY] = useState(0);
   const [isCapsLock, setIsCapsLock] = useState(false);
   const [, setResizeTick] = useState(0);
@@ -88,6 +91,96 @@ export function TypingTest({
       activeInputRef.current.focus({ preventScroll: true });
     }
   }, [words, activeInputRef]);
+
+  // Ghost Caret / Pace Caret Glide Calculation (Subpixel 60fps)
+  useEffect(() => {
+    if (paceCaret === 'off' || !wordsContainerRef.current || words.length === 0) {
+      setGhostCaretPos(null);
+      return;
+    }
+
+    const targetWpm = paceCaret === 'pb' ? Math.max(20, personalBestWpm || 60) : (parseInt(paceCaret, 10) || 60);
+
+    if (status === 'idle') {
+      const firstWordElem = wordsContainerRef.current.querySelector('[data-word-index="0"]');
+      if (firstWordElem) {
+        const containerRect = wordsContainerRef.current.getBoundingClientRect();
+        const wordRect = firstWordElem.getBoundingClientRect();
+        setGhostCaretPos({
+          top: wordRect.top - containerRect.top,
+          left: wordRect.left - containerRect.left - 2,
+          height: wordRect.height || 32,
+          targetWpm
+        });
+      }
+      return;
+    }
+
+    if (status !== 'running') {
+      setGhostCaretPos(null);
+      return;
+    }
+
+    let animId;
+    const updateGhostPosition = () => {
+      if (!wordsContainerRef.current) return;
+      const startTime = engine.startTime || Date.now();
+      const elapsed = Math.max(0, (Date.now() - startTime) / 1000);
+      const targetChars = (targetWpm * 5 / 60) * elapsed;
+
+      let accumulated = 0;
+      let targetWordIdx = 0;
+      let targetCharIdx = 0;
+      let charFraction = 0;
+
+      for (let i = 0; i < words.length; i++) {
+        const wordLen = words[i].length + 1;
+        if (accumulated + wordLen > targetChars || i === words.length - 1) {
+          targetWordIdx = i;
+          const charsIntoWord = Math.max(0, targetChars - accumulated);
+          targetCharIdx = Math.min(words[i].length, Math.floor(charsIntoWord));
+          charFraction = charsIntoWord - Math.floor(charsIntoWord);
+          break;
+        }
+        accumulated += wordLen;
+      }
+
+      const wordElem = wordsContainerRef.current.querySelector(`[data-word-index="${targetWordIdx}"]`);
+      if (wordElem) {
+        const containerRect = wordsContainerRef.current.getBoundingClientRect();
+        const charSpans = wordElem.querySelectorAll('.char');
+
+        if (targetCharIdx < charSpans.length) {
+          const charSpan = charSpans[targetCharIdx];
+          const charRect = charSpan.getBoundingClientRect();
+          const left = charRect.left - containerRect.left - 2 + (charFraction * charRect.width);
+          const top = charRect.top - containerRect.top;
+          setGhostCaretPos({
+            top,
+            left,
+            height: charRect.height || 32,
+            targetWpm
+          });
+        } else if (charSpans.length > 0) {
+          const lastSpan = charSpans[charSpans.length - 1];
+          const lastRect = lastSpan.getBoundingClientRect();
+          const left = lastRect.right - containerRect.left;
+          const top = lastRect.top - containerRect.top;
+          setGhostCaretPos({
+            top,
+            left,
+            height: lastRect.height || 32,
+            targetWpm
+          });
+        }
+      }
+
+      animId = requestAnimationFrame(updateGhostPosition);
+    };
+
+    animId = requestAnimationFrame(updateGhostPosition);
+    return () => cancelAnimationFrame(animId);
+  }, [paceCaret, personalBestWpm, status, words, engine.startTime]);
 
   // 1. Calculate precise caret position & butter-smooth dynamic line scrolling
   useLayoutEffect(() => {
@@ -485,6 +578,52 @@ export function TypingTest({
                 transition: 'transform 0.07s cubic-bezier(0.15, 0.85, 0.35, 1)'
               }}
             />
+          )}
+
+          {/* Pace Caret / Ghost Caret (Butter-Smooth Subpixel Glide) */}
+          {paceCaret !== 'off' && ghostCaretPos && (status === 'idle' || status === 'running') && (
+            <div
+              className="ghost-caret"
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                transform: `translate3d(${ghostCaretPos.left}px, ${ghostCaretPos.top}px, 0)`,
+                willChange: 'transform',
+                height: `${ghostCaretPos.height}px`,
+                width: '2px',
+                backgroundColor: 'var(--accent)',
+                opacity: 0.45,
+                zIndex: 8,
+                pointerEvents: 'none',
+                boxShadow: '0 0 6px var(--accent)'
+              }}
+            >
+              {/* Minimalist Ghost Target Pill */}
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '100%',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  marginBottom: '3px',
+                  padding: '1px 5px',
+                  borderRadius: '5px',
+                  backgroundColor: 'var(--surface)',
+                  border: '1px solid var(--accent)',
+                  color: 'var(--accent)',
+                  fontSize: '9.5px',
+                  fontFamily: 'var(--font-mono)',
+                  fontWeight: 700,
+                  whiteSpace: 'nowrap',
+                  opacity: 0.9,
+                  lineHeight: 1.2,
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
+                }}
+              >
+                {paceCaret === 'pb' ? `PB ${ghostCaretPos.targetWpm}` : `${ghostCaretPos.targetWpm} wpm`}
+              </div>
+            </div>
           )}
 
           {/* osu! Flashlight Beam Spotlight Overlay */}

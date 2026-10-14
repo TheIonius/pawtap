@@ -49,7 +49,10 @@ export function SettingsModal({
   setChallengeMods = () => {},
   // Backwards compatibility for single mode
   challengeMode = 'normal',
-  setChallengeMode = null
+  setChallengeMode = null,
+  paceCaret = 'off',
+  setPaceCaret = () => {},
+  personalBestWpm = 0
 }) {
   React.useEffect(() => {
     if (!isOpen) return;
@@ -446,6 +449,48 @@ export function SettingsModal({
                     style={{ padding: '8px 14px' }}
                   >
                     <span>{cs.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 4B. Pace Caret / Ghost Caret */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Gauge size={16} color="var(--accent)" />
+                <h3 style={{ fontSize: '14px', fontWeight: 600, margin: 0, color: 'var(--text-main)' }}>
+                  Pace Caret (Ghost Guide)
+                </h3>
+              </div>
+              <span style={{ fontSize: '11px', color: 'var(--text-sub)' }}>
+                Target tracker
+              </span>
+            </div>
+
+            <p style={{ fontSize: '11.5px', color: 'var(--text-sub)', margin: '0 0 10px 0' }}>
+              A translucent ghost caret glides at your target speed across words so you know if you are ahead or behind.
+            </p>
+
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              {[
+                { id: 'off', label: 'Off' },
+                { id: 'pb', label: `Personal Best (${personalBestWpm > 0 ? personalBestWpm : 60} wpm)` },
+                { id: '60', label: '60 wpm' },
+                { id: '80', label: '80 wpm' },
+                { id: '100', label: '100 wpm' },
+                { id: '120', label: '120 wpm' }
+              ].map((opt) => {
+                const isActive = paceCaret === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    onClick={() => setPaceCaret(opt.id)}
+                    className={`pill-btn ${isActive ? 'active' : ''}`}
+                    style={{ padding: '8px 14px' }}
+                  >
+                    <span>{opt.label}</span>
                   </button>
                 );
               })}
