@@ -46,10 +46,17 @@ export function SettingsModal({
   personalBestWpm = 0,
   profile,
   onOpenProfile,
+  musicUrl = '',
+  setMusicUrl = () => {},
+  isMusicVisible = true,
+  setIsMusicVisible = () => {},
+  musicVolume = 75,
+  setMusicVolume = () => {},
+  // Backwards compatibility props
   spotifyPlaylistUrl = '',
-  setSpotifyPlaylistUrl = () => {},
-  isSpotifyVisible = false,
-  setIsSpotifyVisible = () => {}
+  setSpotifyPlaylistUrl = null,
+  isSpotifyVisible = null,
+  setIsSpotifyVisible = null
 }) {
   React.useEffect(() => {
     if (!isOpen) return;
@@ -91,6 +98,10 @@ export function SettingsModal({
     setChallengeMods([]);
     if (setChallengeMode) setChallengeMode('normal');
   };
+
+  const effectiveMusicUrl = musicUrl || spotifyPlaylistUrl || '';
+  const effectiveIsMusicVisible = typeof isMusicVisible === 'boolean' ? isMusicVisible : (isSpotifyVisible ?? true);
+  const effectiveMusicVolume = typeof musicVolume === 'number' ? musicVolume : 75;
 
   return (
     <div
@@ -645,7 +656,7 @@ export function SettingsModal({
             </div>
           </div>
 
-          {/* 7. Spotify Music Sanctuary */}
+          {/* 7. YouTube Music Sanctuary */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -654,44 +665,51 @@ export function SettingsModal({
                     width: '8px',
                     height: '8px',
                     borderRadius: '50%',
-                    backgroundColor: '#1DB954',
-                    boxShadow: '0 0 6px #1DB954'
+                    backgroundColor: '#FF0000',
+                    boxShadow: '0 0 6px #FF0000'
                   }}
                 />
-                <Music2 size={16} color="#1DB954" />
+                <Music2 size={16} color="#FF0000" />
                 <h3 style={{ fontSize: '14px', fontWeight: 600, margin: 0, color: 'var(--text-main)' }}>
-                  Spotify Music Sanctuary
+                  YouTube Music Sanctuary
                 </h3>
               </div>
 
               <button
                 type="button"
-                onClick={() => setIsSpotifyVisible(prev => !prev)}
-                className={`pill-btn ${isSpotifyVisible ? 'active' : ''}`}
+                onClick={() => {
+                  const next = !effectiveIsMusicVisible;
+                  setIsMusicVisible(next);
+                  if (setIsSpotifyVisible) setIsSpotifyVisible(next);
+                }}
+                className={`pill-btn ${effectiveIsMusicVisible ? 'active' : ''}`}
                 style={{
                   padding: '6px 12px',
                   fontSize: '12px',
                   fontWeight: 600,
-                  backgroundColor: isSpotifyVisible ? 'rgba(29, 185, 84, 0.15)' : 'var(--surface)',
-                  color: isSpotifyVisible ? '#1DB954' : 'var(--text-sub)',
-                  borderColor: isSpotifyVisible ? '#1DB954' : 'var(--border)'
+                  backgroundColor: effectiveIsMusicVisible ? 'rgba(255, 0, 0, 0.15)' : 'var(--surface)',
+                  color: effectiveIsMusicVisible ? '#FF0000' : 'var(--text-sub)',
+                  borderColor: effectiveIsMusicVisible ? '#FF0000' : 'var(--border)'
                 }}
               >
-                {isSpotifyVisible ? 'Player Active' : 'Enable Player'}
+                {effectiveIsMusicVisible ? 'Player Active' : 'Enable Player'}
               </button>
             </div>
 
             <div style={{ fontSize: '11.5px', color: 'var(--text-sub)', marginBottom: '12px' }}>
-              Stream your favorite Spotify playlist, album, or track while typing. Runs in a non-intrusive floating mini-player.
+              Stream YouTube Music playlists, videos, or 24/7 lofi livestreams with volume control while typing. Runs in a floating mini-player.
             </div>
 
-            {/* Custom Link Input ONLY */}
+            {/* Custom Link Input */}
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <input
                 type="text"
-                value={spotifyPlaylistUrl}
-                onChange={(e) => setSpotifyPlaylistUrl(e.target.value)}
-                placeholder="Paste your Spotify link (https://open.spotify.com/playlist/...)"
+                value={effectiveMusicUrl}
+                onChange={(e) => {
+                  setMusicUrl(e.target.value);
+                  if (setSpotifyPlaylistUrl) setSpotifyPlaylistUrl(e.target.value);
+                }}
+                placeholder="Paste YouTube or YouTube Music link (https://music.youtube.com/...)"
                 style={{
                   flex: 1,
                   padding: '9px 12px',
@@ -704,18 +722,21 @@ export function SettingsModal({
                   fontFamily: 'inherit',
                   transition: 'border-color 0.15s ease'
                 }}
-                onFocus={(e) => { e.target.style.borderColor = '#1DB954'; }}
+                onFocus={(e) => { e.target.style.borderColor = '#FF0000'; }}
                 onBlur={(e) => { e.target.style.borderColor = 'var(--border)'; }}
               />
-              {!isSpotifyVisible && (
+              {!effectiveIsMusicVisible && (
                 <button
                   type="button"
-                  onClick={() => setIsSpotifyVisible(true)}
+                  onClick={() => {
+                    setIsMusicVisible(true);
+                    if (setIsSpotifyVisible) setIsSpotifyVisible(true);
+                  }}
                   className="pill-btn"
                   style={{
                     padding: '9px 14px',
-                    backgroundColor: '#1DB954',
-                    color: '#000000',
+                    backgroundColor: '#FF0000',
+                    color: '#FFFFFF',
                     fontWeight: 700,
                     fontSize: '12px',
                     borderRadius: '10px',
@@ -726,6 +747,25 @@ export function SettingsModal({
                   Show Player
                 </button>
               )}
+            </div>
+
+            {/* Music Volume Control Slider */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '0 4px', marginTop: '14px' }}>
+              <span style={{ fontSize: '12px', color: 'var(--text-sub)', width: '90px' }}>
+                Music Volume:
+              </span>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+                value={effectiveMusicVolume}
+                onChange={(e) => setMusicVolume(parseInt(e.target.value, 10))}
+                style={{ flex: 1, accentColor: '#FF0000' }}
+              />
+              <span style={{ fontSize: '12px', fontFamily: 'monospace', color: 'var(--text-main)', width: '36px' }}>
+                {effectiveMusicVolume}%
+              </span>
             </div>
           </div>
         </div>

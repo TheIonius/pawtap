@@ -16,8 +16,8 @@ import { getWordsTargetingKeys } from './constants/wordLists';
 import { DEFAULT_CUSTOM_TEXT } from './constants/codeSnippets';
 import { DEFAULT_PROFILE } from './constants/profile';
 import { ProfileModal } from './components/ProfileModal';
-import { SpotifyPlayer } from './components/SpotifyPlayer';
-import { DEFAULT_SPOTIFY_PLAYLIST } from './constants/spotify';
+import { MusicPlayer } from './components/MusicPlayer';
+import { DEFAULT_MUSIC_URL } from './constants/music';
 import { Keyboard } from 'lucide-react';
 import { GithubIcon } from './components/GithubIcon';
 
@@ -35,9 +35,10 @@ export default function App() {
   const [customText, setCustomText] = useLocalStorage('pawtap_custom_text', DEFAULT_CUSTOM_TEXT);
   const [profile, setProfile] = useLocalStorage('pawtap_profile', DEFAULT_PROFILE);
   const [hasOnboardedProfile, setHasOnboardedProfile] = useLocalStorage('pawtap_profile_onboarded', false);
-  const [spotifyPlaylistUrl, setSpotifyPlaylistUrl] = useLocalStorage('pawtap_spotify_playlist', DEFAULT_SPOTIFY_PLAYLIST);
-  const [isSpotifyVisible, setIsSpotifyVisible] = useLocalStorage('pawtap_spotify_visible', false);
-  const [isSpotifyCollapsed, setIsSpotifyCollapsed] = useLocalStorage('pawtap_spotify_collapsed', false);
+  const [musicUrl, setMusicUrl] = useLocalStorage('pawtap_music_url', DEFAULT_MUSIC_URL);
+  const [isMusicVisible, setIsMusicVisible] = useLocalStorage('pawtap_music_visible', true);
+  const [isMusicCollapsed, setIsMusicCollapsed] = useLocalStorage('pawtap_music_collapsed', true);
+  const [musicVolume, setMusicVolume] = useLocalStorage('pawtap_music_vol', 75);
 
   // Fallback resilience: ensure profile always has valid defaults even if corrupted in localStorage
   const safeProfile = useMemo(() => ({
@@ -236,9 +237,11 @@ export default function App() {
 
   // Browser Window Blur & Tab Switching Handlers
   useEffect(() => {
+    const isMusicActive = isMusicVisible && !isMusicCollapsed;
+
     const handleWindowBlur = () => {
-      // If focus moved to an embedded player iframe (like Spotify) or Spotify is active, do not trigger unfocused blur overlay
-      if (isSpotifyVisible || (document.activeElement && document.activeElement.tagName === 'IFRAME')) {
+      // If focus moved to an embedded player iframe (like YouTube) or music player is active/expanded, do not trigger unfocused blur overlay
+      if (isMusicActive || (document.activeElement && document.activeElement.tagName === 'IFRAME')) {
         return;
       }
       // Do not trigger unfocused blur overlay if user is interacting with any panel/modal
@@ -248,13 +251,13 @@ export default function App() {
     };
 
     const handleVisibilityChange = () => {
-      if (document.hidden && engine.status !== 'finished' && !isAnyModalOpen && !isSpotifyVisible) {
+      if (document.hidden && engine.status !== 'finished' && !isAnyModalOpen && !isMusicActive) {
         setIsFocused(false);
       }
     };
 
     const handleWindowFocus = () => {
-      if (isAnyModalOpen || isSpotifyVisible) {
+      if (isAnyModalOpen || isMusicActive) {
         setIsFocused(true);
       }
     };
@@ -267,20 +270,20 @@ export default function App() {
       window.removeEventListener('focus', handleWindowFocus);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [engine.status, isAnyModalOpen, isSpotifyVisible]);
+  }, [engine.status, isAnyModalOpen, isMusicVisible, isMusicCollapsed]);
 
   // Global Pointer & Keydown Listeners to Re-Focus
   useEffect(() => {
     const handleGlobalPointerDown = (e) => {
-      // If Spotify player is open and expanded, clicking anywhere outside minimizes it to the bottom pill
-      if (isSpotifyVisible && !isSpotifyCollapsed) {
-        if (!e.target.closest || (!e.target.closest('.spotify-widget-container') && !e.target.closest('[data-spotify-toggle]'))) {
-          setIsSpotifyCollapsed(true);
+      // If music player is open and expanded, clicking anywhere outside minimizes it to the bottom pill
+      if (isMusicVisible && !isMusicCollapsed) {
+        if (!e.target.closest || (!e.target.closest('.music-player-container') && !e.target.closest('.spotify-widget-container'))) {
+          setIsMusicCollapsed(true);
         }
       }
 
-      // Allow interaction with buttons, selects, modals, spotify player, etc.
-      if (e.target.closest && e.target.closest('button, select, input, [role="dialog"], .modal-content, a, textarea, .spotify-widget-container, iframe')) {
+      // Allow interaction with buttons, selects, modals, music player, etc.
+      if (e.target.closest && e.target.closest('button, select, input, [role="dialog"], .modal-content, a, textarea, .music-player-container, .spotify-widget-container, iframe')) {
         return;
       }
       if (!isAnyModalOpen) {
@@ -319,7 +322,7 @@ export default function App() {
       window.removeEventListener('pointerdown', handleGlobalPointerDown);
       window.removeEventListener('keydown', handleGlobalKeyDown);
     };
-  }, [isFocused, isAnyModalOpen, isSpotifyVisible, isSpotifyCollapsed, setIsSpotifyCollapsed, restoreFocus, engine]);
+  }, [isFocused, isAnyModalOpen, isMusicVisible, isMusicCollapsed, setIsMusicCollapsed, restoreFocus, engine]);
 
   // Handle Practice Missed Words (all errors or specific target keys)
   const handlePracticeErrors = useCallback((targetKeys = null) => {
@@ -355,8 +358,8 @@ export default function App() {
     const handleGlobalKeyDown = (e) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        if (isSpotifyVisible && !isSpotifyCollapsed) {
-          setIsSpotifyCollapsed(true);
+        if (isMusicVisible && !isMusicCollapsed) {
+          setIsMusicCollapsed(true);
           restoreFocus();
         } else if (isProfileModalOpen) {
           setIsProfileModalOpen(false);
@@ -379,9 +382,10 @@ export default function App() {
     };
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [isProfileModalOpen, isCustomModalOpen, isLanguageModalOpen, isSettingsOpen, isSpotifyVisible, isSpotifyCollapsed, setIsSpotifyCollapsed, restoreFocus]);
+  }, [isProfileModalOpen, isCustomModalOpen, isLanguageModalOpen, isSettingsOpen, isMusicVisible, isMusicCollapsed, setIsMusicCollapsed, restoreFocus]);
 
-  const shouldShowFullPageBlur = !isFocused && engine.status !== 'finished' && !isAnyModalOpen && !isSpotifyVisible;
+  const isMusicActive = isMusicVisible && !isMusicCollapsed;
+  const shouldShowFullPageBlur = !isFocused && engine.status !== 'finished' && !isAnyModalOpen && !isMusicActive;
 
   return (
     <div
@@ -418,14 +422,6 @@ export default function App() {
           soundVolume={soundVolume}
           isAudioActive={isAudioActive}
           onToggleSound={handleToggleSound}
-          isSpotifyVisible={isSpotifyVisible}
-          onToggleSpotify={() => {
-            setIsSpotifyVisible(prev => {
-              const next = !prev;
-              if (next) setIsSpotifyCollapsed(false);
-              return next;
-            });
-          }}
           onOpenSettings={() => {
             setIsSettingsOpen(true);
             setIsFocused(true);
@@ -693,10 +689,12 @@ export default function App() {
           setIsProfileModalOpen(true);
           setIsFocused(true);
         }}
-        spotifyPlaylistUrl={spotifyPlaylistUrl}
-        setSpotifyPlaylistUrl={setSpotifyPlaylistUrl}
-        isSpotifyVisible={isSpotifyVisible}
-        setIsSpotifyVisible={setIsSpotifyVisible}
+        musicUrl={musicUrl}
+        setMusicUrl={setMusicUrl}
+        isMusicVisible={isMusicVisible}
+        setIsMusicVisible={setIsMusicVisible}
+        musicVolume={musicVolume}
+        setMusicVolume={setMusicVolume}
       />
 
       {/* 7. Language Switcher Modal */}
@@ -743,17 +741,19 @@ export default function App() {
         isFirstVisit={!hasOnboardedProfile}
       />
 
-      {/* 10. Spotify Music Sanctuary Floating Widget */}
-      <SpotifyPlayer
-        playlistUrl={spotifyPlaylistUrl}
-        setPlaylistUrl={setSpotifyPlaylistUrl}
-        isVisible={isSpotifyVisible}
+      {/* 10. YouTube Music Sanctuary Floating Widget */}
+      <MusicPlayer
+        musicUrl={musicUrl}
+        setMusicUrl={setMusicUrl}
+        isVisible={isMusicVisible}
         onClose={() => {
-          setIsSpotifyVisible(false);
+          setIsMusicVisible(false);
           restoreFocus();
         }}
-        isCollapsed={isSpotifyCollapsed}
-        setIsCollapsed={setIsSpotifyCollapsed}
+        isCollapsed={isMusicCollapsed}
+        setIsCollapsed={setIsMusicCollapsed}
+        musicVolume={musicVolume}
+        setMusicVolume={setMusicVolume}
         onRestoreFocus={restoreFocus}
       />
     </div>

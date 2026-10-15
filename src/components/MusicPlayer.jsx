@@ -1,45 +1,109 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   ChevronDown,
   ChevronUp,
   X,
   Music2,
   Link2,
-  Check
+  Check,
+  Volume2,
+  VolumeX,
+  Volume1
 } from 'lucide-react';
-import { parseSpotifyUrl } from '../constants/spotify';
+import { parseYouTubeUrl } from '../constants/music';
 
-export function SpotifyPlayer({
-  playlistUrl,
-  setPlaylistUrl,
-  isVisible,
+export function MusicPlayer({
+  musicUrl,
+  setMusicUrl,
+  isVisible = true,
   onClose,
   isCollapsed,
   setIsCollapsed,
+  musicVolume = 75,
+  setMusicVolume = () => {},
   onRestoreFocus = () => {}
 }) {
-  const [hasOpened, setHasOpened] = useState(isVisible);
-  if (isVisible && !hasOpened) {
-    setHasOpened(true);
-  }
-
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [customInput, setCustomInput] = useState('');
   const [inputFeedback, setInputFeedback] = useState(null);
+  const iframeRef = useRef(null);
+  const prevVolumeRef = useRef(musicVolume > 0 ? musicVolume : 75);
 
-  const embedUrl = useMemo(() => parseSpotifyUrl(playlistUrl), [playlistUrl]);
+  const parsed = useMemo(() => parseYouTubeUrl(musicUrl), [musicUrl]);
+
+  // Keep track of non-zero volume for unmuting
+  useEffect(() => {
+    if (musicVolume > 0) {
+      prevVolumeRef.current = musicVolume;
+    }
+  }, [musicVolume]);
+
+  // Sync volume to YouTube embed via postMessage API
+  const syncVolumeToPlayer = (volumeValue) => {
+    const iframe = iframeRef.current;
+    if (iframe && iframe.contentWindow) {
+      iframe.contentWindow.postMessage(
+        JSON.stringify({
+          event: 'command',
+          func: 'setVolume',
+          args: [volumeValue]
+        }),
+        '*'
+      );
+      if (volumeValue === 0) {
+        iframe.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func: 'mute' }),
+          '*'
+        );
+      } else {
+        iframe.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func: 'unMute' }),
+          '*'
+        );
+      }
+    }
+  };
+
+  const handleVolumeChange = (e) => {
+    const newVol = parseInt(e.target.value, 10);
+    setMusicVolume(newVol);
+    syncVolumeToPlayer(newVol);
+  };
+
+  const handleToggleMute = () => {
+    if (musicVolume > 0) {
+      setMusicVolume(0);
+      syncVolumeToPlayer(0);
+    } else {
+      const restored = prevVolumeRef.current > 0 ? prevVolumeRef.current : 75;
+      setMusicVolume(restored);
+      syncVolumeToPlayer(restored);
+    }
+  };
+
+  const handleIframeLoad = () => {
+    // Send initial volume once iframe document loads
+    setTimeout(() => {
+      syncVolumeToPlayer(musicVolume);
+    }, 500);
+  };
 
   const handleApplyCustomUrl = (e) => {
     e?.preventDefault();
     if (!customInput.trim()) return;
 
-    if (!customInput.includes('spotify.com') && !customInput.startsWith('spotify:')) {
-      setInputFeedback('Please paste a valid Spotify link or URI');
+    const lower = customInput.toLowerCase();
+    if (
+      !lower.includes('youtube.com') &&
+      !lower.includes('youtu.be') &&
+      !lower.match(/^[a-zA-Z0-9_-]{11}$/)
+    ) {
+      setInputFeedback('Please paste a valid YouTube or YouTube Music link');
       return;
     }
 
-    setPlaylistUrl(customInput.trim());
-    setInputFeedback('Playlist applied!');
+    setMusicUrl(customInput.trim());
+    setInputFeedback('Applied!');
     setTimeout(() => {
       setInputFeedback(null);
       setIsPickerOpen(false);
@@ -47,15 +111,14 @@ export function SpotifyPlayer({
     }, 800);
   };
 
-  // If never opened yet, return null for zero impact on initial app load
-  if (!hasOpened && !isVisible) return null;
+  if (!isVisible) return null;
 
   return (
     <>
-      {/* 1. Minimized / Collapsed Floating Pill State */}
-      {isVisible && isCollapsed && (
+      {/* 1. Minimized Floating Micro-Pill State (Visible by default) */}
+      {isCollapsed && (
         <div
-          className="spotify-widget-container"
+          className="music-player-container spotify-widget-container"
           onPointerDown={(e) => e.stopPropagation()}
           style={{
             position: 'fixed',
@@ -81,19 +144,19 @@ export function SpotifyPlayer({
               backdropFilter: 'blur(16px)',
               transition: 'all 0.15s ease'
             }}
-            title="Expand Spotify Player"
-            aria-label="Expand Spotify Player"
+            title="Expand YouTube Music Player"
+            aria-label="Expand YouTube Music Player"
           >
             <span
               style={{
                 width: '7px',
                 height: '7px',
                 borderRadius: '50%',
-                backgroundColor: '#1DB954',
-                boxShadow: '0 0 8px #1DB954'
+                backgroundColor: '#FF0000',
+                boxShadow: '0 0 8px #FF0000'
               }}
             />
-            <Music2 size={14} color="#1DB954" />
+            <Music2 size={14} color="#FF0000" />
             <ChevronUp size={13} style={{ opacity: 0.7 }} />
           </button>
         </div>
@@ -101,7 +164,7 @@ export function SpotifyPlayer({
 
       {/* 2. Expanded Floating Mini-Player (Kept mounted for zero lag & uninterrupted music) */}
       <div
-        className="spotify-widget-container"
+        className="music-player-container spotify-widget-container"
         onPointerDown={(e) => e.stopPropagation()}
         style={{
           position: 'fixed',
@@ -116,9 +179,9 @@ export function SpotifyPlayer({
           zIndex: 80,
           overflow: 'hidden',
           backdropFilter: 'blur(20px)',
-          opacity: isVisible && !isCollapsed ? 1 : 0,
-          transform: isVisible && !isCollapsed ? 'translateY(0) scale(1)' : 'translateY(12px) scale(0.96)',
-          pointerEvents: isVisible && !isCollapsed ? 'auto' : 'none',
+          opacity: !isCollapsed ? 1 : 0,
+          transform: !isCollapsed ? 'translateY(0) scale(1)' : 'translateY(12px) scale(0.96)',
+          pointerEvents: !isCollapsed ? 'auto' : 'none',
           transition: 'opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
       >
@@ -139,12 +202,12 @@ export function SpotifyPlayer({
                 width: '8px',
                 height: '8px',
                 borderRadius: '50%',
-                backgroundColor: '#1DB954',
-                boxShadow: '0 0 8px #1DB954'
+                backgroundColor: '#FF0000',
+                boxShadow: '0 0 8px #FF0000'
               }}
             />
             <span style={{ fontSize: '13px', fontWeight: 700, color: '#FFFFFF', letterSpacing: '-0.2px' }}>
-              Spotify Player
+              YouTube Music
             </span>
           </div>
 
@@ -157,16 +220,16 @@ export function SpotifyPlayer({
                 fontSize: '11px',
                 fontWeight: 600,
                 borderRadius: '12px',
-                backgroundColor: isPickerOpen ? 'rgba(29, 185, 84, 0.2)' : 'rgba(255, 255, 255, 0.08)',
-                color: isPickerOpen ? '#1DB954' : '#E0E0E0',
-                border: isPickerOpen ? '1px solid #1DB954' : '1px solid transparent',
+                backgroundColor: isPickerOpen ? 'rgba(255, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.08)',
+                color: isPickerOpen ? '#FF4D4D' : '#E0E0E0',
+                border: isPickerOpen ? '1px solid #FF0000' : '1px solid transparent',
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '5px',
                 transition: 'all 0.15s ease'
               }}
-              title="Change Spotify Link"
+              title="Change YouTube Music Link"
             >
               <Link2 size={12} />
               <span>Custom link</span>
@@ -224,7 +287,7 @@ export function SpotifyPlayer({
           </div>
         </div>
 
-        {/* Custom Link Input ONLY (Zero fluff, clean paste form) */}
+        {/* Custom Link Input Drawer */}
         {isPickerOpen && (
           <div
             style={{
@@ -245,14 +308,14 @@ export function SpotifyPlayer({
                   marginBottom: '8px'
                 }}
               >
-                Paste Spotify Link
+                Paste YouTube / YT Music Link
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <input
                   type="text"
                   value={customInput}
                   onChange={(e) => setCustomInput(e.target.value)}
-                  placeholder="https://open.spotify.com/playlist/..."
+                  placeholder="https://music.youtube.com/watch?v=..."
                   autoFocus
                   style={{
                     flex: 1,
@@ -266,7 +329,7 @@ export function SpotifyPlayer({
                     fontFamily: 'inherit',
                     transition: 'border-color 0.15s ease'
                   }}
-                  onFocus={(e) => { e.target.style.borderColor = '#1DB954'; }}
+                  onFocus={(e) => { e.target.style.borderColor = '#FF0000'; }}
                   onBlur={(e) => { e.target.style.borderColor = 'rgba(255, 255, 255, 0.15)'; }}
                 />
                 <button
@@ -274,16 +337,16 @@ export function SpotifyPlayer({
                   style={{
                     padding: '8px 14px',
                     borderRadius: '8px',
-                    backgroundColor: '#1DB954',
-                    color: '#000000',
+                    backgroundColor: '#FF0000',
+                    color: '#FFFFFF',
                     fontWeight: 700,
                     fontSize: '12px',
                     border: 'none',
                     cursor: 'pointer',
                     transition: 'all 0.15s ease'
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#1ed760'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#1DB954'; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#E60000'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#FF0000'; }}
                 >
                   Apply
                 </button>
@@ -297,7 +360,7 @@ export function SpotifyPlayer({
                 }}
               >
                 <span style={{ fontSize: '11px', color: '#888888' }}>
-                  Log into Spotify in your browser for full continuous songs
+                  Supports YouTube Music playlists, videos, and live streams
                 </span>
                 {inputFeedback && (
                   <span
@@ -319,16 +382,83 @@ export function SpotifyPlayer({
           </div>
         )}
 
-        {/* Spotify Official Compact Embed Player */}
-        <div style={{ padding: '8px', backgroundColor: '#121212', minHeight: '152px' }}>
+        {/* Dedicated Volume Slider Bar */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '8px 14px',
+            backgroundColor: '#161616',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.06)'
+          }}
+        >
+          <button
+            type="button"
+            onClick={handleToggleMute}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: '2px',
+              color: musicVolume > 0 ? '#FFFFFF' : '#888888',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            title={musicVolume > 0 ? "Mute Music" : "Unmute Music"}
+          >
+            {musicVolume === 0 ? (
+              <VolumeX size={15} color="#888888" />
+            ) : musicVolume < 50 ? (
+              <Volume1 size={15} color="#FFFFFF" />
+            ) : (
+              <Volume2 size={15} color="#FFFFFF" />
+            )}
+          </button>
+
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={musicVolume}
+            onChange={handleVolumeChange}
+            style={{
+              flex: 1,
+              height: '4px',
+              borderRadius: '2px',
+              accentColor: '#FF0000',
+              cursor: 'pointer'
+            }}
+            title={`Music Volume: ${musicVolume}%`}
+          />
+
+          <span
+            style={{
+              fontSize: '11px',
+              color: '#B3B3B3',
+              minWidth: '28px',
+              textAlign: 'right',
+              fontVariantNumeric: 'tabular-nums'
+            }}
+          >
+            {musicVolume}%
+          </span>
+        </div>
+
+        {/* YouTube Official Compact Embed Player */}
+        <div style={{ padding: '8px', backgroundColor: '#121212', minHeight: '180px' }}>
           <iframe
-            title="Spotify Web Player"
-            src={embedUrl}
+            ref={iframeRef}
+            title="YouTube Music Player"
+            src={parsed.embedUrl}
             width="100%"
-            height="152"
+            height="180"
             frameBorder="0"
-            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
             loading="eager"
+            onLoad={handleIframeLoad}
             style={{
               borderRadius: '12px',
               border: 'none',
