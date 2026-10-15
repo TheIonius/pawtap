@@ -16,11 +16,13 @@ import {
 } from 'lucide-react';
 import { getCozyPerformanceTitle } from '../utils/metrics';
 import { generateScorecardBlob } from '../utils/scorecardGenerator';
+import { Avatar } from './Avatar';
 
 export function ResultsView({
   result,
   onRestart,
-  onPracticeErrors
+  onPracticeErrors,
+  profile
 }) {
   const [copied, setCopied] = useState(false);
   const [showRawWpm, setShowRawWpm] = useState(true);
@@ -65,10 +67,11 @@ export function ResultsView({
 
     const tier = getCozyPerformanceTitle(wpm);
 
+    const typistName = profile?.name?.trim() ? `Typist: ${profile.name.trim()}\n` : '';
     const fallbackText = failed
       ? `pawtap • sudden death
 ━━━━━━━━━━━━━━━━━━━━━━━━━
-Status: Terminated by Typo
+${typistName}Status: Terminated by Typo
 WPM: ${wpm} (raw: ${rawWpm || wpm})
 Accuracy: ${accuracy}%
 Missed: '${failedKey}' on "${targetWord}"
@@ -77,7 +80,7 @@ Duration: ${duration}s
 press tab to restart ~`
       : `pawtap • test summary
 ━━━━━━━━━━━━━━━━━━━━━━━━━
-Net Speed: ${wpm} WPM${isNewRecord ? ' ★ NEW PB ★' : ''}
+${typistName}Net Speed: ${wpm} WPM${isNewRecord ? ' ★ NEW PB ★' : ''}
 Raw Speed: ${rawWpm || wpm} WPM
 Accuracy: ${accuracy}%
 Consistency: ${consistency}%
@@ -88,7 +91,7 @@ Rank: [${tier.rank}] ${tier.title} (${tier.stamp})
 take a sip & type gently ~`;
 
     try {
-      const blob = await generateScorecardBlob(result, modeLabel);
+      const blob = await generateScorecardBlob(result, modeLabel, profile);
       if (blob && typeof window !== 'undefined' && navigator.clipboard && window.ClipboardItem) {
         try {
           const item = new ClipboardItem({ 'image/png': blob });
@@ -126,7 +129,7 @@ take a sip & type gently ~`;
         setTimeout(() => setCopied(false), 2000);
       } catch {}
     }
-  }, [result, modeLabel]);
+  }, [result, modeLabel, profile]);
 
   // Keyboard shortcuts: Tab/Enter restart, P for practice missed, S for share
   useEffect(() => {
@@ -324,6 +327,36 @@ take a sip & type gently ~`;
               {failed ? 'TERMINATED' : `RANK ${tier.rank}`}
             </span>
           </div>
+
+          {profile && (
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '4px 10px 4px 6px',
+                borderRadius: '8px',
+                backgroundColor: 'var(--surface)',
+                border: '1px solid var(--border)',
+                color: 'var(--text-main)',
+                fontSize: '12px',
+                fontWeight: 600
+              }}
+              title="Typist Identity"
+            >
+              <Avatar profile={profile} size={18} />
+              <span
+                style={{
+                  maxWidth: '120px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {profile.name?.trim() || 'Typist'}
+              </span>
+            </div>
+          )}
 
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>

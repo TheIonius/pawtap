@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import confetti from 'canvas-confetti';
 import { THEMES, FONTS } from './constants/themes';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -12,10 +12,13 @@ import { SettingsModal } from './components/SettingsModal';
 import { LanguageModal } from './components/LanguageModal';
 import { CustomTextModal } from './components/CustomTextModal';
 import { KeyboardVisualizer } from './components/KeyboardVisualizer';
-import { setAmbientSound, updateAmbientVolume, stopAmbientSound } from './audio/ambientEngine';
 import { getWordsTargetingKeys } from './constants/wordLists';
 import { DEFAULT_CUSTOM_TEXT } from './constants/codeSnippets';
-import { Keyboard } from 'lucide-react';
+import { DEFAULT_PROFILE } from './constants/profile';
+import { ProfileModal } from './components/ProfileModal';
+import { SpotifyPlayer } from './components/SpotifyPlayer';
+import { DEFAULT_SPOTIFY_PLAYLIST } from './constants/spotify';
+import { Keyboard, Music2 } from 'lucide-react';
 import { GithubIcon } from './components/GithubIcon';
 
 export default function App() {
@@ -27,14 +30,23 @@ export default function App() {
   const [companionType, setCompanionType] = useLocalStorage('pawtap_companion', 'cat');
   const [soundPreset, setSoundPreset] = useLocalStorage('pawtap_sound_preset', 'matcha');
   const [soundVolume, setSoundVolume] = useLocalStorage('pawtap_sound_vol', 0.65);
-  const [ambientSound, setAmbientSoundType] = useLocalStorage('pawtap_ambient_type', 'none');
-  const [ambientVolume, setAmbientVolume] = useLocalStorage('pawtap_ambient_vol', 0.25);
   const [showKeyboard, setShowKeyboard] = useLocalStorage('pawtap_show_keyboard', false);
   const [language, setLanguage] = useLocalStorage('pawtap_language', 'english');
   const [customText, setCustomText] = useLocalStorage('pawtap_custom_text', DEFAULT_CUSTOM_TEXT);
+  const [profile, setProfile] = useLocalStorage('pawtap_profile', DEFAULT_PROFILE);
+  const [hasOnboardedProfile, setHasOnboardedProfile] = useLocalStorage('pawtap_profile_onboarded', false);
+  const [spotifyPlaylistUrl, setSpotifyPlaylistUrl] = useLocalStorage('pawtap_spotify_playlist', DEFAULT_SPOTIFY_PLAYLIST);
+  const [isSpotifyVisible, setIsSpotifyVisible] = useLocalStorage('pawtap_spotify_visible', false);
+  const [isSpotifyCollapsed, setIsSpotifyCollapsed] = useLocalStorage('pawtap_spotify_collapsed', false);
+
+  // Fallback resilience: ensure profile always has valid defaults even if corrupted in localStorage
+  const safeProfile = useMemo(() => ({
+    ...DEFAULT_PROFILE,
+    ...(profile && typeof profile === 'object' ? profile : {})
+  }), [profile]);
 
   // Statistics & History Persistence
-  const [, setTestsCompleted] = useLocalStorage('pawtap_tests_count', 0);
+  const [testsCompleted, setTestsCompleted] = useLocalStorage('pawtap_tests_count', 0);
   const [personalBestWpm, setPersonalBestWpm] = useLocalStorage('pawtap_pb_wpm', 0);
 
   // Active Test Configuration
@@ -54,6 +66,7 @@ export default function App() {
 
   // Modals & Results State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
   const [lastResult, setLastResult] = useState(null);
@@ -61,6 +74,17 @@ export default function App() {
   // Full-Page Focus & Window Blur Tracking
   const [isFocused, setIsFocused] = useState(true);
   const typingInputRef = useRef(null);
+
+  // Gentle delayed entrance on first visit (600ms breath to absorb the sanctuary atmosphere)
+  useEffect(() => {
+    if (!hasOnboardedProfile) {
+      const timer = setTimeout(() => {
+        setIsProfileModalOpen(true);
+        setIsFocused(true);
+      }, 600);
+      return () => clearTimeout(timer);
+    }
+  }, [hasOnboardedProfile, setIsFocused]);
 
   // 2. Resolve Active Theme & Font
   const activeTheme = THEMES[activeThemeId] || THEMES['boba-tea'] || THEMES['oat-latte'];
@@ -76,53 +100,24 @@ export default function App() {
     root.style.setProperty('--font-active', activeFont.family);
   }, [activeTheme, activeFont]);
 
-  // Handle Ambient Audio Updates
-  const ambientVolumeRef = useRef(ambientVolume);
-  useEffect(() => {
-    ambientVolumeRef.current = ambientVolume;
-  }, [ambientVolume]);
-
-  useEffect(() => {
-    setAmbientSound(ambientSound, ambientVolumeRef.current);
-  }, [ambientSound]);
-
-  useEffect(() => {
-    updateAmbientVolume(ambientVolume);
-  }, [ambientVolume]);
-
-  // Audio Mute Memory & Unified Toggle
+  // Audio Mute Memory & Tactile Keypress Sound Toggle
   const prevSoundVolumeRef = useRef(soundVolume > 0 ? soundVolume : 0.65);
-  const prevAmbientVolumeRef = useRef(ambientVolume > 0 ? ambientVolume : 0.25);
 
   useEffect(() => {
     if (soundVolume > 0) prevSoundVolumeRef.current = soundVolume;
   }, [soundVolume]);
 
-  useEffect(() => {
-    if (ambientVolume > 0) prevAmbientVolumeRef.current = ambientVolume;
-  }, [ambientVolume]);
-
-  const isAudioActive = soundVolume > 0 || (ambientSound !== 'none' && ambientVolume > 0);
+  const isAudioActive = soundVolume > 0;
 
   const handleToggleSound = useCallback(() => {
     if (isAudioActive) {
-      // Mute all sound
       if (soundVolume > 0) prevSoundVolumeRef.current = soundVolume;
-      if (ambientVolume > 0) prevAmbientVolumeRef.current = ambientVolume;
       setSoundVolume(0);
-      setAmbientVolume(0);
-      stopAmbientSound();
     } else {
-      // Unmute and restore previous volumes
       const restoredSound = prevSoundVolumeRef.current > 0 ? prevSoundVolumeRef.current : 0.65;
-      const restoredAmbient = prevAmbientVolumeRef.current > 0 ? prevAmbientVolumeRef.current : 0.25;
       setSoundVolume(restoredSound);
-      setAmbientVolume(restoredAmbient);
-      if (ambientSound !== 'none') {
-        setAmbientSound(ambientSound, restoredAmbient);
-      }
     }
-  }, [isAudioActive, soundVolume, ambientVolume, ambientSound, setSoundVolume, setAmbientVolume]);
+  }, [isAudioActive, soundVolume, setSoundVolume]);
 
   // 3. Test Completion Callback
   const handleTestFinish = useCallback((result) => {
@@ -234,42 +229,60 @@ export default function App() {
     if (typingInputRef.current) {
       typingInputRef.current.focus({ preventScroll: true });
     }
-  }, []);
+  }, [setIsFocused]);
+
+  // Consolidated active modal state
+  const isAnyModalOpen = isSettingsOpen || isProfileModalOpen || isLanguageModalOpen || isCustomModalOpen;
 
   // Browser Window Blur & Tab Switching Handlers
   useEffect(() => {
     const handleWindowBlur = () => {
-      if (engine.status !== 'finished' && !isSettingsOpen && !isLanguageModalOpen && !isCustomModalOpen) {
+      // If focus moved to an embedded player iframe (like Spotify) or Spotify is active, do not trigger unfocused blur overlay
+      if (isSpotifyVisible || (document.activeElement && document.activeElement.tagName === 'IFRAME')) {
+        return;
+      }
+      // Do not trigger unfocused blur overlay if user is interacting with any panel/modal
+      if (engine.status !== 'finished' && !isAnyModalOpen) {
         setIsFocused(false);
       }
     };
 
     const handleVisibilityChange = () => {
-      if (document.hidden && engine.status !== 'finished' && !isSettingsOpen && !isLanguageModalOpen && !isCustomModalOpen) {
+      if (document.hidden && engine.status !== 'finished' && !isAnyModalOpen && !isSpotifyVisible) {
         setIsFocused(false);
       }
     };
 
+    const handleWindowFocus = () => {
+      if (isAnyModalOpen || isSpotifyVisible) {
+        setIsFocused(true);
+      }
+    };
+
     window.addEventListener('blur', handleWindowBlur);
+    window.addEventListener('focus', handleWindowFocus);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
       window.removeEventListener('blur', handleWindowBlur);
+      window.removeEventListener('focus', handleWindowFocus);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [engine.status, isSettingsOpen, isLanguageModalOpen, isCustomModalOpen]);
+  }, [engine.status, isAnyModalOpen, isSpotifyVisible]);
 
   // Global Pointer & Keydown Listeners to Re-Focus
   useEffect(() => {
     const handleGlobalPointerDown = (e) => {
-      // Allow interaction with buttons, selects, modals, etc.
-      if (e.target.closest && e.target.closest('button, select, input, [role="dialog"], .modal-content, a, textarea')) {
+      // Allow interaction with buttons, selects, modals, spotify player, etc.
+      if (e.target.closest && e.target.closest('button, select, input, [role="dialog"], .modal-content, a, textarea, .spotify-widget-container, iframe')) {
         return;
       }
-      restoreFocus(e);
+      if (!isAnyModalOpen) {
+        restoreFocus(e);
+      }
     };
 
     const handleGlobalKeyDown = (e) => {
-      if (isSettingsOpen || isLanguageModalOpen || isCustomModalOpen) return;
+      if (isAnyModalOpen) return;
 
       // Allow browser shortcuts (like Ctrl+R, Ctrl+W, Cmd+R) to pass through untouched
       if ((e.ctrlKey || e.metaKey) && e.key !== 'Backspace') {
@@ -299,7 +312,7 @@ export default function App() {
       window.removeEventListener('pointerdown', handleGlobalPointerDown);
       window.removeEventListener('keydown', handleGlobalKeyDown);
     };
-  }, [isFocused, isSettingsOpen, isLanguageModalOpen, isCustomModalOpen, restoreFocus, engine]);
+  }, [isFocused, isAnyModalOpen, restoreFocus, engine]);
 
   // Handle Practice Missed Words (all errors or specific target keys)
   const handlePracticeErrors = useCallback((targetKeys = null) => {
@@ -335,7 +348,12 @@ export default function App() {
     const handleGlobalKeyDown = (e) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        if (isCustomModalOpen) {
+        if (isProfileModalOpen) {
+          setIsProfileModalOpen(false);
+          if (!isSettingsOpen) {
+            restoreFocus();
+          }
+        } else if (isCustomModalOpen) {
           setIsCustomModalOpen(false);
           restoreFocus();
         } else if (isLanguageModalOpen) {
@@ -351,9 +369,9 @@ export default function App() {
     };
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [isCustomModalOpen, isLanguageModalOpen, isSettingsOpen, restoreFocus]);
+  }, [isProfileModalOpen, isCustomModalOpen, isLanguageModalOpen, isSettingsOpen, restoreFocus]);
 
-  const shouldShowFullPageBlur = !isFocused && engine.status !== 'finished' && !isSettingsOpen && !isLanguageModalOpen && !isCustomModalOpen;
+  const shouldShowFullPageBlur = !isFocused && engine.status !== 'finished' && !isAnyModalOpen && !isSpotifyVisible;
 
   return (
     <div
@@ -390,7 +408,15 @@ export default function App() {
           soundVolume={soundVolume}
           isAudioActive={isAudioActive}
           onToggleSound={handleToggleSound}
-          onOpenSettings={() => setIsSettingsOpen(true)}
+          onOpenSettings={() => {
+            setIsSettingsOpen(true);
+            setIsFocused(true);
+          }}
+          profile={safeProfile}
+          onOpenProfile={() => {
+            setIsProfileModalOpen(true);
+            setIsFocused(true);
+          }}
         />
 
         {/* 2. Main Content Sanctuary (Expanded for Bigger Screens & Ultrawide) */}
@@ -443,7 +469,10 @@ export default function App() {
                 setNumbers={setNumbers}
                 vocabularyMode={vocabularyMode}
                 setVocabularyMode={setVocabularyMode}
-                onOpenCustomModal={() => setIsCustomModalOpen(true)}
+                onOpenCustomModal={() => {
+                  setIsCustomModalOpen(true);
+                  setIsFocused(true);
+                }}
               />
 
               {/* Interactive Animated Companion (Mochi the Cat / Steaming Latte) */}
@@ -456,6 +485,7 @@ export default function App() {
                   streak={engine.currentStreak}
                   hasError={engine.hasRecentError}
                   themeAccent={activeTheme.colors.accent}
+                  profile={safeProfile}
                 />
               </div>
 
@@ -472,7 +502,10 @@ export default function App() {
                 inputRef={typingInputRef}
                 language={language}
                 challengeMods={normalizedChallengeMods}
-                onOpenLanguageModal={() => setIsLanguageModalOpen(true)}
+                onOpenLanguageModal={() => {
+                  setIsLanguageModalOpen(true);
+                  setIsFocused(true);
+                }}
                 onRestart={handleRestart}
                 paceCaret={paceCaret}
                 personalBestWpm={personalBestWpm}
@@ -491,6 +524,7 @@ export default function App() {
               result={lastResult}
               onRestart={handleRestart}
               onPracticeErrors={handlePracticeErrors}
+              profile={safeProfile}
             />
           )}
         </main>
@@ -518,6 +552,32 @@ export default function App() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <button
+              onPointerDown={(e) => {
+                e.preventDefault();
+              }}
+              onClick={() => {
+                setIsSpotifyVisible(prev => {
+                  const next = !prev;
+                  if (next) setIsSpotifyCollapsed(false);
+                  return next;
+                });
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                color: isSpotifyVisible ? '#1DB954' : 'var(--text-sub)',
+                fontSize: '13px',
+                cursor: 'pointer',
+                transition: 'color 0.15s ease'
+              }}
+              title="Toggle Spotify Music Sanctuary Player"
+            >
+              <Music2 size={15} color={isSpotifyVisible ? '#1DB954' : 'currentColor'} />
+              <span>{isSpotifyVisible ? 'hide spotify' : 'spotify music'}</span>
+            </button>
+            <span>•</span>
             <button
               onClick={() => setShowKeyboard(prev => !prev)}
               style={{
@@ -556,7 +616,7 @@ export default function App() {
               <span>@TheIonius</span>
             </a>
             <span>•</span>
-            <span>v1.0.1 pawtap</span>
+            <span>v1.1.0-dev pawtap</span>
           </div>
         </footer>
       </div>
@@ -577,7 +637,8 @@ export default function App() {
             backgroundColor: 'rgba(0, 0, 0, 0.04)',
             backdropFilter: 'blur(4px)',
             cursor: 'pointer',
-            userSelect: 'none'
+            userSelect: 'none',
+            animation: 'fadeIn 0.24s cubic-bezier(0.16, 1, 0.3, 1)'
           }}
         >
           <div
@@ -586,7 +647,7 @@ export default function App() {
               flexDirection: 'column',
               alignItems: 'center',
               gap: '8px',
-              animation: 'fadeInUp 0.2s ease-out'
+              animation: 'fadeInUp 0.28s cubic-bezier(0.16, 1, 0.3, 1)'
             }}
           >
             <span
@@ -628,10 +689,6 @@ export default function App() {
         setSoundPreset={setSoundPreset}
         soundVolume={soundVolume}
         setSoundVolume={setSoundVolume}
-        ambientSound={ambientSound}
-        setAmbientSoundType={setAmbientSoundType}
-        ambientVolume={ambientVolume}
-        setAmbientVolume={setAmbientVolume}
         vocabularyMode={vocabularyMode}
         setVocabularyMode={setVocabularyMode}
         challengeMods={normalizedChallengeMods}
@@ -639,6 +696,15 @@ export default function App() {
         paceCaret={paceCaret}
         setPaceCaret={setPaceCaret}
         personalBestWpm={personalBestWpm}
+        profile={safeProfile}
+        onOpenProfile={() => {
+          setIsProfileModalOpen(true);
+          setIsFocused(true);
+        }}
+        spotifyPlaylistUrl={spotifyPlaylistUrl}
+        setSpotifyPlaylistUrl={setSpotifyPlaylistUrl}
+        isSpotifyVisible={isSpotifyVisible}
+        setIsSpotifyVisible={setIsSpotifyVisible}
       />
 
       {/* 7. Language Switcher Modal */}
@@ -666,6 +732,37 @@ export default function App() {
         }}
         customText={customText}
         onApplyCustomText={handleApplyCustomText}
+      />
+
+      {/* 9. Typist Profile Identity Modal */}
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => {
+          setHasOnboardedProfile(true);
+          setIsProfileModalOpen(false);
+          if (!isSettingsOpen) {
+            restoreFocus();
+          }
+        }}
+        profile={safeProfile}
+        setProfile={setProfile}
+        personalBestWpm={personalBestWpm}
+        testsCompleted={testsCompleted}
+        isFirstVisit={!hasOnboardedProfile}
+      />
+
+      {/* 10. Spotify Music Sanctuary Floating Widget */}
+      <SpotifyPlayer
+        playlistUrl={spotifyPlaylistUrl}
+        setPlaylistUrl={setSpotifyPlaylistUrl}
+        isVisible={isSpotifyVisible}
+        onClose={() => {
+          setIsSpotifyVisible(false);
+          restoreFocus();
+        }}
+        isCollapsed={isSpotifyCollapsed}
+        setIsCollapsed={setIsSpotifyCollapsed}
+        onRestoreFocus={restoreFocus}
       />
     </div>
   );

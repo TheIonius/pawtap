@@ -13,7 +13,8 @@ export function Companion({
   streak = 0,
   hasError = false,
   isFinished = false,
-  themeAccent = '#D4A373'
+  themeAccent = '#D4A373',
+  profile = null
 }) {
   const [purrHeart, setPurrHeart] = useState(false);
 
@@ -26,11 +27,15 @@ export function Companion({
   if (type === 'none') return null;
 
   const isFast = wpm >= 70 || streak >= 25;
+  const companionName = type === 'cat' ? 'Mochi' : type === 'coffee' ? 'Latte' : 'Sprout';
+  const petTooltip = profile?.name?.trim()
+    ? `Click to pet ${companionName} (loved by ${profile.name.trim()})!`
+    : `Click to pet ${companionName}!`;
 
   return (
     <div
       onClick={handlePet}
-      title="Click to pet your cozy companion!"
+      title={petTooltip}
       style={{
         display: 'inline-flex',
         alignItems: 'center',

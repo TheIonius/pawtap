@@ -1,11 +1,26 @@
 import { getCozyPerformanceTitle } from './metrics';
+import { getPresetAvatar } from '../constants/profile';
 
 /**
  * Generates an aesthetic, high-resolution PNG image scorecard of the test results.
  * Perfectly styled to match the active theme and typography.
  */
-export async function generateScorecardBlob(result, modeLabel) {
+export async function generateScorecardBlob(result, modeLabel, profile = null) {
   if (!result) return null;
+
+  // Pre-load custom avatar image if present
+  let avatarImg = null;
+  if (profile?.avatarType === 'custom' && profile?.avatar) {
+    try {
+      avatarImg = await new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = profile.avatar;
+      });
+    } catch {}
+  }
 
   const {
     wpm = 0,
@@ -105,11 +120,13 @@ export async function generateScorecardBlob(result, modeLabel) {
   ctx.fillText(rankText, badgeX + 12, 55);
 
   // If new record, draw star badge next to it
+  let rightBoundary = badgeX;
   if (isNewRecord && !failed) {
     const nrText = '★ NEW PB';
     ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     const nrWidth = ctx.measureText(nrText).width;
     const nrX = badgeX - nrWidth - 20;
+    rightBoundary = nrX;
 
     ctx.fillStyle = accent;
     ctx.beginPath();
@@ -118,6 +135,41 @@ export async function generateScorecardBlob(result, modeLabel) {
 
     ctx.fillStyle = bg;
     ctx.fillText(nrText, nrX + 7, 55);
+  }
+
+  // Profile / Typist Identity Pill
+  if (profile?.name) {
+    const displayName = profile.name.trim();
+    ctx.font = '600 12px "JetBrains Mono", -apple-system, BlinkMacSystemFont, sans-serif';
+    const nameWidth = ctx.measureText(displayName).width;
+    const pillWidth = nameWidth + (avatarImg ? 32 : 30);
+    const pillX = 154 + modeTextWidth + 28;
+
+    // Only draw if there's comfortable space before right-aligned badges
+    if (pillX + pillWidth < rightBoundary - 24) {
+      ctx.fillStyle = surface;
+      ctx.beginPath();
+      ctx.roundRect(pillX, 38, pillWidth, 24, 6);
+      ctx.fill();
+
+      // Render custom image or preset emoji
+      if (avatarImg) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(pillX + 12, 50, 7.5, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(avatarImg, pillX + 4.5, 42.5, 15, 15);
+        ctx.restore();
+      } else {
+        const preset = getPresetAvatar(profile?.avatar || 'cat');
+        ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.fillText(preset.emoji, pillX + 5, 54);
+      }
+
+      ctx.fillStyle = textMain;
+      ctx.font = '600 11.5px "JetBrains Mono", -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.fillText(displayName, pillX + (avatarImg ? 24 : 22), 54);
+    }
   }
 
   // 3. Primary Metrics Grid

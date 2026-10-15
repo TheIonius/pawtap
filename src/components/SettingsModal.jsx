@@ -4,17 +4,12 @@ import {
   Palette,
   Type,
   Volume2,
-  VolumeX,
   Sliders,
   Cat,
   Coffee,
   Sprout,
-  Headphones,
   Sparkles,
-  CloudRain,
-  Moon,
-  Sun,
-  Music,
+  Music2,
   Gauge,
   Skull,
   EyeOff,
@@ -22,7 +17,8 @@ import {
 } from 'lucide-react';
 import { THEMES, FONTS, CARET_STYLES, COMPANION_TYPES } from '../constants/themes';
 import { SOUND_PRESETS, playKeySound } from '../audio/soundEngine';
-import { AMBIENT_PRESETS } from '../audio/ambientEngine';
+import { SPOTIFY_PRESETS } from '../constants/spotify';
+import { Avatar } from './Avatar';
 
 export function SettingsModal({
   isOpen,
@@ -39,10 +35,6 @@ export function SettingsModal({
   setSoundPreset,
   soundVolume,
   setSoundVolume,
-  ambientSound,
-  setAmbientSoundType,
-  ambientVolume,
-  setAmbientVolume,
   vocabularyMode = 'cozy',
   setVocabularyMode = () => {},
   challengeMods = [],
@@ -52,7 +44,13 @@ export function SettingsModal({
   setChallengeMode = null,
   paceCaret = 'off',
   setPaceCaret = () => {},
-  personalBestWpm = 0
+  personalBestWpm = 0,
+  profile,
+  onOpenProfile,
+  spotifyPlaylistUrl = '',
+  setSpotifyPlaylistUrl = () => {},
+  isSpotifyVisible = false,
+  setIsSpotifyVisible = () => {}
 }) {
   React.useEffect(() => {
     if (!isOpen) return;
@@ -114,7 +112,8 @@ export function SettingsModal({
           position: 'absolute',
           inset: 0,
           backgroundColor: 'rgba(18, 15, 12, 0.65)',
-          transform: 'translateZ(0)'
+          transform: 'translateZ(0)',
+          animation: 'fadeIn 0.26s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
       />
 
@@ -134,7 +133,7 @@ export function SettingsModal({
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          animation: 'modalSlideUp 0.22s ease-out',
+          animation: 'modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
           transform: 'translateZ(0)',
           contain: 'content',
           isolation: 'isolate'
@@ -180,6 +179,56 @@ export function SettingsModal({
             gap: '28px'
           }}
         >
+          {/* 0. Typist Identity Banner */}
+          {profile && (
+            <div
+              className="stagger-item"
+              style={{
+                backgroundColor: 'var(--surface)',
+                border: '1.5px solid var(--border)',
+                borderRadius: '16px',
+                padding: '14px 18px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '12px',
+                flexWrap: 'wrap',
+                animationDelay: '30ms'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <Avatar profile={profile} size={44} />
+                <div>
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-main)' }}>
+                    {profile.name?.trim() || 'Anonymous Typist'}
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-sub)' }}>
+                    Personal display name & picture
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  onOpenProfile?.();
+                }}
+                className="pill-btn"
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: '10px',
+                  backgroundColor: 'var(--surface-hover)',
+                  border: '1px solid var(--border)',
+                  color: 'var(--accent)',
+                  fontWeight: 600,
+                  fontSize: '12.5px',
+                  cursor: 'pointer'
+                }}
+              >
+                Edit Identity
+              </button>
+            </div>
+          )}
+
           {/* 1. Theme Color Palette */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
@@ -597,65 +646,111 @@ export function SettingsModal({
             </div>
           </div>
 
-          {/* 7. Ambient Atmosphere */}
+          {/* 7. Spotify Music Sanctuary */}
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-              <CloudRain size={16} color="var(--accent)" />
-              <h3 style={{ fontSize: '14px', fontWeight: 600, margin: 0, color: 'var(--text-main)' }}>
-                Calming Ambient Background Sound
-              </h3>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span
+                  style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    backgroundColor: '#1DB954',
+                    boxShadow: '0 0 6px #1DB954'
+                  }}
+                />
+                <Music2 size={16} color="#1DB954" />
+                <h3 style={{ fontSize: '14px', fontWeight: 600, margin: 0, color: 'var(--text-main)' }}>
+                  Spotify Music Sanctuary
+                </h3>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsSpotifyVisible(prev => !prev)}
+                className={`pill-btn ${isSpotifyVisible ? 'active' : ''}`}
+                style={{
+                  padding: '6px 12px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  backgroundColor: isSpotifyVisible ? 'rgba(29, 185, 84, 0.15)' : 'var(--surface)',
+                  color: isSpotifyVisible ? '#1DB954' : 'var(--text-sub)',
+                  borderColor: isSpotifyVisible ? '#1DB954' : 'var(--border)'
+                }}
+              >
+                {isSpotifyVisible ? 'Player Active' : 'Enable Player'}
+              </button>
             </div>
 
+            <div style={{ fontSize: '11.5px', color: 'var(--text-sub)', marginBottom: '10px' }}>
+              Stream your favorite Spotify playlist or album while typing. Runs in a non-intrusive floating mini-player.
+            </div>
+
+            {/* Presets */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>
-              {AMBIENT_PRESETS.map((ap) => {
-                const isActive = ambientSound === ap.id;
+              {SPOTIFY_PRESETS.map((preset) => {
+                const isSelected = spotifyPlaylistUrl === preset.uri;
                 return (
                   <button
-                    key={ap.id}
+                    key={preset.id}
+                    type="button"
                     onClick={() => {
-                      setAmbientSoundType(ap.id);
-                      if (ap.id !== 'none' && ambientVolume <= 0) {
-                        setAmbientVolume(0.25);
-                      }
+                      setSpotifyPlaylistUrl(preset.uri);
+                      if (!isSpotifyVisible) setIsSpotifyVisible(true);
                     }}
-                    className={`pill-btn ${isActive ? 'active' : ''}`}
-                    style={{ padding: '8px 14px' }}
+                    className={`pill-btn ${isSelected ? 'active' : ''}`}
+                    style={{ padding: '8px 12px', gap: '6px' }}
                   >
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                      {ap.id === 'none' && <VolumeX size={13} />}
-                      {ap.id === 'rain' && <CloudRain size={13} />}
-                      {ap.id === 'midnight' && <Moon size={13} />}
-                      {ap.id === 'afternoon' && <Sun size={13} />}
-                      {ap.id === 'starlit' && <Sparkles size={13} />}
-                      {ap.id === 'cafe' && <Coffee size={13} />}
-                      {ap.id === 'sunbeam' && <Music size={13} />}
-                      {['none', 'rain', 'midnight', 'afternoon', 'starlit', 'cafe', 'sunbeam'].indexOf(ap.id) === -1 && <Headphones size={13} />}
-                      <span>{ap.name}</span>
+                    <span>{preset.icon}</span>
+                    <span style={{ fontSize: '12.5px', fontWeight: isSelected ? 600 : 500 }}>
+                      {preset.name}
                     </span>
                   </button>
                 );
               })}
             </div>
 
-            {ambientSound !== 'none' && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '0 4px' }}>
-                <span style={{ fontSize: '12px', color: 'var(--text-sub)', width: '90px' }}>
-                  Ambient Vol:
-                </span>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.05"
-                  value={ambientVolume}
-                  onChange={(e) => setAmbientVolume(parseFloat(e.target.value))}
-                  style={{ flex: 1, accentColor: 'var(--accent)' }}
-                />
-                <span style={{ fontSize: '12px', fontFamily: 'monospace', color: 'var(--text-main)', width: '36px' }}>
-                  {Math.round(ambientVolume * 100)}%
-                </span>
-              </div>
-            )}
+            {/* Custom Input */}
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <input
+                type="text"
+                value={spotifyPlaylistUrl}
+                onChange={(e) => setSpotifyPlaylistUrl(e.target.value)}
+                placeholder="Paste your Spotify playlist URL (https://open.spotify.com/playlist/...)"
+                style={{
+                  flex: 1,
+                  padding: '8px 12px',
+                  borderRadius: '10px',
+                  border: '1.5px solid var(--border)',
+                  backgroundColor: 'var(--surface)',
+                  color: 'var(--text-main)',
+                  fontSize: '12.5px',
+                  outline: 'none',
+                  fontFamily: 'inherit'
+                }}
+                onFocus={(e) => { e.target.style.borderColor = '#1DB954'; }}
+                onBlur={(e) => { e.target.style.borderColor = 'var(--border)'; }}
+              />
+              {!isSpotifyVisible && (
+                <button
+                  type="button"
+                  onClick={() => setIsSpotifyVisible(true)}
+                  className="pill-btn"
+                  style={{
+                    padding: '8px 14px',
+                    backgroundColor: 'var(--accent)',
+                    color: '#FFFFFF',
+                    fontWeight: 600,
+                    fontSize: '12px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Show Player
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
