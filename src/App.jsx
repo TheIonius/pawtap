@@ -18,7 +18,7 @@ import { DEFAULT_PROFILE } from './constants/profile';
 import { ProfileModal } from './components/ProfileModal';
 import { SpotifyPlayer } from './components/SpotifyPlayer';
 import { DEFAULT_SPOTIFY_PLAYLIST } from './constants/spotify';
-import { Keyboard, Music2 } from 'lucide-react';
+import { Keyboard } from 'lucide-react';
 import { GithubIcon } from './components/GithubIcon';
 
 export default function App() {
@@ -408,6 +408,14 @@ export default function App() {
           soundVolume={soundVolume}
           isAudioActive={isAudioActive}
           onToggleSound={handleToggleSound}
+          isSpotifyVisible={isSpotifyVisible}
+          onToggleSpotify={() => {
+            setIsSpotifyVisible(prev => {
+              const next = !prev;
+              if (next) setIsSpotifyCollapsed(false);
+              return next;
+            });
+          }}
           onOpenSettings={() => {
             setIsSettingsOpen(true);
             setIsFocused(true);
@@ -552,32 +560,6 @@ export default function App() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <button
-              onPointerDown={(e) => {
-                e.preventDefault();
-              }}
-              onClick={() => {
-                setIsSpotifyVisible(prev => {
-                  const next = !prev;
-                  if (next) setIsSpotifyCollapsed(false);
-                  return next;
-                });
-              }}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                color: isSpotifyVisible ? '#1DB954' : 'var(--text-sub)',
-                fontSize: '13px',
-                cursor: 'pointer',
-                transition: 'color 0.15s ease'
-              }}
-              title="Toggle Spotify Music Sanctuary Player"
-            >
-              <Music2 size={15} color={isSpotifyVisible ? '#1DB954' : 'currentColor'} />
-              <span>{isSpotifyVisible ? 'hide spotify' : 'spotify music'}</span>
-            </button>
-            <span>•</span>
             <button
               onClick={() => setShowKeyboard(prev => !prev)}
               style={{

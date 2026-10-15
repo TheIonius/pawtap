@@ -17,7 +17,6 @@ import {
 } from 'lucide-react';
 import { THEMES, FONTS, CARET_STYLES, COMPANION_TYPES } from '../constants/themes';
 import { SOUND_PRESETS, playKeySound } from '../audio/soundEngine';
-import { SPOTIFY_PRESETS } from '../constants/spotify';
 import { Avatar } from './Avatar';
 
 export function SettingsModal({
@@ -682,51 +681,28 @@ export function SettingsModal({
               </button>
             </div>
 
-            <div style={{ fontSize: '11.5px', color: 'var(--text-sub)', marginBottom: '10px' }}>
-              Stream your favorite Spotify playlist or album while typing. Runs in a non-intrusive floating mini-player.
+            <div style={{ fontSize: '11.5px', color: 'var(--text-sub)', marginBottom: '12px' }}>
+              Stream your favorite Spotify playlist, album, or track while typing. Runs in a non-intrusive floating mini-player.
             </div>
 
-            {/* Presets */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>
-              {SPOTIFY_PRESETS.map((preset) => {
-                const isSelected = spotifyPlaylistUrl === preset.uri;
-                return (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    onClick={() => {
-                      setSpotifyPlaylistUrl(preset.uri);
-                      if (!isSpotifyVisible) setIsSpotifyVisible(true);
-                    }}
-                    className={`pill-btn ${isSelected ? 'active' : ''}`}
-                    style={{ padding: '8px 12px', gap: '6px' }}
-                  >
-                    <span>{preset.icon}</span>
-                    <span style={{ fontSize: '12.5px', fontWeight: isSelected ? 600 : 500 }}>
-                      {preset.name}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Custom Input */}
+            {/* Custom Link Input ONLY */}
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <input
                 type="text"
                 value={spotifyPlaylistUrl}
                 onChange={(e) => setSpotifyPlaylistUrl(e.target.value)}
-                placeholder="Paste your Spotify playlist URL (https://open.spotify.com/playlist/...)"
+                placeholder="Paste your Spotify link (https://open.spotify.com/playlist/...)"
                 style={{
                   flex: 1,
-                  padding: '8px 12px',
+                  padding: '9px 12px',
                   borderRadius: '10px',
                   border: '1.5px solid var(--border)',
                   backgroundColor: 'var(--surface)',
                   color: 'var(--text-main)',
                   fontSize: '12.5px',
                   outline: 'none',
-                  fontFamily: 'inherit'
+                  fontFamily: 'inherit',
+                  transition: 'border-color 0.15s ease'
                 }}
                 onFocus={(e) => { e.target.style.borderColor = '#1DB954'; }}
                 onBlur={(e) => { e.target.style.borderColor = 'var(--border)'; }}
@@ -737,10 +713,10 @@ export function SettingsModal({
                   onClick={() => setIsSpotifyVisible(true)}
                   className="pill-btn"
                   style={{
-                    padding: '8px 14px',
-                    backgroundColor: 'var(--accent)',
-                    color: '#FFFFFF',
-                    fontWeight: 600,
+                    padding: '9px 14px',
+                    backgroundColor: '#1DB954',
+                    color: '#000000',
+                    fontWeight: 700,
                     fontSize: '12px',
                     borderRadius: '10px',
                     border: 'none',

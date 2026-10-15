@@ -5,7 +5,8 @@ import {
   Volume2,
   VolumeX,
   ChevronDown,
-  Check
+  Check,
+  Music2
 } from 'lucide-react';
 import { THEMES } from '../constants/themes';
 import { GithubIcon } from './GithubIcon';
@@ -18,7 +19,9 @@ export function Header({
   onToggleSound,
   onOpenSettings,
   profile,
-  onOpenProfile
+  onOpenProfile,
+  isSpotifyVisible = false,
+  onToggleSpotify = () => {}
 }) {
   const [openMenu, setOpenMenu] = useState(null); // 'theme' | null
   const dockRef = useRef(null);
@@ -268,6 +271,41 @@ export function Header({
               </div>
             )}
           </div>
+
+          {/* Spotify Music Sanctuary Button (Right Next to Theme) */}
+          <button
+            onPointerDown={(e) => {
+              e.preventDefault();
+            }}
+            onClick={onToggleSpotify}
+            className={`pill-btn ${isSpotifyVisible ? 'active' : ''}`}
+            style={{
+              padding: '6px 10px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              color: isSpotifyVisible ? '#1DB954' : 'var(--text-sub)',
+              fontWeight: 600,
+              fontSize: '12.5px',
+              transition: 'all 0.15s ease'
+            }}
+            title={isSpotifyVisible ? "Hide Spotify Player" : "Spotify Music Sanctuary"}
+            aria-label="Toggle Spotify Music Player"
+          >
+            <Music2 size={13} color={isSpotifyVisible ? '#1DB954' : 'currentColor'} />
+            <span>spotify</span>
+            {isSpotifyVisible && (
+              <span
+                style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  backgroundColor: '#1DB954',
+                  boxShadow: '0 0 6px #1DB954'
+                }}
+              />
+            )}
+          </button>
 
           {/* Divider */}
           <div style={{ width: '1px', height: '14px', backgroundColor: 'var(--border)', opacity: 0.8 }} />
