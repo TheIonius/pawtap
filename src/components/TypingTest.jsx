@@ -16,7 +16,9 @@ export function TypingTest({
   challengeMode = 'normal',
   onOpenLanguageModal = () => {},
   paceCaret = 'off',
-  personalBestWpm = 0
+  personalBestWpm = 0,
+  showKeyboard = false,
+  onToggleKeyboard = () => {}
 }) {
   const activeMods = Array.isArray(challengeMods) && challengeMods.length > 0
     ? challengeMods
@@ -791,6 +793,27 @@ export function TypingTest({
         <span><kbd className="kbd">tab</kbd> to restart</span>
         <span>•</span>
         <span><kbd className="kbd">esc</kbd> for themes & fonts</span>
+        <span>•</span>
+        <button
+          type="button"
+          onClick={onToggleKeyboard}
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            font: 'inherit',
+            color: showKeyboard ? 'var(--accent)' : 'inherit',
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            transition: 'color 0.15s ease'
+          }}
+          title="Toggle on-screen visual keyboard (Alt+K)"
+        >
+          <kbd className="kbd">alt+k</kbd>
+          <span>{showKeyboard ? 'hide keyboard' : 'keyboard'}</span>
+        </button>
       </div>
     </div>
   );

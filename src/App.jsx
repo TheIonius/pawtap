@@ -18,8 +18,6 @@ import { DEFAULT_PROFILE } from './constants/profile';
 import { ProfileModal } from './components/ProfileModal';
 import { MusicPlayer } from './components/MusicPlayer';
 import { DEFAULT_MUSIC_URL } from './constants/music';
-import { Keyboard } from 'lucide-react';
-import { GithubIcon } from './components/GithubIcon';
 
 export default function App() {
   // 1. Persistent User Preferences
@@ -304,6 +302,13 @@ export default function App() {
     const handleGlobalKeyDown = (e) => {
       if (isAnyModalOpen) return;
 
+      // Toggle visual keyboard shortcut: Alt+K or F2
+      if ((e.altKey && (e.key === 'k' || e.key === 'K')) || e.key === 'F2') {
+        e.preventDefault();
+        setShowKeyboard(prev => !prev);
+        return;
+      }
+
       // Allow browser shortcuts (like Ctrl+R, Ctrl+W, Cmd+R) to pass through untouched
       if ((e.ctrlKey || e.metaKey) && e.key !== 'Backspace') {
         return;
@@ -332,7 +337,7 @@ export default function App() {
       window.removeEventListener('pointerdown', handleGlobalPointerDown);
       window.removeEventListener('keydown', handleGlobalKeyDown);
     };
-  }, [isFocused, isAnyModalOpen, isMusicVisible, isMusicCollapsed, setIsMusicCollapsed, restoreFocus, engine]);
+  }, [isFocused, isAnyModalOpen, isMusicVisible, isMusicCollapsed, setIsMusicCollapsed, restoreFocus, engine, setShowKeyboard]);
 
   // Handle Practice Missed Words (all errors or specific target keys)
   const handlePracticeErrors = useCallback((targetKeys = null) => {
@@ -533,6 +538,8 @@ export default function App() {
                 onRestart={handleRestart}
                 paceCaret={paceCaret}
                 personalBestWpm={personalBestWpm}
+                showKeyboard={showKeyboard}
+                onToggleKeyboard={() => setShowKeyboard(prev => !prev)}
               />
 
               {/* Optional On-Screen Aesthetic Keyboard */}
@@ -576,44 +583,6 @@ export default function App() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <button
-              onClick={() => setShowKeyboard(prev => !prev)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                color: showKeyboard ? 'var(--accent)' : 'var(--text-sub)',
-                fontSize: '13px',
-                cursor: 'pointer'
-              }}
-              title="Toggle on-screen visual keyboard"
-            >
-              <Keyboard size={15} />
-              <span>{showKeyboard ? 'hide keyboard' : 'visual keyboard'}</span>
-            </button>
-            <span>•</span>
-            <a
-              href="https://github.com/TheIonius"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                color: 'var(--text-sub)',
-                fontSize: '13px',
-                textDecoration: 'none',
-                transition: 'color 0.15s ease'
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--accent)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-sub)'; }}
-              title="GitHub Profile @TheIonius"
-              aria-label="GitHub Profile @TheIonius"
-            >
-              <GithubIcon size={14} />
-              <span>@TheIonius</span>
-            </a>
-            <span>•</span>
             <span>v1.1.0-dev pawtap</span>
           </div>
         </footer>

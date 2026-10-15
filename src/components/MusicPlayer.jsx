@@ -29,10 +29,51 @@ export function MusicPlayer({
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [customInput, setCustomInput] = useState('');
   const [inputFeedback, setInputFeedback] = useState(null);
+  const [meta, setMeta] = useState(null);
   const iframeRef = useRef(null);
   const prevVolumeRef = useRef(musicVolume > 0 ? musicVolume : 75);
 
   const parsed = useMemo(() => parseYouTubeUrl(musicUrl), [musicUrl]);
+  const currentMeta = parsed ? meta : null;
+
+  // Fetch track/playlist title, artist, and album picture via YouTube oEmbed
+  useEffect(() => {
+    if (!parsed) return;
+
+    let isMounted = true;
+    const targetUrl = parsed.type === 'playlist'
+      ? `https://www.youtube.com/playlist?list=${parsed.id}`
+      : `https://www.youtube.com/watch?v=${parsed.id}`;
+
+    fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(targetUrl)}&format=json`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (!isMounted || !data) return;
+        setMeta({
+          title: data.title || '',
+          author: data.author_name || 'YouTube Music',
+          thumbnail: data.thumbnail_url || (parsed.videoId ? `https://i.ytimg.com/vi/${parsed.videoId}/hqdefault.jpg` : null)
+        });
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        if (parsed.videoId) {
+          fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${parsed.videoId}&format=json`)
+            .then(res => res.ok ? res.json() : null)
+            .then(data => {
+              if (!isMounted || !data) return;
+              setMeta({
+                title: data.title || '',
+                author: data.author_name || 'YouTube Music',
+                thumbnail: data.thumbnail_url
+              });
+            })
+            .catch(() => {});
+        }
+      });
+
+    return () => { isMounted = false; };
+  }, [parsed]);
 
   // Keep track of non-zero volume for unmuting
   useEffect(() => {
@@ -175,10 +216,24 @@ export function MusicPlayer({
                 height: '7px',
                 borderRadius: '50%',
                 backgroundColor: '#FF0000',
-                boxShadow: '0 0 8px #FF0000'
+                boxShadow: '0 0 8px #FF0000',
+                flexShrink: 0
               }}
             />
-            <Music2 size={14} color="#FF0000" />
+            {currentMeta?.thumbnail ? (
+              <img
+                src={currentMeta.thumbnail}
+                alt="Track"
+                style={{
+                  width: '18px',
+                  height: '18px',
+                  borderRadius: '4px',
+                  objectFit: 'cover'
+                }}
+              />
+            ) : (
+              <Music2 size={14} color="#FF0000" />
+            )}
             <ChevronUp size={13} style={{ opacity: 0.7 }} />
           </button>
         </div>
@@ -609,6 +664,93 @@ export function MusicPlayer({
                 </form>
               </div>
             )}
+
+            {/* Now Playing Card: Album Art, Song / Playlist Title, Artist */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '10px 14px',
+                backgroundColor: '#161616',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.06)'
+              }}
+            >
+              {currentMeta?.thumbnail ? (
+                <img
+                  src={currentMeta.thumbnail}
+                  alt={currentMeta.title || 'Track Art'}
+                  style={{
+                    width: '46px',
+                    height: '46px',
+                    borderRadius: '8px',
+                    objectFit: 'cover',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.45)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    flexShrink: 0
+                  }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: '46px',
+                    height: '46px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(255, 0, 0, 0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}
+                >
+                  <Music2 size={22} color="#FF0000" />
+                </div>
+              )}
+
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div
+                  style={{
+                    fontSize: '12.5px',
+                    fontWeight: 700,
+                    color: '#FFFFFF',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    letterSpacing: '-0.1px'
+                  }}
+                  title={currentMeta?.title || 'YouTube Music'}
+                >
+                  {currentMeta?.title || 'YouTube Music'}
+                </div>
+                <div
+                  style={{
+                    fontSize: '11px',
+                    color: '#A0A0A0',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    marginTop: '2px'
+                  }}
+                >
+                  {currentMeta?.author || 'YouTube Music'}
+                </div>
+                {parsed.type === 'playlist' && (
+                  <div
+                    style={{
+                      fontSize: '10px',
+                      color: '#FF4D4D',
+                      fontWeight: 600,
+                      marginTop: '3px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <span>Playlist • Click ☰ in player to view queue</span>
+                  </div>
+                )}
+              </div>
+            </div>
 
             {/* Dedicated Volume Slider Bar */}
             <div
