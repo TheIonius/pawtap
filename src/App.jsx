@@ -40,6 +40,13 @@ export default function App() {
   const [isMusicCollapsed, setIsMusicCollapsed] = useLocalStorage('pawtap_music_collapsed', true);
   const [musicVolume, setMusicVolume] = useLocalStorage('pawtap_music_vol', 75);
 
+  // Reset legacy expired test stream if cached in user's browser localStorage
+  useEffect(() => {
+    if (musicUrl && musicUrl.includes('jfKfPfyJRdk')) {
+      setMusicUrl('');
+    }
+  }, [musicUrl, setMusicUrl]);
+
   // Fallback resilience: ensure profile always has valid defaults even if corrupted in localStorage
   const safeProfile = useMemo(() => ({
     ...DEFAULT_PROFILE,
