@@ -40,12 +40,15 @@ export default function App() {
   const [isMusicCollapsed, setIsMusicCollapsed] = useLocalStorage('pawtap_music_collapsed', true);
   const [musicVolume, setMusicVolume] = useLocalStorage('pawtap_music_vol', 75);
 
-  // Reset legacy expired test stream if cached in user's browser localStorage
+  // Ensure the floating music player pill is visible and clean legacy stream
   useEffect(() => {
     if (musicUrl && musicUrl.includes('jfKfPfyJRdk')) {
       setMusicUrl('');
     }
-  }, [musicUrl, setMusicUrl]);
+    if (isMusicVisible === false) {
+      setIsMusicVisible(true);
+    }
+  }, [musicUrl, setMusicUrl, isMusicVisible, setIsMusicVisible]);
 
   // Fallback resilience: ensure profile always has valid defaults even if corrupted in localStorage
   const safeProfile = useMemo(() => ({
@@ -754,7 +757,7 @@ export default function App() {
         setMusicUrl={setMusicUrl}
         isVisible={isMusicVisible}
         onClose={() => {
-          setIsMusicVisible(false);
+          setIsMusicCollapsed(true);
           restoreFocus();
         }}
         isCollapsed={isMusicCollapsed}

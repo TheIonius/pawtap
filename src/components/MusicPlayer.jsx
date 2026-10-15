@@ -146,7 +146,7 @@ export function MusicPlayer({
             position: 'fixed',
             bottom: '96px',
             right: '36px',
-            zIndex: 80,
+            zIndex: 996,
             animation: 'fadeInUp 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
           }}
         >
@@ -198,7 +198,7 @@ export function MusicPlayer({
           border: '1px solid rgba(255, 255, 255, 0.12)',
           borderRadius: '16px',
           boxShadow: '0 24px 64px rgba(0, 0, 0, 0.55), 0 8px 24px rgba(0, 0, 0, 0.35)',
-          zIndex: 80,
+          zIndex: 996,
           overflow: 'hidden',
           backdropFilter: 'blur(20px)',
           opacity: !isCollapsed ? 1 : 0,
@@ -284,10 +284,11 @@ export function MusicPlayer({
               <ChevronDown size={14} />
             </button>
 
-            {/* Close */}
+            {/* Close / Minimize */}
             <button
               onClick={() => {
-                onClose();
+                setIsCollapsed(true);
+                onClose?.();
                 onRestoreFocus();
               }}
               style={{
@@ -304,7 +305,7 @@ export function MusicPlayer({
               }}
               onMouseEnter={(e) => { e.currentTarget.style.color = '#FFFFFF'; }}
               onMouseLeave={(e) => { e.currentTarget.style.color = '#B3B3B3'; }}
-              title="Close Player"
+              title="Minimize to Floating Pill"
             >
               <X size={14} />
             </button>
