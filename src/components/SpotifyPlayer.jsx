@@ -70,32 +70,30 @@ export function SpotifyPlayer({
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '8px',
-              padding: '8px 16px 8px 12px',
+              gap: '6px',
+              padding: '8px 12px',
               borderRadius: '20px',
               backgroundColor: 'rgba(18, 18, 18, 0.94)',
               border: '1px solid rgba(255, 255, 255, 0.14)',
-              boxShadow: '0 12px 32px rgba(0, 0, 0, 0.45)',
+              boxShadow: '0 10px 28px rgba(0, 0, 0, 0.45)',
               color: '#FFFFFF',
-              fontWeight: 600,
-              fontSize: '12.5px',
               cursor: 'pointer',
               backdropFilter: 'blur(16px)',
               transition: 'all 0.15s ease'
             }}
             title="Expand Spotify Player"
+            aria-label="Expand Spotify Player"
           >
             <span
               style={{
-                width: '8px',
-                height: '8px',
+                width: '7px',
+                height: '7px',
                 borderRadius: '50%',
                 backgroundColor: '#1DB954',
                 boxShadow: '0 0 8px #1DB954'
               }}
             />
             <Music2 size={14} color="#1DB954" />
-            <span style={{ letterSpacing: '-0.2px' }}>Spotify Player</span>
             <ChevronUp size={13} style={{ opacity: 0.7 }} />
           </button>
         </div>

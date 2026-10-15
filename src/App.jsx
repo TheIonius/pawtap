@@ -272,6 +272,13 @@ export default function App() {
   // Global Pointer & Keydown Listeners to Re-Focus
   useEffect(() => {
     const handleGlobalPointerDown = (e) => {
+      // If Spotify player is open and expanded, clicking anywhere outside minimizes it to the bottom pill
+      if (isSpotifyVisible && !isSpotifyCollapsed) {
+        if (!e.target.closest || (!e.target.closest('.spotify-widget-container') && !e.target.closest('[data-spotify-toggle]'))) {
+          setIsSpotifyCollapsed(true);
+        }
+      }
+
       // Allow interaction with buttons, selects, modals, spotify player, etc.
       if (e.target.closest && e.target.closest('button, select, input, [role="dialog"], .modal-content, a, textarea, .spotify-widget-container, iframe')) {
         return;
@@ -312,7 +319,7 @@ export default function App() {
       window.removeEventListener('pointerdown', handleGlobalPointerDown);
       window.removeEventListener('keydown', handleGlobalKeyDown);
     };
-  }, [isFocused, isAnyModalOpen, restoreFocus, engine]);
+  }, [isFocused, isAnyModalOpen, isSpotifyVisible, isSpotifyCollapsed, setIsSpotifyCollapsed, restoreFocus, engine]);
 
   // Handle Practice Missed Words (all errors or specific target keys)
   const handlePracticeErrors = useCallback((targetKeys = null) => {
@@ -348,7 +355,10 @@ export default function App() {
     const handleGlobalKeyDown = (e) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        if (isProfileModalOpen) {
+        if (isSpotifyVisible && !isSpotifyCollapsed) {
+          setIsSpotifyCollapsed(true);
+          restoreFocus();
+        } else if (isProfileModalOpen) {
           setIsProfileModalOpen(false);
           if (!isSettingsOpen) {
             restoreFocus();
@@ -369,7 +379,7 @@ export default function App() {
     };
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [isProfileModalOpen, isCustomModalOpen, isLanguageModalOpen, isSettingsOpen, restoreFocus]);
+  }, [isProfileModalOpen, isCustomModalOpen, isLanguageModalOpen, isSettingsOpen, isSpotifyVisible, isSpotifyCollapsed, setIsSpotifyCollapsed, restoreFocus]);
 
   const shouldShowFullPageBlur = !isFocused && engine.status !== 'finished' && !isAnyModalOpen && !isSpotifyVisible;
 

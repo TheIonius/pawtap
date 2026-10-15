@@ -274,6 +274,7 @@ export function Header({
 
           {/* Spotify Music Sanctuary Button (Right Next to Theme) */}
           <button
+            data-spotify-toggle="true"
             onPointerDown={(e) => {
               e.preventDefault();
             }}
