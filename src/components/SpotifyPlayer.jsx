@@ -121,8 +121,7 @@ export function SpotifyPlayer({
           opacity: isVisible && !isCollapsed ? 1 : 0,
           transform: isVisible && !isCollapsed ? 'translateY(0) scale(1)' : 'translateY(12px) scale(0.96)',
           pointerEvents: isVisible && !isCollapsed ? 'auto' : 'none',
-          visibility: isVisible && !isCollapsed ? 'visible' : 'hidden',
-          transition: 'opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.22s'
+          transition: 'opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
       >
         {/* Top Header Bar */}
@@ -299,8 +298,8 @@ export function SpotifyPlayer({
                   marginTop: '6px'
                 }}
               >
-                <span style={{ fontSize: '11px', color: '#777777' }}>
-                  Supports playlists, albums, and tracks
+                <span style={{ fontSize: '11px', color: '#888888' }}>
+                  Log into Spotify in your browser for full continuous songs
                 </span>
                 {inputFeedback && (
                   <span
@@ -331,7 +330,7 @@ export function SpotifyPlayer({
             height="152"
             frameBorder="0"
             allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-            loading="lazy"
+            loading="eager"
             style={{
               borderRadius: '12px',
               border: 'none',
