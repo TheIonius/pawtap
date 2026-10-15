@@ -5,7 +5,6 @@ import {
   Volume2,
   VolumeX,
   ChevronDown,
-  Check,
   Music2
 } from 'lucide-react';
 import { THEMES } from '../constants/themes';
@@ -24,9 +23,11 @@ export function Header({
   onToggleSpotify = () => {}
 }) {
   const [openMenu, setOpenMenu] = useState(null); // 'theme' | null
+  const [hoveredThemeId, setHoveredThemeId] = useState(null);
   const dockRef = useRef(null);
 
   const activeTheme = THEMES[activeThemeId] || THEMES['boba-tea'] || THEMES['oat-latte'];
+  const previewTheme = (hoveredThemeId && THEMES[hoveredThemeId]) || activeTheme;
 
   const openMenuRef = useRef(openMenu);
   useEffect(() => {
@@ -205,69 +206,97 @@ export function Header({
                 style={{
                   position: 'absolute',
                   top: 'calc(100% + 8px)',
-                  right: '-16px',
-                  width: '220px',
-                  maxHeight: '300px',
-                  overflowY: 'auto',
+                  left: 0,
+                  width: '210px',
                   backgroundColor: 'var(--bg)',
                   border: '1.5px solid var(--border)',
-                  borderRadius: '14px',
-                  boxShadow: '0 8px 26px var(--shadow), 0 2px 8px rgba(0,0,0,0.06)',
-                  padding: '6px',
+                  borderRadius: '16px',
+                  boxShadow: '0 12px 36px var(--shadow), 0 4px 12px rgba(0,0,0,0.08)',
+                  padding: '12px 14px',
                   zIndex: 100,
-                  animation: 'modalSlideUp 0.24s cubic-bezier(0.16, 1, 0.3, 1)'
+                  animation: 'modalSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+                  backdropFilter: 'blur(16px)'
                 }}
               >
-                <div style={{ padding: '4px 8px 6px', fontSize: '11px', fontWeight: 600, color: 'var(--text-sub)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-                  Color Palettes
-                </div>
-                {Object.values(THEMES).map((thm) => {
-                  const isSelected = thm.id === activeThemeId;
-                  return (
-                    <button
-                      key={thm.id}
-                      onClick={() => {
-                        setThemeId(thm.id);
-                        setOpenMenu(null);
-                      }}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        width: '100%',
-                        padding: '7px 10px',
-                        borderRadius: '8px',
-                        backgroundColor: isSelected ? 'var(--surface-hover)' : 'transparent',
-                        color: isSelected ? 'var(--accent)' : 'var(--text-main)',
-                        fontWeight: isSelected ? 600 : 500,
-                        fontSize: '12.5px',
-                        cursor: 'pointer',
-                        transition: 'background-color 0.12s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isSelected) e.currentTarget.style.backgroundColor = 'var(--surface)';
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent';
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {/* 5-Column Grid of Minimal Theme Dots */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(5, 1fr)',
+                    gap: '10px',
+                    justifyItems: 'center',
+                    alignItems: 'center'
+                  }}
+                >
+                  {Object.values(THEMES).map((thm) => {
+                    const isSelected = thm.id === activeThemeId;
+                    const isHovered = hoveredThemeId === thm.id;
+                    return (
+                      <button
+                        key={thm.id}
+                        type="button"
+                        onClick={() => {
+                          setThemeId(thm.id);
+                          setOpenMenu(null);
+                        }}
+                        onMouseEnter={() => setHoveredThemeId(thm.id)}
+                        onMouseLeave={() => setHoveredThemeId(null)}
+                        style={{
+                          width: '28px',
+                          height: '28px',
+                          borderRadius: '50%',
+                          backgroundColor: thm.colors.bg,
+                          border: `2px solid ${isSelected ? thm.colors.accent : 'var(--border)'}`,
+                          boxShadow: isSelected
+                            ? `0 0 0 2px var(--bg), 0 0 0 4px ${thm.colors.accent}`
+                            : isHovered
+                              ? '0 3px 10px var(--shadow)'
+                              : 'none',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: 0,
+                          transform: isHovered ? 'scale(1.2)' : 'scale(1)',
+                          transition: 'all 0.15s cubic-bezier(0.16, 1, 0.3, 1)',
+                          position: 'relative'
+                        }}
+                        title={thm.name}
+                        aria-label={`Select ${thm.name} theme`}
+                      >
+                        {/* Inner Accent Core Dot */}
                         <span
                           style={{
                             width: '12px',
                             height: '12px',
                             borderRadius: '50%',
                             backgroundColor: thm.colors.accent,
-                            border: `2px solid ${thm.colors.bg}`,
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                            boxShadow: `0 0 4px ${thm.colors.accent}`
                           }}
                         />
-                        <span>{thm.name}</span>
-                      </div>
-                      {isSelected && <Check size={13} color="var(--accent)" />}
-                    </button>
-                  );
-                })}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Dynamic Theme Name Preview on Hover / Active */}
+                <div
+                  style={{
+                    marginTop: '10px',
+                    paddingTop: '8px',
+                    borderTop: '1px solid var(--border)',
+                    textAlign: 'center',
+                    fontSize: '11.5px',
+                    fontWeight: 600,
+                    color: 'var(--text-sub)',
+                    letterSpacing: '-0.1px',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                  }}
+                >
+                  {previewTheme.name}
+                </div>
               </div>
             )}
           </div>
