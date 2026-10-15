@@ -207,23 +207,23 @@ export function Header({
                   position: 'absolute',
                   top: 'calc(100% + 8px)',
                   left: 0,
-                  width: '210px',
+                  width: '190px',
                   backgroundColor: 'var(--bg)',
                   border: '1.5px solid var(--border)',
-                  borderRadius: '16px',
-                  boxShadow: '0 12px 36px var(--shadow), 0 4px 12px rgba(0,0,0,0.08)',
-                  padding: '12px 14px',
+                  borderRadius: '14px',
+                  boxShadow: '0 10px 30px var(--shadow), 0 3px 10px rgba(0,0,0,0.08)',
+                  padding: '10px 12px',
                   zIndex: 100,
                   animation: 'modalSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
                   backdropFilter: 'blur(16px)'
                 }}
               >
-                {/* 5-Column Grid of Minimal Theme Dots */}
+                {/* 5-Column Grid of Original Accent Dots */}
                 <div
                   style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(5, 1fr)',
-                    gap: '10px',
+                    gap: '4px',
                     justifyItems: 'center',
                     alignItems: 'center'
                   }}
@@ -242,36 +242,33 @@ export function Header({
                         onMouseEnter={() => setHoveredThemeId(thm.id)}
                         onMouseLeave={() => setHoveredThemeId(null)}
                         style={{
-                          width: '28px',
-                          height: '28px',
-                          borderRadius: '50%',
-                          backgroundColor: thm.colors.bg,
-                          border: `2px solid ${isSelected ? thm.colors.accent : 'var(--border)'}`,
-                          boxShadow: isSelected
-                            ? `0 0 0 2px var(--bg), 0 0 0 4px ${thm.colors.accent}`
-                            : isHovered
-                              ? '0 3px 10px var(--shadow)'
-                              : 'none',
+                          width: '30px',
+                          height: '30px',
+                          borderRadius: '8px',
+                          backgroundColor: isSelected ? 'var(--surface-hover)' : isHovered ? 'var(--surface)' : 'transparent',
+                          border: isSelected ? '1px solid var(--border)' : '1px solid transparent',
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           padding: 0,
-                          transform: isHovered ? 'scale(1.2)' : 'scale(1)',
-                          transition: 'all 0.15s cubic-bezier(0.16, 1, 0.3, 1)',
-                          position: 'relative'
+                          transition: 'all 0.12s ease'
                         }}
                         title={thm.name}
                         aria-label={`Select ${thm.name} theme`}
                       >
-                        {/* Inner Accent Core Dot */}
                         <span
                           style={{
-                            width: '12px',
-                            height: '12px',
+                            width: '13px',
+                            height: '13px',
                             borderRadius: '50%',
                             backgroundColor: thm.colors.accent,
-                            boxShadow: `0 0 4px ${thm.colors.accent}`
+                            border: `2px solid ${thm.colors.bg}`,
+                            boxShadow: isSelected
+                              ? `0 0 0 2px ${thm.colors.accent}, 0 1px 4px rgba(0,0,0,0.2)`
+                              : '0 1px 3px rgba(0,0,0,0.12)',
+                            transform: isHovered ? 'scale(1.2)' : 'scale(1)',
+                            transition: 'transform 0.15s ease'
                           }}
                         />
                       </button>
@@ -282,11 +279,11 @@ export function Header({
                 {/* Dynamic Theme Name Preview on Hover / Active */}
                 <div
                   style={{
-                    marginTop: '10px',
-                    paddingTop: '8px',
+                    marginTop: '8px',
+                    paddingTop: '6px',
                     borderTop: '1px solid var(--border)',
                     textAlign: 'center',
-                    fontSize: '11.5px',
+                    fontSize: '11px',
                     fontWeight: 600,
                     color: 'var(--text-sub)',
                     letterSpacing: '-0.1px',
