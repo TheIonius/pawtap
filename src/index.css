@@ -526,3 +526,56 @@ button {
   overflow: hidden;
   background-color: rgba(var(--accent-rgb, 184, 120, 65), 0.12);
 }
+
+/* ==========================================================================
+   YouTube Music Playlist Player & Equalizer Animations
+   ========================================================================== */
+
+@keyframes eqBounce1 {
+  0% { height: 4px; }
+  50% { height: 14px; }
+  100% { height: 7px; }
+}
+
+@keyframes eqBounce2 {
+  0% { height: 14px; }
+  50% { height: 6px; }
+  100% { height: 16px; }
+}
+
+@keyframes eqBounce3 {
+  0% { height: 8px; }
+  50% { height: 16px; }
+  100% { height: 5px; }
+}
+
+.music-eq-bar-1 {
+  animation: eqBounce1 0.75s ease-in-out infinite alternate;
+}
+
+.music-eq-bar-2 {
+  animation: eqBounce2 0.85s ease-in-out infinite alternate 0.15s;
+}
+
+.music-eq-bar-3 {
+  animation: eqBounce3 0.65s ease-in-out infinite alternate 0.3s;
+}
+
+.playlist-tracks-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+.playlist-tracks-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+}
+
+.playlist-tracks-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 4px;
+}
+
+.playlist-tracks-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 0, 0, 0.6);
+}
+

@@ -79,21 +79,20 @@ export function parseYouTubeUrl(input) {
 
   // Case A: Specific Video found
   if (vidId) {
-    // If it also points to a true public playlist or album (starts with PL, OLAK, UU), load playlist player
-    if (listId && (listId.startsWith('PL') || listId.startsWith('OLAK') || listId.startsWith('UU'))) {
+    if (listId) {
       return {
         type: 'playlist',
         id: listId,
         videoId: vidId,
-        embedUrl: `https://www.youtube.com/embed/videoseries?list=${listId}&enablejsapi=1${originParam}`
+        embedUrl: `https://www.youtube.com/embed/${vidId}?list=${listId}&enablejsapi=1${originParam}&autoplay=1`
       };
     }
-    // Single video or dynamic radio mix (RDAM...) which YouTube embed cannot handle as videoseries
+    // Single video
     return {
       type: 'video',
       id: vidId,
       videoId: vidId,
-      embedUrl: `https://www.youtube.com/embed/${vidId}?enablejsapi=1${originParam}`
+      embedUrl: `https://www.youtube.com/embed/${vidId}?enablejsapi=1${originParam}&autoplay=1`
     };
   }
 
@@ -102,7 +101,8 @@ export function parseYouTubeUrl(input) {
     return {
       type: 'playlist',
       id: listId,
-      embedUrl: `https://www.youtube.com/embed/videoseries?list=${listId}&enablejsapi=1${originParam}`
+      videoId: null,
+      embedUrl: `https://www.youtube.com/embed/videoseries?list=${listId}&enablejsapi=1${originParam}&autoplay=1`
     };
   }
 
