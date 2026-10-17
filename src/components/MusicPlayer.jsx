@@ -14,11 +14,10 @@ import {
   SkipBack,
   SkipForward,
   ListMusic,
-  Sparkles,
   RotateCcw,
   Loader2
 } from 'lucide-react';
-import { parseYouTubeUrl, YOUTUBE_PRESETS } from '../constants/music';
+import { parseYouTubeUrl } from '../constants/music';
 
 // Helper to load YouTube IFrame Player API script once
 let ytApiPromise = null;
@@ -464,13 +463,6 @@ export function MusicPlayer({
     }, 600);
   };
 
-  const handleSelectPreset = (presetUrl) => {
-    setMusicUrl(presetUrl);
-    setIsPickerOpen(false);
-    setCustomInput('');
-    setInputFeedback(null);
-  };
-
   const handleResetLink = () => {
     setMusicUrl('');
     setCustomInput('');
@@ -851,83 +843,6 @@ export function MusicPlayer({
                 </div>
               )}
             </form>
-
-            {/* Cozy Presets Section */}
-            <div>
-              <div
-                style={{
-                  fontSize: '10.5px',
-                  fontWeight: 600,
-                  color: '#777777',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.6px',
-                  marginBottom: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px'
-                }}
-              >
-                <Sparkles size={11} color="#FF0000" />
-                Or start with a cozy preset
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
-                {YOUTUBE_PRESETS.map((preset) => (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    onClick={() => handleSelectPreset(preset.url)}
-                    style={{
-                      padding: '8px 10px',
-                      borderRadius: '10px',
-                      backgroundColor: 'rgba(255, 255, 255, 0.04)',
-                      border: '1px solid rgba(255, 255, 255, 0.08)',
-                      color: '#FFFFFF',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      transition: 'all 0.15s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = 'rgba(255, 0, 0, 0.12)';
-                      e.currentTarget.style.borderColor = 'rgba(255, 0, 0, 0.3)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
-                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
-                    }}
-                  >
-                    <span style={{ fontSize: '14px' }}>{preset.icon}</span>
-                    <div style={{ overflow: 'hidden' }}>
-                      <div
-                        style={{
-                          fontSize: '11.5px',
-                          fontWeight: 600,
-                          whiteSpace: 'nowrap',
-                          textOverflow: 'ellipsis',
-                          overflow: 'hidden'
-                        }}
-                      >
-                        {preset.name}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: '9.5px',
-                          color: '#888888',
-                          whiteSpace: 'nowrap',
-                          textOverflow: 'ellipsis',
-                          overflow: 'hidden'
-                        }}
-                      >
-                        {preset.desc}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
         )}
 
@@ -1057,32 +972,6 @@ export function MusicPlayer({
                       {inputFeedback}
                     </div>
                   )}
-
-                  {/* Preset Pills */}
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
-                    {YOUTUBE_PRESETS.map((p) => (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => handleSelectPreset(p.url)}
-                        style={{
-                          padding: '4px 8px',
-                          borderRadius: '8px',
-                          backgroundColor: 'rgba(255, 255, 255, 0.06)',
-                          border: '1px solid rgba(255, 255, 255, 0.08)',
-                          color: '#DDDDDD',
-                          fontSize: '10.5px',
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px'
-                        }}
-                      >
-                        <span>{p.icon}</span>
-                        <span>{p.name}</span>
-                      </button>
-                    ))}
-                  </div>
                 </form>
               </div>
             )}
