@@ -94,6 +94,7 @@ export function useTypingEngine({
   const [currentStreak, setCurrentStreak] = useState(0);
   const [hasRecentError, setHasRecentError] = useState(false);
 
+  const missedWordsRef = useRef(new Set());
   const timerRef = useRef(null);
   const typingActivityTimerRef = useRef(null);
   const startTimeRef = useRef(null);
@@ -151,6 +152,7 @@ export function useTypingEngine({
     totalErrorsRef.current = 0;
     setRawKeyStats({ correct: 0, incorrect: 0, extra: 0, missed: 0 });
     setKeyErrors({});
+    missedWordsRef.current.clear();
     setCurrentStreak(0);
     setHasRecentError(false);
     setTimeLeft(timeLimit);
@@ -234,6 +236,7 @@ export function useTypingEngine({
         wpmHistory: prev,
         rawKeyStats: finalKeyStats,
         keyErrors,
+        missedWords: Array.from(missedWordsRef.current),
         mode,
         timeLimit,
         wordLimit,
@@ -309,6 +312,7 @@ export function useTypingEngine({
         wpmHistory: historyToSave,
         rawKeyStats: finalKeyStats,
         keyErrors: updatedKeyErrors,
+        missedWords: Array.from(missedWordsRef.current),
         mode,
         timeLimit,
         wordLimit,
@@ -505,6 +509,9 @@ export function useTypingEngine({
       if (currentInput !== targetWord) {
         totalErrorsRef.current += 1;
         setHasRecentError(true);
+        if (targetWord) {
+          missedWordsRef.current.add(targetWord);
+        }
         if (activeMods.includes('sudden_death')) {
           failTest({
             failedKey: 'Space',
@@ -556,6 +563,9 @@ export function useTypingEngine({
       } else {
         totalErrorsRef.current += 1;
         setKeyErrors(prev => ({ ...prev, [expectedChar || e.key]: (prev[expectedChar || e.key] || 0) + 1 }));
+        if (targetWord) {
+          missedWordsRef.current.add(targetWord);
+        }
         setCurrentStreak(0);
         setHasRecentError(true);
         if (activeMods.includes('sudden_death')) {
@@ -611,6 +621,7 @@ export function useTypingEngine({
     wpmHistory,
     rawKeyStats,
     keyErrors,
+    getMissedWords: useCallback(() => Array.from(missedWordsRef.current), []),
     currentStreak,
     hasRecentError,
     vocabularyMode,

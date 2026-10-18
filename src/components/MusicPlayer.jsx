@@ -1,66 +1,26 @@
-import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
   ChevronDown,
-  ChevronUp,
   X,
   Music2,
   Link2,
   Check,
-  Volume2,
-  VolumeX,
-  Volume1,
   Play,
   Pause,
   SkipBack,
   SkipForward,
-  ListMusic,
-  RotateCcw,
-  Loader2
+  RotateCcw
 } from 'lucide-react';
 import { parseYouTubeUrl } from '../constants/music';
+import { useYouTubePlayer } from '../hooks/useYouTubePlayer';
+import { VolumeControl } from './music/VolumeControl';
+import { TrackList } from './music/TrackList';
+import { MusicPlayerPill } from './music/MusicPlayerPill';
 
-// Helper to load YouTube IFrame Player API script once
-let ytApiPromise = null;
-function loadYouTubeIframeApi() {
-  if (ytApiPromise) return ytApiPromise;
-
-  ytApiPromise = new Promise((resolve) => {
-    if (typeof window !== 'undefined' && window.YT && window.YT.Player) {
-      resolve(window.YT);
-      return;
-    }
-    if (typeof document !== 'undefined') {
-      const existingScript = document.getElementById('yt-iframe-api-script');
-      if (!existingScript) {
-        const tag = document.createElement('script');
-        tag.id = 'yt-iframe-api-script';
-        tag.src = 'https://www.youtube.com/iframe_api';
-        const firstScript = document.getElementsByTagName('script')[0];
-        if (firstScript && firstScript.parentNode) {
-          firstScript.parentNode.insertBefore(tag, firstScript);
-        } else {
-          document.head.appendChild(tag);
-        }
-      }
-
-      const prevCallback = window.onYouTubeIframeAPIReady;
-      window.onYouTubeIframeAPIReady = () => {
-        if (typeof prevCallback === 'function') prevCallback();
-        resolve(window.YT);
-      };
-
-      const checkInterval = setInterval(() => {
-        if (window.YT && window.YT.Player) {
-          clearInterval(checkInterval);
-          resolve(window.YT);
-        }
-      }, 80);
-    }
-  });
-
-  return ytApiPromise;
-}
-
+/**
+ * YouTube Music player component with persistent hidden stream,
+ * expandable drawer, and minimized floating pill.
+ */
 export function MusicPlayer({
   musicUrl,
   setMusicUrl,
@@ -76,75 +36,29 @@ export function MusicPlayer({
   const [customInput, setCustomInput] = useState('');
   const [inputFeedback, setInputFeedback] = useState(null);
 
-  // Playback & Playlist state
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
-  const [playlistIds, setPlaylistIds] = useState([]);
-  const [currentVideoId, setCurrentVideoId] = useState(null);
-  const [currentTitle, setCurrentTitle] = useState('');
-  const [currentAuthor, setCurrentAuthor] = useState('');
-  const [playlistMeta, setPlaylistMeta] = useState(null);
-  const [trackMetaMap, setTrackMetaMap] = useState({});
-  const [isVolumeHovered, setIsVolumeHovered] = useState(false);
-  const [isVolumeDragging, setIsVolumeDragging] = useState(false);
-  const isVolumeVisible = isVolumeHovered || isVolumeDragging;
+  const {
+    iframeRef,
+    prevVolumeRef,
+    parsed,
+    isPlaying,
+    currentTrackIndex,
+    playlistIds,
+    currentTitle,
+    currentAuthor,
+    playlistMeta,
+    trackMetaMap,
+    displayTitle,
+    displayAuthor,
+    displayThumbnail,
+    syncVolume,
+    handleIframeLoad,
+    handleTogglePlayPause,
+    handlePreviousTrack,
+    handleNextTrack,
+    handleSelectTrack
+  } = useYouTubePlayer({ musicUrl, musicVolume });
 
-  const iframeRef = useRef(null);
-  const ytPlayerRef = useRef(null);
-  const prevVolumeRef = useRef(musicVolume > 0 ? musicVolume : 75);
-  const fetchedTrackIdsRef = useRef(new Set());
-
-  const parsed = useMemo(() => parseYouTubeUrl(musicUrl), [musicUrl]);
-
-  // Adjust state during render when musicUrl prop changes (React recommended pattern)
-  const [prevParsedUrl, setPrevParsedUrl] = useState(musicUrl);
-  if (musicUrl !== prevParsedUrl) {
-    setPrevParsedUrl(musicUrl);
-    setTrackMetaMap({});
-    if (!parsed) {
-      setPlaylistIds([]);
-      setCurrentVideoId(null);
-      setCurrentTitle('');
-      setCurrentAuthor('');
-      setPlaylistMeta(null);
-      setCurrentTrackIndex(0);
-      setIsPlaying(false);
-    } else {
-      if (parsed.videoId) {
-        setCurrentVideoId(parsed.videoId);
-        setPlaylistIds([parsed.videoId]);
-      } else if (parsed.type === 'video' && parsed.id) {
-        setCurrentVideoId(parsed.id);
-        setPlaylistIds([parsed.id]);
-      } else {
-        setPlaylistIds([]);
-      }
-      setCurrentTrackIndex(0);
-      setIsPlaying(true);
-    }
-  }
-
-  // Reset track cache when musicUrl changes
-  useEffect(() => {
-    fetchedTrackIdsRef.current.clear();
-  }, [musicUrl]);
-
-  // Keep track of non-zero volume for unmuting
-  useEffect(() => {
-    if (musicVolume > 0) {
-      prevVolumeRef.current = musicVolume;
-    }
-  }, [musicVolume]);
-
-  // Release dragging state on global pointerup
-  useEffect(() => {
-    if (!isVolumeDragging) return;
-    const handlePointerUp = () => setIsVolumeDragging(false);
-    window.addEventListener('pointerup', handlePointerUp);
-    return () => window.removeEventListener('pointerup', handlePointerUp);
-  }, [isVolumeDragging]);
-
-  // Auto-close change link drawer whenever player is minimized or collapsed
+  // Auto-close change link drawer whenever player is minimized
   const [prevCollapsedState, setPrevCollapsedState] = useState(isCollapsed);
   if (isCollapsed !== prevCollapsedState) {
     setPrevCollapsedState(isCollapsed);
@@ -153,380 +67,6 @@ export function MusicPlayer({
       setInputFeedback(null);
     }
   }
-
-  // Fetch playlist-level metadata via oEmbed
-  useEffect(() => {
-    if (!parsed) return;
-
-    let isMounted = true;
-    const targetUrl = parsed.type === 'playlist'
-      ? `https://www.youtube.com/playlist?list=${parsed.id}`
-      : `https://www.youtube.com/watch?v=${parsed.id}`;
-
-    fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(targetUrl)}&format=json`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (!isMounted || !data) return;
-        setPlaylistMeta({
-          title: data.title || '',
-          author: data.author_name || 'YouTube Music',
-          thumbnail: data.thumbnail_url || (parsed.videoId ? `https://i.ytimg.com/vi/${parsed.videoId}/hqdefault.jpg` : null)
-        });
-      })
-      .catch(() => {});
-
-    return () => {
-      isMounted = false;
-    };
-  }, [parsed]);
-
-  // Fetch individual track titles/thumbnails for every item in playlistIds
-  useEffect(() => {
-    if (!playlistIds || playlistIds.length === 0) return;
-
-    let isMounted = true;
-    const missing = playlistIds.filter((id) => !fetchedTrackIdsRef.current.has(id));
-    if (missing.length === 0) return;
-
-    missing.forEach((id) => fetchedTrackIdsRef.current.add(id));
-
-    missing.forEach((id) => {
-      fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(`https://www.youtube.com/watch?v=${id}`)}&format=json`)
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data) => {
-          if (!isMounted || !data) return;
-          setTrackMetaMap((prev) => ({
-            ...prev,
-            [id]: {
-              title: data.title || '',
-              author: data.author_name || 'YouTube Music',
-              thumbnail: data.thumbnail_url || `https://i.ytimg.com/vi/${id}/mqdefault.jpg`
-            }
-          }));
-        })
-        .catch(() => {});
-    });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [playlistIds]);
-
-  // Send control command to YouTube player (via postMessage and YT.Player object)
-  const sendPlayerCommand = useCallback((func, args = []) => {
-    if (ytPlayerRef.current && typeof ytPlayerRef.current[func] === 'function') {
-      try {
-        ytPlayerRef.current[func](...args);
-      } catch {
-        // fallback to postMessage
-      }
-    }
-    const iframe = iframeRef.current;
-    if (iframe && iframe.contentWindow) {
-      try {
-        iframe.contentWindow.postMessage(
-          JSON.stringify({
-            event: 'command',
-            func: func,
-            args: args
-          }),
-          '*'
-        );
-      } catch {
-        // ignore cross-origin error
-      }
-    }
-  }, []);
-
-  // Sync volume to YouTube embed
-  const syncVolume = useCallback((vol) => {
-    sendPlayerCommand('setVolume', [vol]);
-    if (vol === 0) {
-      sendPlayerCommand('mute');
-    } else {
-      sendPlayerCommand('unMute');
-    }
-  }, [sendPlayerCommand]);
-
-  // YouTube postMessage listener to capture real-time player events and playlist queues
-  useEffect(() => {
-    const handleWindowMessage = (e) => {
-      if (!e.data || typeof e.data !== 'string') return;
-      try {
-        const payload = JSON.parse(e.data);
-        if (payload.event === 'infoDelivery' && payload.info) {
-          const info = payload.info;
-
-          // 1. Playback State (1 = PLAYING, 2 = PAUSED, 0 = ENDED, 3 = BUFFERING)
-          if (typeof info.playerState === 'number') {
-            setIsPlaying(info.playerState === 1);
-          }
-
-          // 2. Currently Playing Video Metadata
-          if (info.videoData) {
-            if (info.videoData.video_id) {
-              setCurrentVideoId(info.videoData.video_id);
-              setPlaylistIds((prev) => (prev.length === 0 ? [info.videoData.video_id] : prev));
-            }
-            if (info.videoData.title) {
-              setCurrentTitle(info.videoData.title);
-            }
-            if (info.videoData.author) {
-              setCurrentAuthor(info.videoData.author);
-            }
-          }
-
-          // 3. Playlist Video IDs Array
-          if (Array.isArray(info.playlist) && info.playlist.length > 0) {
-            setPlaylistIds((prev) => {
-              if (
-                prev.length === info.playlist.length &&
-                prev.every((val, idx) => val === info.playlist[idx])
-              ) {
-                return prev;
-              }
-              return info.playlist;
-            });
-          }
-
-          // 4. Playlist Index
-          if (typeof info.playlistIndex === 'number' && info.playlistIndex >= 0) {
-            setCurrentTrackIndex(info.playlistIndex);
-          }
-        }
-      } catch {
-        // Ignore non-json or unrelated messages
-      }
-    };
-
-    window.addEventListener('message', handleWindowMessage);
-    return () => window.removeEventListener('message', handleWindowMessage);
-  }, []);
-
-  const embedUrl = parsed?.embedUrl;
-
-  // Initialize YouTube Iframe Player API instance on iframe
-  useEffect(() => {
-    if (!embedUrl) return;
-
-    let isMounted = true;
-    let pollInterval = null;
-
-    loadYouTubeIframeApi().then((YT) => {
-      if (!isMounted || !iframeRef.current) return;
-
-      try {
-        ytPlayerRef.current = new YT.Player(iframeRef.current, {
-          events: {
-            onReady: (event) => {
-              if (!isMounted) return;
-              try {
-                event.target.setVolume(prevVolumeRef.current);
-
-                const list = event.target.getPlaylist();
-                if (Array.isArray(list) && list.length > 0) {
-                  setPlaylistIds(list);
-                }
-                const idx = event.target.getPlaylistIndex();
-                if (typeof idx === 'number' && idx >= 0) {
-                  setCurrentTrackIndex(idx);
-                }
-                const vData = event.target.getVideoData();
-                if (vData) {
-                  if (vData.video_id) {
-                    setCurrentVideoId(vData.video_id);
-                    setPlaylistIds((prev) => (prev.length === 0 ? [vData.video_id] : prev));
-                  }
-                  if (vData.title) setCurrentTitle(vData.title);
-                  if (vData.author) setCurrentAuthor(vData.author);
-                }
-              } catch {
-                // ignore
-              }
-            },
-            onStateChange: (event) => {
-              if (!isMounted) return;
-              setIsPlaying(event.data === 1);
-
-              try {
-                const list = event.target.getPlaylist();
-                if (Array.isArray(list) && list.length > 0) {
-                  setPlaylistIds(list);
-                }
-                const idx = event.target.getPlaylistIndex();
-                if (typeof idx === 'number' && idx >= 0) {
-                  setCurrentTrackIndex(idx);
-                }
-                const vData = event.target.getVideoData();
-                if (vData) {
-                  if (vData.video_id) {
-                    setCurrentVideoId(vData.video_id);
-                    setPlaylistIds((prev) => (prev.length === 0 ? [vData.video_id] : prev));
-                  }
-                  if (vData.title) setCurrentTitle(vData.title);
-                  if (vData.author) setCurrentAuthor(vData.author);
-                }
-              } catch {
-                // ignore
-              }
-            }
-          }
-        });
-
-        // Polling to catch playlist IDs once buffering starts
-        let polls = 0;
-        pollInterval = setInterval(() => {
-          if (!isMounted) return;
-          polls += 1;
-          try {
-            // Handshake message to iframe to trigger infoDelivery stream
-            iframeRef.current?.contentWindow?.postMessage(
-              JSON.stringify({ event: 'listening' }),
-              '*'
-            );
-
-            if (ytPlayerRef.current) {
-              const list = ytPlayerRef.current.getPlaylist?.();
-              if (Array.isArray(list) && list.length > 0) {
-                setPlaylistIds(list);
-                const idx = ytPlayerRef.current.getPlaylistIndex?.();
-                if (typeof idx === 'number' && idx >= 0) {
-                  setCurrentTrackIndex(idx);
-                }
-                const vData = ytPlayerRef.current.getVideoData?.();
-                if (vData) {
-                  if (vData.video_id) {
-                    setCurrentVideoId(vData.video_id);
-                    setPlaylistIds((prev) => (prev.length === 0 ? [vData.video_id] : prev));
-                  }
-                  if (vData.title) setCurrentTitle(vData.title);
-                  if (vData.author) setCurrentAuthor(vData.author);
-                }
-                clearInterval(pollInterval);
-              }
-            }
-          } catch {
-            // ignore
-          }
-          if (polls > 15) clearInterval(pollInterval);
-        }, 400);
-      } catch {
-        // ignore
-      }
-    });
-
-    return () => {
-      isMounted = false;
-      if (pollInterval) clearInterval(pollInterval);
-    };
-  }, [embedUrl]);
-
-  // Sync volume without re-initializing player
-  useEffect(() => {
-    syncVolume(musicVolume);
-  }, [musicVolume, syncVolume]);
-
-  const handleIframeLoad = () => {
-    const iframe = iframeRef.current;
-    if (iframe && iframe.contentWindow) {
-      try {
-        iframe.contentWindow.postMessage(JSON.stringify({ event: 'listening' }), '*');
-      } catch {
-        // ignore
-      }
-    }
-    setTimeout(() => {
-      syncVolume(musicVolume);
-    }, 400);
-  };
-
-  const handleTogglePlayPause = () => {
-    if (isPlaying) {
-      sendPlayerCommand('pauseVideo');
-      setIsPlaying(false);
-    } else {
-      sendPlayerCommand('playVideo');
-      setIsPlaying(true);
-    }
-  };
-
-  const handlePreviousTrack = () => {
-    sendPlayerCommand('previousVideo');
-    if (currentTrackIndex > 0) {
-      setCurrentTrackIndex((prev) => prev - 1);
-    }
-    setIsPlaying(true);
-  };
-
-  const handleNextTrack = () => {
-    sendPlayerCommand('nextVideo');
-    if (currentTrackIndex < playlistIds.length - 1) {
-      setCurrentTrackIndex((prev) => prev + 1);
-    }
-    setIsPlaying(true);
-  };
-
-  const handleSelectTrack = (index) => {
-    sendPlayerCommand('playVideoAt', [index]);
-    setCurrentTrackIndex(index);
-    setIsPlaying(true);
-  };
-
-  const handleVolumeBarPointerDown = (e) => {
-    e.stopPropagation();
-    const bar = e.currentTarget;
-    const updateFromClientX = (clientX) => {
-      const rect = bar.getBoundingClientRect();
-      if (rect.width <= 0) return;
-      const rawRatio = (clientX - rect.left) / rect.width;
-      const clampedRatio = Math.max(0, Math.min(1, rawRatio));
-      const newVol = Math.round(clampedRatio * 100);
-      setMusicVolume(newVol);
-      syncVolume(newVol);
-    };
-
-    updateFromClientX(e.clientX);
-    setIsVolumeDragging(true);
-
-    const onPointerMove = (moveEvent) => {
-      updateFromClientX(moveEvent.clientX);
-    };
-
-    const onPointerUp = () => {
-      setIsVolumeDragging(false);
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerup', onPointerUp);
-    };
-
-    window.addEventListener('pointermove', onPointerMove);
-    window.addEventListener('pointerup', onPointerUp);
-  };
-
-  const handleVolumeBarKeyDown = (e) => {
-    e.stopPropagation();
-    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
-      e.preventDefault();
-      const newVol = Math.min(100, musicVolume + 5);
-      setMusicVolume(newVol);
-      syncVolume(newVol);
-    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
-      e.preventDefault();
-      const newVol = Math.max(0, musicVolume - 5);
-      setMusicVolume(newVol);
-      syncVolume(newVol);
-    }
-  };
-
-  const handleToggleMute = () => {
-    if (musicVolume > 0) {
-      setMusicVolume(0);
-      syncVolume(0);
-    } else {
-      const restored = prevVolumeRef.current > 0 ? prevVolumeRef.current : 75;
-      setMusicVolume(restored);
-      syncVolume(restored);
-    }
-  };
 
   const handleApplyCustomUrl = (e) => {
     e?.preventDefault();
@@ -565,140 +105,16 @@ export function MusicPlayer({
 
   if (!isVisible) return null;
 
-  // Active track details
-  const activeVideoId =
-    currentVideoId ||
-    (playlistIds.length > 0 && playlistIds[currentTrackIndex]) ||
-    parsed?.videoId ||
-    parsed?.id ||
-    null;
-
-  const activeMeta = activeVideoId ? trackMetaMap[activeVideoId] : null;
-
-  const displayTitle =
-    currentTitle ||
-    activeMeta?.title ||
-    playlistMeta?.title ||
-    (parsed?.type === 'playlist' ? 'YouTube Music Playlist' : 'YouTube Music');
-
-  const displayAuthor =
-    currentAuthor ||
-    activeMeta?.author ||
-    playlistMeta?.author ||
-    'YouTube Music';
-
-  const displayThumbnail =
-    (activeVideoId ? `https://i.ytimg.com/vi/${activeVideoId}/mqdefault.jpg` : null) ||
-    activeMeta?.thumbnail ||
-    playlistMeta?.thumbnail ||
-    null;
-
   return (
     <>
       {/* Minimized player pill */}
       {isCollapsed && (
-        <div
-          className="music-player-container spotify-widget-container"
-          onPointerDown={(e) => e.stopPropagation()}
-          style={{
-            position: 'fixed',
-            bottom: '96px',
-            right: '36px',
-            zIndex: 996,
-            animation: 'fadeInUp 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
-          }}
-        >
-          <button
-            onClick={() => setIsCollapsed(false)}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '8px 14px',
-              borderRadius: '22px',
-              backgroundColor: 'rgba(18, 18, 18, 0.95)',
-              border: '1px solid rgba(255, 255, 255, 0.14)',
-              boxShadow: '0 10px 28px rgba(0, 0, 0, 0.5)',
-              color: '#FFFFFF',
-              cursor: 'pointer',
-              backdropFilter: 'blur(16px)',
-              transition: 'all 0.15s ease'
-            }}
-            title="Expand YouTube Music Player"
-            aria-label="Expand YouTube Music Player"
-          >
-            {/* Playback indicator dot */}
-            <span
-              style={{
-                width: '7px',
-                height: '7px',
-                borderRadius: '50%',
-                backgroundColor: '#FF0000',
-                boxShadow: isPlaying ? '0 0 10px #FF0000' : 'none',
-                flexShrink: 0
-              }}
-            />
-
-            {/* Current track thumbnail */}
-            {displayThumbnail ? (
-              <img
-                src={displayThumbnail}
-                alt="Track Cover"
-                style={{
-                  width: '20px',
-                  height: '20px',
-                  borderRadius: '5px',
-                  objectFit: 'cover'
-                }}
-              />
-            ) : (
-              <Music2 size={15} color="#FF0000" />
-            )}
-
-            {/* Title Snippet */}
-            <span
-              style={{
-                fontSize: '12px',
-                fontWeight: 600,
-                maxWidth: '130px',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                color: '#EEEEEE'
-              }}
-            >
-              {displayTitle || 'YT Music'}
-            </span>
-
-            {/* Equalizer animation */}
-            {isPlaying && (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-end',
-                  gap: '2px',
-                  height: '12px',
-                  marginLeft: '2px'
-                }}
-              >
-                <span
-                  className="music-eq-bar-1"
-                  style={{ width: '2px', backgroundColor: '#FF0000', borderRadius: '1px' }}
-                />
-                <span
-                  className="music-eq-bar-2"
-                  style={{ width: '2px', backgroundColor: '#FF0000', borderRadius: '1px' }}
-                />
-                <span
-                  className="music-eq-bar-3"
-                  style={{ width: '2px', backgroundColor: '#FF0000', borderRadius: '1px' }}
-                />
-              </div>
-            )}
-
-            <ChevronUp size={14} style={{ opacity: 0.7, marginLeft: '2px' }} />
-          </button>
-        </div>
+        <MusicPlayerPill
+          isPlaying={isPlaying}
+          displayThumbnail={displayThumbnail}
+          displayTitle={displayTitle}
+          onExpand={() => setIsCollapsed(false)}
+        />
       )}
 
       {/* Expanded audio player window */}
@@ -969,13 +385,13 @@ export function MusicPlayer({
                     <span
                       style={{
                         fontSize: '11px',
-                        fontWeight: 600,
+                        fontWeight: 700,
                         color: '#B3B3B3',
                         textTransform: 'uppercase',
-                        letterSpacing: '0.5px'
+                        letterSpacing: '0.6px'
                       }}
                     >
-                      Paste New YouTube / YT Music Link
+                      Paste New YouTube Link
                     </span>
                     <button
                       type="button"
@@ -983,71 +399,53 @@ export function MusicPlayer({
                       style={{
                         background: 'none',
                         border: 'none',
-                        color: '#888888',
+                        color: '#FF6B6B',
                         fontSize: '11px',
                         cursor: 'pointer',
-                        display: 'inline-flex',
+                        padding: 0,
+                        display: 'flex',
                         alignItems: 'center',
                         gap: '4px'
                       }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.color = '#FF4D4D';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.color = '#888888';
-                      }}
-                      title="Reset and clear link"
+                      title="Clear playlist link"
                     >
                       <RotateCcw size={11} />
-                      Reset
+                      <span>Reset</span>
                     </button>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ display: 'flex', gap: '6px' }}>
                     <input
                       type="text"
                       value={customInput}
                       onChange={(e) => setCustomInput(e.target.value)}
                       onKeyDown={(e) => e.stopPropagation()}
-                      placeholder="https://music.youtube.com/playlist?list=..."
+                      placeholder="Paste YouTube or YouTube Music link..."
                       autoFocus
                       style={{
                         flex: 1,
-                        padding: '8px 12px',
+                        padding: '7px 10px',
                         borderRadius: '8px',
-                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        border: '1px solid rgba(255, 255, 255, 0.16)',
                         backgroundColor: '#121212',
                         color: '#FFFFFF',
                         fontSize: '12px',
                         outline: 'none',
-                        fontFamily: 'inherit',
-                        transition: 'border-color 0.15s ease'
-                      }}
-                      onFocus={(e) => {
-                        e.target.style.borderColor = '#FF0000';
-                      }}
-                      onBlur={(e) => {
-                        e.target.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                        fontFamily: 'inherit'
                       }}
                     />
                     <button
                       type="submit"
                       style={{
-                        padding: '8px 14px',
+                        padding: '7px 12px',
                         borderRadius: '8px',
                         backgroundColor: '#FF0000',
                         color: '#FFFFFF',
-                        fontWeight: 700,
-                        fontSize: '12px',
+                        fontWeight: 600,
+                        fontSize: '11.5px',
                         border: 'none',
                         cursor: 'pointer',
-                        transition: 'all 0.15s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#E60000';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = '#FF0000';
+                        whiteSpace: 'nowrap'
                       }}
                     >
                       Apply
@@ -1074,73 +472,39 @@ export function MusicPlayer({
               </div>
             )}
 
-            {/* Current track details and playback controls */}
+            {/* Currently Playing Card */}
             <div
               style={{
+                padding: '14px 16px',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px',
-                padding: '12px 14px',
-                backgroundColor: '#161616',
-                borderBottom: '1px solid rgba(255, 255, 255, 0.06)'
+                backgroundColor: '#161616'
               }}
             >
-              {/* Track cover thumbnail */}
+              {/* Thumbnail */}
               {displayThumbnail ? (
-                <div style={{ position: 'relative', flexShrink: 0 }}>
-                  <img
-                    src={displayThumbnail}
-                    alt={displayTitle}
-                    style={{
-                      width: '52px',
-                      height: '52px',
-                      borderRadius: '8px',
-                      objectFit: 'cover',
-                      boxShadow: isPlaying
-                        ? '0 6px 16px rgba(255, 0, 0, 0.25), 0 2px 8px rgba(0, 0, 0, 0.5)'
-                        : '0 4px 12px rgba(0, 0, 0, 0.45)',
-                      border: '1px solid rgba(255, 255, 255, 0.12)',
-                      display: 'block',
-                      transition: 'box-shadow 0.2s ease'
-                    }}
-                  />
-                  {isPlaying && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        bottom: '3px',
-                        right: '3px',
-                        backgroundColor: 'rgba(0, 0, 0, 0.75)',
-                        borderRadius: '4px',
-                        padding: '1px 3px',
-                        display: 'flex',
-                        alignItems: 'flex-end',
-                        gap: '2px',
-                        height: '10px'
-                      }}
-                    >
-                      <span
-                        className="music-eq-bar-1"
-                        style={{ width: '2px', backgroundColor: '#FF0000', borderRadius: '1px' }}
-                      />
-                      <span
-                        className="music-eq-bar-2"
-                        style={{ width: '2px', backgroundColor: '#FF0000', borderRadius: '1px' }}
-                      />
-                      <span
-                        className="music-eq-bar-3"
-                        style={{ width: '2px', backgroundColor: '#FF0000', borderRadius: '1px' }}
-                      />
-                    </div>
-                  )}
-                </div>
+                <img
+                  src={displayThumbnail}
+                  alt={displayTitle}
+                  style={{
+                    width: '52px',
+                    height: '52px',
+                    borderRadius: '8px',
+                    objectFit: 'cover',
+                    backgroundColor: '#242424',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
+                    flexShrink: 0
+                  }}
+                />
               ) : (
                 <div
                   style={{
                     width: '52px',
                     height: '52px',
                     borderRadius: '8px',
-                    backgroundColor: 'rgba(255, 0, 0, 0.15)',
+                    backgroundColor: '#242424',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -1151,13 +515,12 @@ export function MusicPlayer({
                 </div>
               )}
 
-              {/* Title & Artist & Counter Badge */}
-              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              {/* Title, Artist & Track indicator */}
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   style={{
                     fontSize: '13px',
                     fontWeight: 700,
-                    lineHeight: '17px',
                     color: '#FFFFFF',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
@@ -1171,7 +534,6 @@ export function MusicPlayer({
                 <div
                   style={{
                     fontSize: '11px',
-                    lineHeight: '15px',
                     color: '#A0A0A0',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
@@ -1328,382 +690,27 @@ export function MusicPlayer({
                   <SkipForward size={16} />
                 </button>
 
-                {/* Sound changer: hides slider when not hovered, expands smoothly on hover */}
-                <div
-                  onMouseEnter={() => setIsVolumeHovered(true)}
-                  onMouseLeave={() => setIsVolumeHovered(false)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: isVolumeVisible ? '3px 8px 3px 4px' : '3px 4px',
-                    borderRadius: '16px',
-                    backgroundColor: isVolumeVisible ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
-                    border: isVolumeVisible ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid transparent',
-                    marginLeft: '2px',
-                    transition: 'background-color 0.2s ease, border-color 0.2s ease, padding 0.2s ease'
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={handleToggleMute}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      padding: '4px',
-                      color: musicVolume > 0 ? '#FFFFFF' : '#888888',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderRadius: '50%',
-                      transition: 'color 0.15s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = '#FF0000';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = musicVolume > 0 ? '#FFFFFF' : '#888888';
-                    }}
-                    title={musicVolume > 0 ? `Mute Music (${musicVolume}%)` : 'Unmute Music'}
-                    aria-label={musicVolume > 0 ? `Mute Music (${musicVolume}%)` : 'Unmute Music'}
-                  >
-                    {musicVolume === 0 ? (
-                      <VolumeX size={16} color="#888888" />
-                    ) : musicVolume < 50 ? (
-                      <Volume1 size={16} color="#FFFFFF" />
-                    ) : (
-                      <Volume2 size={16} color="#FFFFFF" />
-                    )}
-                  </button>
-
-                  <div
-                    style={{
-                      width: isVolumeVisible ? '88px' : '0px',
-                      opacity: isVolumeVisible ? 1 : 0,
-                      overflow: 'hidden',
-                      transition: 'width 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.18s ease',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      pointerEvents: isVolumeVisible ? 'auto' : 'none',
-                      marginLeft: isVolumeVisible ? '2px' : '0px'
-                    }}
-                  >
-                    {/* Flat bar volume slider without circular dot */}
-                    <div
-                      role="slider"
-                      tabIndex={0}
-                      aria-label="Music Volume"
-                      aria-valuenow={musicVolume}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                      onPointerDown={handleVolumeBarPointerDown}
-                      onKeyDown={handleVolumeBarKeyDown}
-                      style={{
-                        width: '56px',
-                        height: '14px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        cursor: 'pointer',
-                        outline: 'none',
-                        userSelect: 'none',
-                        touchAction: 'none'
-                      }}
-                      title={`Music Volume: ${musicVolume}%`}
-                    >
-                      <div
-                        style={{
-                          width: '100%',
-                          height: '5px',
-                          backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                          borderRadius: '2.5px',
-                          overflow: 'hidden',
-                          position: 'relative'
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: `${musicVolume}%`,
-                            height: '100%',
-                            backgroundColor: '#FF0000',
-                            borderRadius: '2.5px',
-                            transition: isVolumeDragging ? 'none' : 'width 0.1s ease'
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    <span
-                      style={{
-                        fontSize: '10.5px',
-                        color: '#B3B3B3',
-                        minWidth: '24px',
-                        textAlign: 'right',
-                        fontVariantNumeric: 'tabular-nums',
-                        userSelect: 'none'
-                      }}
-                    >
-                      {musicVolume}%
-                    </span>
-                  </div>
-                </div>
+                {/* Modular Volume Controller */}
+                <VolumeControl
+                  musicVolume={musicVolume}
+                  setMusicVolume={setMusicVolume}
+                  syncVolume={syncVolume}
+                  prevVolumeRef={prevVolumeRef}
+                />
               </div>
             </div>
 
-            {/* Playlist tracklist */}
-            <div style={{ padding: '10px 12px 14px 12px', backgroundColor: '#121212' }}>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '8px',
-                  padding: '0 4px'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <ListMusic size={14} color="#FF0000" />
-                  <span
-                    style={{
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      color: '#B3B3B3',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.6px'
-                    }}
-                  >
-                    Songs inside playlist
-                  </span>
-                </div>
-                <span
-                  style={{
-                    fontSize: '10px',
-                    fontWeight: 600,
-                    color: '#888888',
-                    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-                    padding: '2px 6px',
-                    borderRadius: '10px'
-                  }}
-                >
-                  {playlistIds.length > 0 ? `${playlistIds.length} tracks` : '1 track'}
-                </span>
-              </div>
-
-              {/* Track list */}
-              <div
-                className="playlist-tracks-scroll"
-                style={{
-                  maxHeight: '200px',
-                  overflowY: 'auto',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '4px',
-                  paddingRight: '2px'
-                }}
-              >
-                {playlistIds.length > 0 ? (
-                  playlistIds.map((trackId, index) => {
-                    const isCurrent = index === currentTrackIndex;
-                    const itemMeta = trackMetaMap[trackId];
-                    const itemTitle =
-                      (isCurrent && currentTitle) ||
-                      itemMeta?.title ||
-                      `Track ${index + 1}`;
-                    const itemAuthor =
-                      (isCurrent && currentAuthor) ||
-                      itemMeta?.author ||
-                      playlistMeta?.author ||
-                      '';
-                    const itemThumbnail =
-                      itemMeta?.thumbnail || `https://i.ytimg.com/vi/${trackId}/default.jpg`;
-
-                    return (
-                      <button
-                        key={`${trackId}-${index}`}
-                        type="button"
-                        onClick={() => handleSelectTrack(index)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '10px',
-                          padding: '7px 8px',
-                          borderRadius: '8px',
-                          backgroundColor: isCurrent
-                            ? 'rgba(255, 0, 0, 0.16)'
-                            : 'rgba(255, 255, 255, 0.03)',
-                          border: isCurrent
-                            ? '1px solid rgba(255, 0, 0, 0.35)'
-                            : '1px solid transparent',
-                          color: '#FFFFFF',
-                          cursor: 'pointer',
-                          textAlign: 'left',
-                          transition: 'all 0.15s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!isCurrent) {
-                            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.07)';
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!isCurrent) {
-                            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.03)';
-                          }
-                        }}
-                        title={`Play "${itemTitle}"`}
-                      >
-                        {/* Track Index or Equalizer */}
-                        <div
-                          style={{
-                            width: '20px',
-                            textAlign: 'center',
-                            fontSize: '11px',
-                            fontWeight: 600,
-                            color: isCurrent ? '#FF4D4D' : '#777777',
-                            flexShrink: 0
-                          }}
-                        >
-                          {isCurrent && isPlaying ? (
-                            <div
-                              style={{
-                                display: 'flex',
-                                alignItems: 'flex-end',
-                                gap: '2px',
-                                height: '12px',
-                                justifyContent: 'center'
-                              }}
-                            >
-                              <span
-                                className="music-eq-bar-1"
-                                style={{
-                                  width: '2px',
-                                  backgroundColor: '#FF0000',
-                                  borderRadius: '1px'
-                                }}
-                              />
-                              <span
-                                className="music-eq-bar-2"
-                                style={{
-                                  width: '2px',
-                                  backgroundColor: '#FF0000',
-                                  borderRadius: '1px'
-                                }}
-                              />
-                              <span
-                                className="music-eq-bar-3"
-                                style={{
-                                  width: '2px',
-                                  backgroundColor: '#FF0000',
-                                  borderRadius: '1px'
-                                }}
-                              />
-                            </div>
-                          ) : (
-                            index + 1
-                          )}
-                        </div>
-
-                        {/* Song Thumbnail */}
-                        <img
-                          src={itemThumbnail}
-                          alt={itemTitle}
-                          style={{
-                            width: '34px',
-                            height: '34px',
-                            borderRadius: '6px',
-                            objectFit: 'cover',
-                            backgroundColor: '#222222',
-                            flexShrink: 0
-                          }}
-                        />
-
-                        {/* Song Title & Author */}
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div
-                            style={{
-                              fontSize: '11.5px',
-                              fontWeight: isCurrent ? 700 : 500,
-                              color: isCurrent ? '#FFFFFF' : '#D0D0D0',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis'
-                            }}
-                          >
-                            {itemTitle}
-                          </div>
-                          {itemAuthor && (
-                            <div
-                              style={{
-                                fontSize: '10px',
-                                color: '#888888',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                marginTop: '1px'
-                              }}
-                            >
-                              {itemAuthor}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Playing badge or Play indicator */}
-                        <div style={{ flexShrink: 0, paddingLeft: '4px' }}>
-                          {isCurrent ? (
-                            <span
-                              style={{
-                                fontSize: '9px',
-                                fontWeight: 700,
-                                color: '#FF4D4D',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.5px'
-                              }}
-                            >
-                              {isPlaying ? 'Playing' : 'Paused'}
-                            </span>
-                          ) : (
-                            <Play size={12} color="#777777" />
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })
-                ) : (
-                  <div
-                    style={{
-                      padding: '16px',
-                      textAlign: 'center',
-                      color: '#888888',
-                      fontSize: '11px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Loader2 size={13} className="spin" />
-                      <span>{playlistMeta?.title ? 'Connecting to playlist tracks...' : 'Loading playlist tracks...'}</span>
-                    </div>
-                    {playlistMeta?.title && (
-                      <div
-                        style={{
-                          fontSize: '10px',
-                          color: '#777777',
-                          maxWidth: '260px',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
-                        }}
-                        title={playlistMeta.title}
-                      >
-                        {playlistMeta.title}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
+            {/* Modular Playlist Tracklist */}
+            <TrackList
+              playlistIds={playlistIds}
+              currentTrackIndex={currentTrackIndex}
+              currentTitle={currentTitle}
+              currentAuthor={currentAuthor}
+              playlistMeta={playlistMeta}
+              trackMetaMap={trackMetaMap}
+              isPlaying={isPlaying}
+              handleSelectTrack={handleSelectTrack}
+            />
 
             {/* Hidden audio playback iframe */}
             <div

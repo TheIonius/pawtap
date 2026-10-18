@@ -13,9 +13,11 @@ import {
   Gauge,
   Skull,
   EyeOff,
-  Flashlight
+  Flashlight,
+  Lock,
+  Award
 } from 'lucide-react';
-import { THEMES, FONTS, CARET_STYLES, COMPANION_TYPES } from '../constants/themes';
+import { THEMES, FONTS, CARET_STYLES, COMPANION_TYPES, COMPANION_ACCESSORIES } from '../constants/themes';
 import { SOUND_PRESETS, playKeySound } from '../audio/soundEngine';
 import { Avatar } from './Avatar';
 
@@ -30,6 +32,9 @@ export function SettingsModal({
   setCaretStyle,
   companionType,
   setCompanionType,
+  companionHat = 'none',
+  setCompanionHat = () => {},
+  lifetimeWords = 0,
   soundPreset,
   setSoundPreset,
   soundVolume,
@@ -532,14 +537,16 @@ export function SettingsModal({
               A translucent ghost caret glides at your target speed across words so you know if you are ahead or behind.
             </p>
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
               {[
                 { id: 'off', label: 'Off' },
                 { id: 'pb', label: `Personal Best (${personalBestWpm > 0 ? personalBestWpm : 60} wpm)` },
+                { id: '40', label: '40 wpm' },
                 { id: '60', label: '60 wpm' },
                 { id: '80', label: '80 wpm' },
                 { id: '100', label: '100 wpm' },
-                { id: '120', label: '120 wpm' }
+                { id: '120', label: '120 wpm' },
+                { id: '140', label: '140 wpm' }
               ].map((opt) => {
                 const isActive = paceCaret === opt.id;
                 return (
@@ -553,6 +560,48 @@ export function SettingsModal({
                   </button>
                 );
               })}
+
+              {/* Custom target pace input */}
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '4px 10px',
+                  borderRadius: '8px',
+                  border: (!['off', 'pb', '40', '60', '80', '100', '120', '140'].includes(paceCaret))
+                    ? '1px solid var(--accent)'
+                    : '1px solid var(--border)',
+                  backgroundColor: (!['off', 'pb', '40', '60', '80', '100', '120', '140'].includes(paceCaret))
+                    ? 'rgba(var(--accent-rgb, 184, 120, 65), 0.12)'
+                    : 'var(--surface)',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <span style={{ fontSize: '12px', color: 'var(--text-sub)' }}>custom:</span>
+                <input
+                  type="number"
+                  min="10"
+                  max="300"
+                  placeholder="e.g. 75"
+                  value={!['off', 'pb', '40', '60', '80', '100', '120', '140'].includes(paceCaret) ? paceCaret : ''}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9]/g, '');
+                    if (val) setPaceCaret(val);
+                  }}
+                  style={{
+                    width: '54px',
+                    background: 'none',
+                    border: 'none',
+                    outline: 'none',
+                    color: 'var(--text-main)',
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '12.5px',
+                    fontWeight: 600
+                  }}
+                />
+                <span style={{ fontSize: '11px', color: 'var(--text-sub)' }}>wpm</span>
+              </div>
             </div>
           </div>
 
@@ -607,6 +656,80 @@ export function SettingsModal({
                 );
               })}
             </div>
+
+            {/* Companion Unlockable Milestones & Accessories */}
+            {companionType !== 'none' && (
+              <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Award size={14} color="var(--accent)" />
+                    <span style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--text-main)' }}>
+                      Unlockable Hats & Accessories
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '11px', color: 'var(--text-sub)', fontFamily: 'var(--font-mono)' }}>
+                    {lifetimeWords.toLocaleString()} lifetime words
+                  </span>
+                </div>
+
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+                    gap: '8px'
+                  }}
+                >
+                  {COMPANION_ACCESSORIES.map((acc) => {
+                    const isUnlocked = lifetimeWords >= acc.requiredWords;
+                    const isEquipped = companionHat === acc.id;
+
+                    return (
+                      <button
+                        key={acc.id}
+                        disabled={!isUnlocked}
+                        onClick={() => isUnlocked && setCompanionHat(acc.id)}
+                        style={{
+                          padding: '10px 8px',
+                          borderRadius: '10px',
+                          border: isEquipped
+                            ? '1.5px solid var(--accent)'
+                            : isUnlocked
+                            ? '1px solid var(--border)'
+                            : '1px dashed var(--border)',
+                          backgroundColor: isEquipped
+                            ? 'rgba(var(--accent-rgb, 184, 120, 65), 0.12)'
+                            : 'var(--surface)',
+                          opacity: isUnlocked ? 1 : 0.5,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: '4px',
+                          cursor: isUnlocked ? 'pointer' : 'not-allowed',
+                          textAlign: 'center',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <div style={{ fontSize: '20px', lineHeight: 1 }}>{acc.icon}</div>
+                        <span style={{ fontSize: '11.5px', fontWeight: 600, color: isEquipped ? 'var(--accent)' : 'var(--text-main)' }}>
+                          {acc.name}
+                        </span>
+                        <span style={{ fontSize: '9.5px', color: 'var(--text-sub)' }}>
+                          {isUnlocked
+                            ? isEquipped ? 'Equipped' : acc.description
+                            : `Unlock at ${acc.requiredWords.toLocaleString()} w`}
+                        </span>
+                        {!isUnlocked && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '9px', color: 'var(--text-sub)', marginTop: '2px' }}>
+                            <Lock size={10} />
+                            <span>Locked</span>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Audio and key sound controls */}

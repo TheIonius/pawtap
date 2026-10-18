@@ -26,6 +26,8 @@ export default function App() {
   const [caretStyle, setCaretStyle] = useLocalStorage('pawtap_caret', 'underline');
   const [paceCaret, setPaceCaret] = useLocalStorage('pawtap_pace_caret', 'off');
   const [companionType, setCompanionType] = useLocalStorage('pawtap_companion', 'cat');
+  const [companionHat, setCompanionHat] = useLocalStorage('pawtap_companion_hat', 'none');
+  const [lifetimeWords, setLifetimeWords] = useLocalStorage('pawtap_lifetime_words', 0);
   const [soundPreset, setSoundPreset] = useLocalStorage('pawtap_sound_preset', 'matcha');
   const [soundVolume, setSoundVolume] = useLocalStorage('pawtap_sound_vol', 0.65);
   const [showKeyboard, setShowKeyboard] = useLocalStorage('pawtap_show_keyboard', false);
@@ -123,6 +125,9 @@ export default function App() {
 
     setLastResult(enrichedResult);
     setTestsCompleted(prev => (prev || 0) + 1);
+    if (result.wordsCompleted > 0) {
+      setLifetimeWords(prev => (prev || 0) + result.wordsCompleted);
+    }
 
     if (isNewRecord) {
       setPersonalBestWpm(result.wpm);
@@ -148,7 +153,7 @@ export default function App() {
         // Ignored if canvas-confetti unavailable
       }
     }
-  }, [personalBestWpm, activeTheme, setTestsCompleted, setPersonalBestWpm]);
+  }, [personalBestWpm, activeTheme, setTestsCompleted, setPersonalBestWpm, setLifetimeWords]);
 
   const savedModeConfigRef = useRef(null);
   const engineRef = useRef(null);
@@ -349,6 +354,41 @@ export default function App() {
     engine.initializeTest(practiceWords);
   }, [lastResult, mode, timeLimit, wordLimit, quoteLength, punctuation, numbers, language, vocabularyMode, engine]);
 
+  // Practice the exact words mistyped during the last test
+  const handlePracticeMissedWords = useCallback((specificWords = null) => {
+    const rawWords = specificWords && specificWords.length > 0
+      ? specificWords
+      : lastResult?.missedWords;
+
+    if (!rawWords || rawWords.length === 0) {
+      handlePracticeErrors();
+      return;
+    }
+
+    if (!savedModeConfigRef.current) {
+      savedModeConfigRef.current = {
+        mode,
+        timeLimit,
+        wordLimit,
+        quoteLength
+      };
+    }
+
+    // Repeat words up to 10-15 words so the drill has solid practice length
+    let practiceList = [...rawWords];
+    while (practiceList.length < 10) {
+      practiceList = practiceList.concat(rawWords);
+    }
+    if (practiceList.length > 20) {
+      practiceList = practiceList.slice(0, 20);
+    }
+
+    setMode('words');
+    setWordLimit(practiceList.length);
+    setLastResult(null);
+    engine.initializeTest(practiceList);
+  }, [lastResult, mode, timeLimit, wordLimit, quoteLength, engine, handlePracticeErrors]);
+
   // Handle Escape key to close open modal or toggle settings
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
@@ -482,6 +522,7 @@ export default function App() {
               <div style={{ marginBottom: '8px' }}>
                 <Companion
                   type={companionType}
+                  accessory={companionHat}
                   isTyping={engine.isActivelyTyping}
                   status={engine.status}
                   wpm={engine.liveWpm}
@@ -529,6 +570,7 @@ export default function App() {
               result={lastResult}
               onRestart={handleRestart}
               onPracticeErrors={handlePracticeErrors}
+              onPracticeMissedWords={handlePracticeMissedWords}
               profile={safeProfile}
             />
           )}
@@ -626,6 +668,9 @@ export default function App() {
         setCaretStyle={setCaretStyle}
         companionType={companionType}
         setCompanionType={setCompanionType}
+        companionHat={companionHat}
+        setCompanionHat={setCompanionHat}
+        lifetimeWords={lifetimeWords}
         soundPreset={soundPreset}
         setSoundPreset={setSoundPreset}
         soundVolume={soundVolume}
