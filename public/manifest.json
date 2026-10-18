@@ -1,0 +1,20 @@
+{
+  "name": "pawtap • a gentle typing sanctuary",
+  "short_name": "pawtap",
+  "description": "A cozy, minimalist, and gentle mechanical keyboard typing sanctuary with lo-fi beats.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F5EFE6",
+  "theme_color": "#D4A373",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "48x48 72x72 96x96 128x128 192x192 256x256 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["utilities", "productivity", "games", "lifestyle"]
+}
