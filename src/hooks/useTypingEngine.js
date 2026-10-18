@@ -5,8 +5,7 @@ import { calculateWpm, calculateRawWpm, calculateAccuracy, calculateConsistency 
 import { playKeySound } from '../audio/soundEngine';
 
 /**
- * Calculates net correct characters directly from actual words and typed history.
- * Guarantees zero double-counting, zero drift on backspaces, and 100% precision metrics.
+ * Calculates net correct characters directly from words and typed history.
  */
 function getNetCorrectChars(words, typedHistory, currentWordIndex, currentInput) {
   let correct = 0;
@@ -343,7 +342,7 @@ export function useTypingEngine({
     onFinish
   ]);
 
-  // 3. High-Precision Real-Time Clock Loop (Fluid & Butter-Smooth)
+  // 3. Real-time clock interval loop
   useEffect(() => {
     if (status !== 'running' || isPaused) return;
 
@@ -417,6 +416,11 @@ export function useTypingEngine({
       return;
     }
 
+    // Allow all Alt combinations (e.g. Alt+K to toggle visual keyboard) except Alt+Backspace
+    if (e.altKey && !e.ctrlKey && e.key !== 'Backspace') {
+      return;
+    }
+
     // 2. Restart shortcut: Tab
     if (e.key === 'Tab') {
       e.preventDefault();
@@ -467,7 +471,7 @@ export function useTypingEngine({
 
     const targetWord = words[currentWordIndex] || '';
 
-    // Play synthetic creamy mechanical keyboard sound with key parameter
+    // Play keystroke sound
     playKeySound(soundPreset, soundVolume, e.key);
 
     // Track total keystroke

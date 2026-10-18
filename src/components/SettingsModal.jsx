@@ -4,17 +4,12 @@ import {
   Palette,
   Type,
   Volume2,
-  VolumeX,
   Sliders,
   Cat,
   Coffee,
   Sprout,
-  Headphones,
   Sparkles,
-  CloudRain,
-  Moon,
-  Sun,
-  Music,
+  Music2,
   Gauge,
   Skull,
   EyeOff,
@@ -22,7 +17,7 @@ import {
 } from 'lucide-react';
 import { THEMES, FONTS, CARET_STYLES, COMPANION_TYPES } from '../constants/themes';
 import { SOUND_PRESETS, playKeySound } from '../audio/soundEngine';
-import { AMBIENT_PRESETS } from '../audio/ambientEngine';
+import { Avatar } from './Avatar';
 
 export function SettingsModal({
   isOpen,
@@ -39,10 +34,6 @@ export function SettingsModal({
   setSoundPreset,
   soundVolume,
   setSoundVolume,
-  ambientSound,
-  setAmbientSoundType,
-  ambientVolume,
-  setAmbientVolume,
   vocabularyMode = 'cozy',
   setVocabularyMode = () => {},
   challengeMods = [],
@@ -52,7 +43,20 @@ export function SettingsModal({
   setChallengeMode = null,
   paceCaret = 'off',
   setPaceCaret = () => {},
-  personalBestWpm = 0
+  personalBestWpm = 0,
+  profile,
+  onOpenProfile,
+  musicUrl = '',
+  setMusicUrl = () => {},
+  isMusicVisible = true,
+  setIsMusicVisible = () => {},
+  musicVolume = 75,
+  setMusicVolume = () => {},
+  // Backwards compatibility props
+  spotifyPlaylistUrl = '',
+  setSpotifyPlaylistUrl = null,
+  isSpotifyVisible = null,
+  setIsSpotifyVisible = null
 }) {
   React.useEffect(() => {
     if (!isOpen) return;
@@ -95,6 +99,10 @@ export function SettingsModal({
     if (setChallengeMode) setChallengeMode('normal');
   };
 
+  const effectiveMusicUrl = musicUrl || spotifyPlaylistUrl || '';
+  const effectiveIsMusicVisible = typeof isMusicVisible === 'boolean' ? isMusicVisible : (isSpotifyVisible ?? true);
+  const effectiveMusicVolume = typeof musicVolume === 'number' ? musicVolume : 75;
+
   return (
     <div
       style={{
@@ -107,18 +115,19 @@ export function SettingsModal({
         padding: '20px'
       }}
     >
-      {/* 1. Fast GPU-efficient dimming backdrop scrim (zero rasterization lag on hover) */}
+      {/* Backdrop scrim */}
       <div
         onClick={onClose}
         style={{
           position: 'absolute',
           inset: 0,
           backgroundColor: 'rgba(18, 15, 12, 0.65)',
-          transform: 'translateZ(0)'
+          transform: 'translateZ(0)',
+          animation: 'fadeIn 0.26s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
       />
 
-      {/* 2. Isolated Modal Window */}
+      {/* Modal dialog container */}
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
@@ -134,13 +143,13 @@ export function SettingsModal({
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          animation: 'modalSlideUp 0.22s ease-out',
+          animation: 'modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
           transform: 'translateZ(0)',
           contain: 'content',
           isolation: 'isolate'
         }}
       >
-        {/* Modal Header */}
+        {/* Modal header */}
         <div
           style={{
             padding: '20px 24px',
@@ -166,7 +175,7 @@ export function SettingsModal({
           </button>
         </div>
 
-        {/* Modal Body (Scrollable with hidden scrollbar & fluid performance) */}
+        {/* Modal body */}
         <div
           className="no-scrollbar"
           style={{
@@ -180,6 +189,56 @@ export function SettingsModal({
             gap: '28px'
           }}
         >
+          {/* 0. Typist Identity Banner */}
+          {profile && (
+            <div
+              className="stagger-item"
+              style={{
+                backgroundColor: 'var(--surface)',
+                border: '1.5px solid var(--border)',
+                borderRadius: '16px',
+                padding: '14px 18px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '12px',
+                flexWrap: 'wrap',
+                animationDelay: '30ms'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <Avatar profile={profile} size={44} />
+                <div>
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-main)' }}>
+                    {profile.name?.trim() || 'Anonymous Typist'}
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-sub)' }}>
+                    Personal display name & picture
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  onOpenProfile?.();
+                }}
+                className="pill-btn"
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: '10px',
+                  backgroundColor: 'var(--surface-hover)',
+                  border: '1px solid var(--border)',
+                  color: 'var(--accent)',
+                  fontWeight: 600,
+                  fontSize: '12.5px',
+                  cursor: 'pointer'
+                }}
+              >
+                Edit Identity
+              </button>
+            </div>
+          )}
+
           {/* 1. Theme Color Palette */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
@@ -236,7 +295,7 @@ export function SettingsModal({
             </div>
           </div>
 
-          {/* 2. Typography & Fonts (Accommodated & Space-Efficient) */}
+          {/* Typography and fonts */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
               <Type size={16} color="var(--accent)" />
@@ -281,7 +340,7 @@ export function SettingsModal({
             </div>
           </div>
 
-          {/* 3. Difficulty & Challenge Mode */}
+          {/* Difficulty and challenge mods */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
               <Gauge size={16} color="var(--accent)" />
@@ -290,7 +349,7 @@ export function SettingsModal({
               </h3>
             </div>
 
-            {/* A. Typing Mechanics Challenge (osu! Style Multi-Select Modifiers) */}
+            {/* Challenge modifiers */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
               <div style={{ fontSize: '11.5px', color: 'var(--text-sub)', fontWeight: 500 }}>
                 osu! Difficulty Modifiers (Multi-Select)
@@ -455,7 +514,7 @@ export function SettingsModal({
             </div>
           </div>
 
-          {/* 4B. Pace Caret / Ghost Caret */}
+          {/* Pace caret */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -497,7 +556,7 @@ export function SettingsModal({
             </div>
           </div>
 
-          {/* 5. Cozy Companion */}
+          {/* Interactive companion */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
               <Cat size={16} color="var(--accent)" />
@@ -550,7 +609,7 @@ export function SettingsModal({
             </div>
           </div>
 
-          {/* 6. Sound & Atmosphere Controls */}
+          {/* Audio and key sound controls */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
               <Volume2 size={16} color="var(--accent)" />
@@ -597,65 +656,117 @@ export function SettingsModal({
             </div>
           </div>
 
-          {/* 7. Ambient Atmosphere */}
+          {/* YouTube Music controls */}
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-              <CloudRain size={16} color="var(--accent)" />
-              <h3 style={{ fontSize: '14px', fontWeight: 600, margin: 0, color: 'var(--text-main)' }}>
-                Calming Ambient Background Sound
-              </h3>
-            </div>
-
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>
-              {AMBIENT_PRESETS.map((ap) => {
-                const isActive = ambientSound === ap.id;
-                return (
-                  <button
-                    key={ap.id}
-                    onClick={() => {
-                      setAmbientSoundType(ap.id);
-                      if (ap.id !== 'none' && ambientVolume <= 0) {
-                        setAmbientVolume(0.25);
-                      }
-                    }}
-                    className={`pill-btn ${isActive ? 'active' : ''}`}
-                    style={{ padding: '8px 14px' }}
-                  >
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                      {ap.id === 'none' && <VolumeX size={13} />}
-                      {ap.id === 'rain' && <CloudRain size={13} />}
-                      {ap.id === 'midnight' && <Moon size={13} />}
-                      {ap.id === 'afternoon' && <Sun size={13} />}
-                      {ap.id === 'starlit' && <Sparkles size={13} />}
-                      {ap.id === 'cafe' && <Coffee size={13} />}
-                      {ap.id === 'sunbeam' && <Music size={13} />}
-                      {['none', 'rain', 'midnight', 'afternoon', 'starlit', 'cafe', 'sunbeam'].indexOf(ap.id) === -1 && <Headphones size={13} />}
-                      <span>{ap.name}</span>
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {ambientSound !== 'none' && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '0 4px' }}>
-                <span style={{ fontSize: '12px', color: 'var(--text-sub)', width: '90px' }}>
-                  Ambient Vol:
-                </span>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.05"
-                  value={ambientVolume}
-                  onChange={(e) => setAmbientVolume(parseFloat(e.target.value))}
-                  style={{ flex: 1, accentColor: 'var(--accent)' }}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span
+                  style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    backgroundColor: '#FF0000',
+                    boxShadow: '0 0 6px #FF0000'
+                  }}
                 />
-                <span style={{ fontSize: '12px', fontFamily: 'monospace', color: 'var(--text-main)', width: '36px' }}>
-                  {Math.round(ambientVolume * 100)}%
-                </span>
+                <Music2 size={16} color="#FF0000" />
+                <h3 style={{ fontSize: '14px', fontWeight: 600, margin: 0, color: 'var(--text-main)' }}>
+                  YouTube Music Sanctuary
+                </h3>
               </div>
-            )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !effectiveIsMusicVisible;
+                  setIsMusicVisible(next);
+                  if (setIsSpotifyVisible) setIsSpotifyVisible(next);
+                }}
+                className={`pill-btn ${effectiveIsMusicVisible ? 'active' : ''}`}
+                style={{
+                  padding: '6px 12px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  backgroundColor: effectiveIsMusicVisible ? 'rgba(255, 0, 0, 0.15)' : 'var(--surface)',
+                  color: effectiveIsMusicVisible ? '#FF0000' : 'var(--text-sub)',
+                  borderColor: effectiveIsMusicVisible ? '#FF0000' : 'var(--border)'
+                }}
+              >
+                {effectiveIsMusicVisible ? 'Player Active' : 'Enable Player'}
+              </button>
+            </div>
+
+            <div style={{ fontSize: '11.5px', color: 'var(--text-sub)', marginBottom: '12px' }}>
+              Stream YouTube Music playlists, videos, or 24/7 lofi livestreams with volume control while typing. Runs in a floating mini-player.
+            </div>
+
+            {/* Custom Link Input */}
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <input
+                type="text"
+                value={effectiveMusicUrl}
+                onChange={(e) => {
+                  setMusicUrl(e.target.value);
+                  if (setSpotifyPlaylistUrl) setSpotifyPlaylistUrl(e.target.value);
+                }}
+                placeholder="Paste YouTube or YouTube Music link (https://music.youtube.com/...)"
+                style={{
+                  flex: 1,
+                  padding: '9px 12px',
+                  borderRadius: '10px',
+                  border: '1.5px solid var(--border)',
+                  backgroundColor: 'var(--surface)',
+                  color: 'var(--text-main)',
+                  fontSize: '12.5px',
+                  outline: 'none',
+                  fontFamily: 'inherit',
+                  transition: 'border-color 0.15s ease'
+                }}
+                onFocus={(e) => { e.target.style.borderColor = '#FF0000'; }}
+                onBlur={(e) => { e.target.style.borderColor = 'var(--border)'; }}
+              />
+              {!effectiveIsMusicVisible && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMusicVisible(true);
+                    if (setIsSpotifyVisible) setIsSpotifyVisible(true);
+                  }}
+                  className="pill-btn"
+                  style={{
+                    padding: '9px 14px',
+                    backgroundColor: '#FF0000',
+                    color: '#FFFFFF',
+                    fontWeight: 700,
+                    fontSize: '12px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Show Player
+                </button>
+              )}
+            </div>
+
+            {/* Music Volume Control Slider */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '0 4px', marginTop: '14px' }}>
+              <span style={{ fontSize: '12px', color: 'var(--text-sub)', width: '90px' }}>
+                Music Volume:
+              </span>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+                value={effectiveMusicVolume}
+                onChange={(e) => setMusicVolume(parseInt(e.target.value, 10))}
+                style={{ flex: 1, accentColor: '#FF0000' }}
+              />
+              <span style={{ fontSize: '12px', fontFamily: 'monospace', color: 'var(--text-main)', width: '36px' }}>
+                {effectiveMusicVolume}%
+              </span>
+            </div>
           </div>
         </div>
       </div>

@@ -12,7 +12,7 @@ export function KeyboardVisualizer() {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.ctrlKey || e.metaKey) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
       setPressedKey(e.key === ' ' ? 'space' : e.key.toLowerCase());
     };
     const handleKeyUp = () => {

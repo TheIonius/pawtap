@@ -72,7 +72,8 @@ export function LanguageModal({
           position: 'absolute',
           inset: 0,
           backgroundColor: 'rgba(18, 15, 12, 0.65)',
-          transform: 'translateZ(0)'
+          transform: 'translateZ(0)',
+          animation: 'fadeIn 0.26s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
       />
 
@@ -92,7 +93,7 @@ export function LanguageModal({
           flexDirection: 'column',
           boxShadow: '0 16px 48px var(--shadow, rgba(0,0,0,0.22))',
           overflow: 'hidden',
-          animation: 'slideUp 0.22s ease-out',
+          animation: 'modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
           transform: 'translateZ(0)',
           contain: 'content',
           isolation: 'isolate'

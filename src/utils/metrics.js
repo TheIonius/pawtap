@@ -46,7 +46,7 @@ export function calculateConsistency(wpmHistory = []) {
 }
 
 /**
- * Returns a cozy, charming title and collectible arcade stamp metadata based on final WPM
+ * Returns performance title, rank, and stamp metadata based on final WPM.
  */
 export function getCozyPerformanceTitle(wpm) {
   if (wpm >= 120) {

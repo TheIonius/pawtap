@@ -74,7 +74,8 @@ export function CustomTextModal({
           position: 'absolute',
           inset: 0,
           backgroundColor: 'rgba(18, 15, 12, 0.65)',
-          transform: 'translateZ(0)'
+          transform: 'translateZ(0)',
+          animation: 'fadeIn 0.26s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
       />
 
@@ -93,7 +94,7 @@ export function CustomTextModal({
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          animation: 'fadeInUp 0.18s cubic-bezier(0.16, 1, 0.3, 1)'
+          animation: 'modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
       >
         {/* Header */}

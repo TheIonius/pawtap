@@ -1,36 +1,26 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Palette,
-  Type,
   Sliders,
-  Volume2,
-  VolumeX,
-  ChevronDown,
-  Check,
-  Music2
+  ChevronDown
 } from 'lucide-react';
-import { THEMES, FONTS } from '../constants/themes';
-import { SOUND_PRESETS, playKeySound } from '../audio/soundEngine';
+import { THEMES } from '../constants/themes';
 import { GithubIcon } from './GithubIcon';
+import { Avatar } from './Avatar';
 
 export function Header({
   activeThemeId,
   setThemeId,
-  activeFontId,
-  setFontId,
-  soundPreset,
-  setSoundPreset,
-  soundVolume,
-  isAudioActive,
-  onToggleSound,
-  onOpenSettings
+  onOpenSettings,
+  profile,
+  onOpenProfile
 }) {
-  const [openMenu, setOpenMenu] = useState(null); // 'theme' | 'font' | 'sound' | null
+  const [openMenu, setOpenMenu] = useState(null); // 'theme' | null
+  const [hoveredThemeId, setHoveredThemeId] = useState(null);
   const dockRef = useRef(null);
 
   const activeTheme = THEMES[activeThemeId] || THEMES['boba-tea'] || THEMES['oat-latte'];
-  const activeFont = FONTS.find(f => f.id === activeFontId) || FONTS[1];
-  const currentSound = SOUND_PRESETS.find(p => p.id === soundPreset) || SOUND_PRESETS.find(p => p.id === 'matcha') || SOUND_PRESETS[0];
+  const previewTheme = (hoveredThemeId && THEMES[hoveredThemeId]) || activeTheme;
 
   const openMenuRef = useRef(openMenu);
   useEffect(() => {
@@ -79,7 +69,7 @@ export function Header({
         zIndex: 50
       }}
     >
-      {/* 1. Brand & Subtitle */}
+      {/* Brand logo and title */}
       <div>
         <div>
           <h1
@@ -117,312 +107,224 @@ export function Header({
         </div>
       </div>
 
-      {/* 2. Unified Aesthetic Customizer Capsule Dock */}
+      {/* Header controls */}
       <div
-        ref={dockRef}
         style={{
-          display: 'inline-flex',
+          display: 'flex',
           alignItems: 'center',
-          gap: '4px',
-          padding: '4px 6px',
-          borderRadius: '16px',
-          backgroundColor: 'var(--surface)',
-          border: '1.5px solid var(--border)',
-          boxShadow: '0 3px 12px var(--shadow)',
-          backdropFilter: 'blur(8px)',
-          position: 'relative',
-          zIndex: 60,
-          fontSize: '13px',
-          fontWeight: 500
+          gap: '10px',
+          flexWrap: 'wrap'
         }}
       >
-        {/* A. Theme Selector Button & Floating Popover */}
-        <div style={{ position: 'relative' }}>
+        {/* User profile pill */}
+        {profile && (
           <button
-            onClick={() => toggleMenu('theme')}
-            className={`pill-btn ${openMenu === 'theme' ? 'active' : ''}`}
-            style={{ padding: '6px 10px', gap: '6px' }}
-            title="Choose Aesthetic Color Theme"
+            onClick={onOpenProfile}
+            className="pill-btn"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '4px 12px 4px 6px',
+              borderRadius: '16px',
+              backgroundColor: 'var(--surface)',
+              border: '1.5px solid var(--border)',
+              boxShadow: '0 3px 12px var(--shadow)',
+              backdropFilter: 'blur(8px)',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+            title="Typist Identity (Name & Avatar)"
+            aria-label="Open Typist Profile"
           >
-            <Palette size={13} color="var(--accent)" />
-            <span>{activeTheme.name}</span>
-            <ChevronDown size={12} style={{ opacity: 0.6, transform: openMenu === 'theme' ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease' }} />
-          </button>
-
-          {openMenu === 'theme' && (
-            <div
+            <Avatar profile={profile} size={22} />
+            <span
               style={{
-                position: 'absolute',
-                top: 'calc(100% + 8px)',
-                right: '-40px',
-                width: '220px',
-                maxHeight: '300px',
-                overflowY: 'auto',
-                backgroundColor: 'var(--bg)',
-                border: '1.5px solid var(--border)',
-                borderRadius: '14px',
-                boxShadow: '0 8px 26px var(--shadow), 0 2px 8px rgba(0,0,0,0.06)',
-                padding: '6px',
-                zIndex: 100,
-                animation: 'modalSlideUp 0.16s ease-out'
+                fontWeight: 600,
+                fontSize: '13px',
+                color: 'var(--text-main)',
+                maxWidth: '120px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
               }}
             >
-              <div style={{ padding: '4px 8px 6px', fontSize: '11px', fontWeight: 600, color: 'var(--text-sub)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-                Color Palettes
-              </div>
-              {Object.values(THEMES).map((thm) => {
-                const isSelected = thm.id === activeThemeId;
-                return (
-                  <button
-                    key={thm.id}
-                    onClick={() => {
-                      setThemeId(thm.id);
-                      setOpenMenu(null);
-                    }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      width: '100%',
-                      padding: '7px 10px',
-                      borderRadius: '8px',
-                      backgroundColor: isSelected ? 'var(--surface-hover)' : 'transparent',
-                      color: isSelected ? 'var(--accent)' : 'var(--text-main)',
-                      fontWeight: isSelected ? 600 : 500,
-                      fontSize: '12.5px',
-                      cursor: 'pointer',
-                      transition: 'background-color 0.12s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isSelected) e.currentTarget.style.backgroundColor = 'var(--surface)';
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent';
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span
-                        style={{
-                          width: '12px',
-                          height: '12px',
-                          borderRadius: '50%',
-                          backgroundColor: thm.colors.accent,
-                          border: `2px solid ${thm.colors.bg}`,
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                        }}
-                      />
-                      <span>{thm.name}</span>
-                    </div>
-                    {isSelected && <Check size={13} color="var(--accent)" />}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Divider */}
-        <div style={{ width: '1px', height: '14px', backgroundColor: 'var(--border)', opacity: 0.8 }} />
-
-        {/* B. Font Selector Button & Floating Popover */}
-        <div style={{ position: 'relative' }}>
-          <button
-            onClick={() => toggleMenu('font')}
-            className={`pill-btn ${openMenu === 'font' ? 'active' : ''}`}
-            style={{ padding: '6px 10px', gap: '6px' }}
-            title="Choose Typography Font"
-          >
-            <Type size={13} color="var(--accent)" />
-            <span>{activeFont.name}</span>
-            <ChevronDown size={12} style={{ opacity: 0.6, transform: openMenu === 'font' ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease' }} />
+              {profile.name?.trim() || 'Profile'}
+            </span>
           </button>
+        )}
 
-          {openMenu === 'font' && (
-            <div
-              style={{
-                position: 'absolute',
-                top: 'calc(100% + 8px)',
-                right: '-30px',
-                width: '190px',
-                maxHeight: '280px',
-                overflowY: 'auto',
-                backgroundColor: 'var(--bg)',
-                border: '1.5px solid var(--border)',
-                borderRadius: '14px',
-                boxShadow: '0 8px 26px var(--shadow), 0 2px 8px rgba(0,0,0,0.06)',
-                padding: '6px',
-                zIndex: 100,
-                animation: 'modalSlideUp 0.16s ease-out'
-              }}
-            >
-              <div style={{ padding: '4px 8px 6px', fontSize: '11px', fontWeight: 600, color: 'var(--text-sub)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-                Typography
-              </div>
-              {FONTS.map((f) => {
-                const isSelected = f.id === activeFontId;
-                return (
-                  <button
-                    key={f.id}
-                    onClick={() => {
-                      setFontId(f.id);
-                      setOpenMenu(null);
-                    }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      width: '100%',
-                      padding: '7px 10px',
-                      borderRadius: '8px',
-                      backgroundColor: isSelected ? 'var(--surface-hover)' : 'transparent',
-                      color: isSelected ? 'var(--accent)' : 'var(--text-main)',
-                      fontWeight: isSelected ? 600 : 500,
-                      fontSize: '13px',
-                      fontFamily: f.family,
-                      cursor: 'pointer',
-                      transition: 'background-color 0.12s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isSelected) e.currentTarget.style.backgroundColor = 'var(--surface)';
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent';
-                    }}
-                  >
-                    <span>{f.name}</span>
-                    {isSelected && <Check size={13} color="var(--accent)" />}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Divider */}
-        <div style={{ width: '1px', height: '14px', backgroundColor: 'var(--border)', opacity: 0.8 }} />
-
-        {/* C. Mechanical Sound Selector Button & Floating Popover */}
-        <div style={{ position: 'relative' }}>
-          <button
-            onClick={() => toggleMenu('sound')}
-            className={`pill-btn ${openMenu === 'sound' ? 'active' : ''}`}
-            style={{ padding: '6px 10px', gap: '6px' }}
-            title="Switch Mechanical Keyboard Sound Profile"
-          >
-            <Music2 size={13} color="var(--accent)" />
-            <span>{currentSound.name}</span>
-            <ChevronDown size={12} style={{ opacity: 0.6, transform: openMenu === 'sound' ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease' }} />
-          </button>
-
-          {openMenu === 'sound' && (
-            <div
-              style={{
-                position: 'absolute',
-                top: 'calc(100% + 8px)',
-                right: '0',
-                width: '235px',
-                backgroundColor: 'var(--bg)',
-                border: '1.5px solid var(--border)',
-                borderRadius: '14px',
-                boxShadow: '0 8px 26px var(--shadow), 0 2px 8px rgba(0,0,0,0.06)',
-                padding: '6px',
-                zIndex: 100,
-                animation: 'modalSlideUp 0.16s ease-out'
-              }}
-            >
-              <div style={{ padding: '4px 8px 5px', fontSize: '11px', fontWeight: 600, color: 'var(--text-sub)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-                Tactile Switch Acoustics
-              </div>
-              {SOUND_PRESETS.map((p) => {
-                const isSelected = p.id === soundPreset;
-                return (
-                  <button
-                    key={p.id}
-                    onClick={() => {
-                      setSoundPreset(p.id);
-                      playKeySound(p.id, soundVolume, ' ');
-                      setOpenMenu(null);
-                    }}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'flex-start',
-                      width: '100%',
-                      padding: '6px 9px',
-                      borderRadius: '8px',
-                      backgroundColor: isSelected ? 'var(--surface-hover)' : 'transparent',
-                      color: isSelected ? 'var(--accent)' : 'var(--text-main)',
-                      fontSize: '12.5px',
-                      cursor: 'pointer',
-                      transition: 'background-color 0.12s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isSelected) e.currentTarget.style.backgroundColor = 'var(--surface)';
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent';
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                      <span style={{ fontWeight: isSelected ? 600 : 500 }}>{p.name}</span>
-                      {isSelected && <Check size={13} color="var(--accent)" />}
-                    </div>
-                    {p.desc && (
-                      <span style={{ fontSize: '11px', color: 'var(--text-sub)', marginTop: '2px', textAlign: 'left' }}>
-                        {p.desc}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Divider */}
-        <div style={{ width: '1px', height: '14px', backgroundColor: 'var(--border)', opacity: 0.8 }} />
-
-        {/* D. Mute/Unmute Quick Button */}
-        <button
-          onClick={onToggleSound}
-          className="pill-btn"
-          style={{ padding: '6px 8px' }}
-          title={isAudioActive ? "Mute All Audio (Key Sounds & Lo-Fi)" : "Unmute Audio"}
-          aria-label="Toggle Sound"
-        >
-          {isAudioActive ? <Volume2 size={14} color="var(--accent)" /> : <VolumeX size={14} />}
-        </button>
-
-        {/* E. Settings Modal Trigger */}
-        <button
-          onClick={onOpenSettings}
-          className="pill-btn"
-          style={{ padding: '6px 8px' }}
-          title="Full Sanctuary Customizer (Esc)"
-          aria-label="Open Settings"
-        >
-          <Sliders size={14} />
-        </button>
-
-        {/* F. GitHub Profile Link */}
-        <a
-          href="https://github.com/TheIonius"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="pill-btn"
+        {/* Controls bar */}
+        <div
+          ref={dockRef}
           style={{
-            padding: '6px 8px',
             display: 'inline-flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            textDecoration: 'none',
-            color: 'inherit'
+            gap: '4px',
+            padding: '4px 6px',
+            borderRadius: '16px',
+            backgroundColor: 'var(--surface)',
+            border: '1.5px solid var(--border)',
+            boxShadow: '0 3px 12px var(--shadow)',
+            backdropFilter: 'blur(8px)',
+            position: 'relative',
+            zIndex: 60,
+            fontSize: '13px',
+            fontWeight: 500
           }}
-          title="GitHub Profile @TheIonius"
-          aria-label="GitHub Profile @TheIonius"
         >
-          <GithubIcon size={14} />
-        </a>
+          {/* Theme selector popover */}
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => toggleMenu('theme')}
+              className={`pill-btn ${openMenu === 'theme' ? 'active' : ''}`}
+              style={{ padding: '6px 11px', gap: '7px' }}
+              title="Choose Aesthetic Color Theme"
+              aria-label={`Current Theme: ${activeTheme.name}`}
+            >
+              <Palette size={13} color="var(--accent)" />
+              <span style={{ fontWeight: 600, fontSize: '13px' }}>{activeTheme.name}</span>
+              <ChevronDown
+                size={12}
+                style={{
+                  opacity: 0.6,
+                  transform: openMenu === 'theme' ? 'rotate(180deg)' : 'none',
+                  transition: 'transform 0.15s ease'
+                }}
+              />
+            </button>
+
+            {openMenu === 'theme' && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 8px)',
+                  left: 0,
+                  width: '190px',
+                  backgroundColor: 'var(--bg)',
+                  border: '1.5px solid var(--border)',
+                  borderRadius: '14px',
+                  boxShadow: '0 10px 30px var(--shadow), 0 3px 10px rgba(0,0,0,0.08)',
+                  padding: '10px 12px',
+                  zIndex: 100,
+                  animation: 'modalSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+                  backdropFilter: 'blur(16px)'
+                }}
+              >
+                {/* Theme grid */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(5, 1fr)',
+                    gap: '4px',
+                    justifyItems: 'center',
+                    alignItems: 'center'
+                  }}
+                >
+                  {Object.values(THEMES).map((thm) => {
+                    const isSelected = thm.id === activeThemeId;
+                    const isHovered = hoveredThemeId === thm.id;
+                    return (
+                      <button
+                        key={thm.id}
+                        type="button"
+                        onClick={() => {
+                          setThemeId(thm.id);
+                          setOpenMenu(null);
+                        }}
+                        onMouseEnter={() => setHoveredThemeId(thm.id)}
+                        onMouseLeave={() => setHoveredThemeId(null)}
+                        style={{
+                          width: '30px',
+                          height: '30px',
+                          borderRadius: '8px',
+                          backgroundColor: isSelected ? 'var(--surface-hover)' : isHovered ? 'var(--surface)' : 'transparent',
+                          border: isSelected ? '1px solid var(--border)' : '1px solid transparent',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: 0,
+                          transition: 'all 0.12s ease'
+                        }}
+                        title={thm.name}
+                        aria-label={`Select ${thm.name} theme`}
+                      >
+                        <span
+                          style={{
+                            width: '13px',
+                            height: '13px',
+                            borderRadius: '50%',
+                            backgroundColor: thm.colors.accent,
+                            border: `2px solid ${thm.colors.bg}`,
+                            boxShadow: isSelected
+                              ? `0 0 0 2px ${thm.colors.accent}, 0 1px 4px rgba(0,0,0,0.2)`
+                              : '0 1px 3px rgba(0,0,0,0.12)',
+                            transform: isHovered ? 'scale(1.2)' : 'scale(1)',
+                            transition: 'transform 0.15s ease'
+                          }}
+                        />
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Theme name preview */}
+                <div
+                  style={{
+                    marginTop: '8px',
+                    paddingTop: '6px',
+                    borderTop: '1px solid var(--border)',
+                    textAlign: 'center',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    color: 'var(--text-sub)',
+                    letterSpacing: '-0.1px',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                  }}
+                >
+                  {previewTheme.name}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Divider */}
+          <div style={{ width: '1px', height: '14px', backgroundColor: 'var(--border)', opacity: 0.8 }} />
+
+          {/* Settings trigger */}
+          <button
+            onClick={onOpenSettings}
+            className="pill-btn"
+            style={{ padding: '6px 8px' }}
+            title="Full Sanctuary Customizer (Esc)"
+            aria-label="Open Settings"
+          >
+            <Sliders size={14} />
+          </button>
+
+          {/* GitHub link */}
+          <a
+            href="https://github.com/TheIonius"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="pill-btn"
+            style={{
+              padding: '6px 8px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textDecoration: 'none',
+              color: 'inherit'
+            }}
+            title="GitHub Profile @TheIonius"
+            aria-label="GitHub Profile @TheIonius"
+          >
+            <GithubIcon size={14} />
+          </a>
+        </div>
       </div>
     </header>
   );

@@ -1,7 +1,5 @@
 /**
- * Cozy & Aesthetic Theme Definitions
- * Inspired by cozy girl aesthetics, warm neutrals, matcha cafés, and lofi vibes.
- * Deepened background tones with warm multi-tone harmony to prevent eye glare.
+ * Theme color palettes, fonts, and UI style definitions.
  */
 
 export const THEMES = {
@@ -187,6 +185,52 @@ export const THEMES = {
       border: '#2E354A',
       companion: '#E5A250',
       shadow: 'rgba(0, 0, 0, 0.5)',
+    }
+  },
+  'anime-twilight': {
+    id: 'anime-twilight',
+    name: 'Anime Twilight',
+    category: 'anime',
+    badge: 'Shinkai Skies',
+    isDark: true,
+    colors: {
+      bg: '#18192A',
+      bgRadial: 'rgba(255, 101, 132, 0.12)',
+      surface: '#24263D',
+      surfaceHover: '#303452',
+      textSub: '#8B8EA8',
+      textMain: '#F2ECFC',
+      textError: '#FF5C77',
+      textErrorExtra: '#9E1C33',
+      caret: 'rgba(255, 101, 132, 0.85)',
+      accent: '#FF6584',
+      accentRgb: '255, 101, 132',
+      border: '#383C61',
+      companion: '#FF6584',
+      shadow: 'rgba(12, 13, 24, 0.55)',
+    }
+  },
+  'manga-ink': {
+    id: 'manga-ink',
+    name: 'Manga Ink',
+    category: 'manga',
+    badge: 'Shonen Comic',
+    isDark: false,
+    colors: {
+      bg: '#F5F4F0',
+      bgRadial: 'rgba(0, 0, 0, 0.03)',
+      surface: '#EAE8E2',
+      surfaceHover: '#DDD9D1',
+      textSub: '#706C64',
+      textMain: '#141414',
+      textError: '#D90429',
+      textErrorExtra: '#7A0014',
+      caret: 'rgba(20, 20, 20, 0.85)',
+      accent: '#E63946',
+      accentRgb: '230, 57, 70',
+      border: '#D4D0C5',
+      companion: '#141414',
+      shadow: 'rgba(0, 0, 0, 0.08)',
     }
   }
 };

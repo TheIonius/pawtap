@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Heart } from 'lucide-react';
 
 /**
- * Interactive Cozy Companions (Mochi the Cat & Steaming Latte)
- * Reacts dynamically to live typing speed, streaks, active typing bursts, and errors.
+ * Companion animations (Cat, Coffee, Plant).
+ * Reacts to live typing speed, streaks, typing activity, and errors.
  */
 export function Companion({
   type = 'cat',
@@ -13,11 +13,12 @@ export function Companion({
   streak = 0,
   hasError = false,
   isFinished = false,
-  themeAccent = '#D4A373'
+  themeAccent = '#D4A373',
+  profile = null
 }) {
   const [purrHeart, setPurrHeart] = useState(false);
 
-  // Click on companion to trigger affection
+  // Trigger pet animation
   const handlePet = () => {
     setPurrHeart(true);
     setTimeout(() => setPurrHeart(false), 1200);
@@ -26,11 +27,15 @@ export function Companion({
   if (type === 'none') return null;
 
   const isFast = wpm >= 70 || streak >= 25;
+  const companionName = type === 'cat' ? 'Mochi' : type === 'coffee' ? 'Latte' : 'Sprout';
+  const petTooltip = profile?.name?.trim()
+    ? `Click to pet ${companionName} (loved by ${profile.name.trim()})!`
+    : `Click to pet ${companionName}!`;
 
   return (
     <div
       onClick={handlePet}
-      title="Click to pet your cozy companion!"
+      title={petTooltip}
       style={{
         display: 'inline-flex',
         alignItems: 'center',
@@ -42,7 +47,7 @@ export function Companion({
       }}
       className="companion-container"
     >
-      {/* Floating Pet Heart */}
+      {/* Pet heart animation */}
       {purrHeart && (
         <div
           style={{
@@ -96,7 +101,7 @@ function CatCompanion({ isTyping, status, isFast, hasError, isFinished, streak, 
   const isRunning = status === 'running';
   const [pawToggle, setPawToggle] = useState(false);
 
-  // Animate paws only when user is actively pressing keys!
+  // Animate paws during active typing
   useEffect(() => {
     if (!isTyping) return;
     const interval = setInterval(() => {
@@ -118,17 +123,17 @@ function CatCompanion({ isTyping, status, isFast, hasError, isFinished, streak, 
           animation: status === 'idle' ? 'cozyBreathing 3s ease-in-out infinite' : undefined
         }}
       >
-        {/* Cat Ears */}
+        {/* Cat ears */}
         <polygon points="12,18 20,4 28,18" fill="var(--surface-hover, #E8DFD3)" stroke="var(--text-sub, #A89988)" strokeWidth="1.5" />
         <polygon points="16,16 20,8 24,16" fill="#F4B8C1" />
         
         <polygon points="36,18 44,4 52,18" fill="var(--surface-hover, #E8DFD3)" stroke="var(--text-sub, #A89988)" strokeWidth="1.5" />
         <polygon points="40,16 44,8 48,16" fill="#F4B8C1" />
 
-        {/* Cat Head */}
+        {/* Cat head */}
         <circle cx="32" cy="26" r="18" fill="var(--surface, #F3EDE2)" stroke="var(--text-sub, #A89988)" strokeWidth="1.8" />
 
-        {/* Blushing Cheeks */}
+        {/* Cheeks */}
         {(isTyping || isFast || isRunning) && (
           <>
             <circle cx="21" cy="29" r="3.2" fill="#F4B8C1" opacity="0.8" />
@@ -136,10 +141,10 @@ function CatCompanion({ isTyping, status, isFast, hasError, isFinished, streak, 
           </>
         )}
 
-        {/* Eyes: Sleeping (idle) vs Typing (active) vs Paused/Watching vs Sparkle */}
+        {/* Eye states */}
         {status === 'idle' && !isFinished && (
           <>
-            {/* Sleeping curved eyes */}
+            {/* Idle eyes */}
             <path d="M21 24 Q24 28 27 24" stroke="var(--text-main, #3E342B)" strokeWidth="1.8" strokeLinecap="round" fill="none" />
             <path d="M37 24 Q40 28 43 24" stroke="var(--text-main, #3E342B)" strokeWidth="1.8" strokeLinecap="round" fill="none" />
           </>
@@ -147,7 +152,7 @@ function CatCompanion({ isTyping, status, isFast, hasError, isFinished, streak, 
 
         {isRunning && !hasError && !isFast && (
           <>
-            {/* Happy attentive eyes */}
+            {/* Active eyes */}
             <circle cx="24" cy="24" r="2.5" fill="var(--text-main, #3E342B)" />
             <circle cx="40" cy="24" r="2.5" fill="var(--text-main, #3E342B)" />
             <circle cx="25" cy="23" r="0.8" fill="#FFFFFF" />
@@ -157,7 +162,7 @@ function CatCompanion({ isTyping, status, isFast, hasError, isFinished, streak, 
 
         {isFast && (
           <>
-            {/* Excited star/sparkle eyes */}
+            {/* Fast eyes */}
             <path d="M22 24 L26 24 M24 22 L24 26" stroke={themeAccent} strokeWidth="2.2" strokeLinecap="round" />
             <path d="M38 24 L42 24 M40 22 L40 26" stroke={themeAccent} strokeWidth="2.2" strokeLinecap="round" />
           </>
@@ -165,35 +170,35 @@ function CatCompanion({ isTyping, status, isFast, hasError, isFinished, streak, 
 
         {hasError && (
           <>
-            {/* Surprised eyes */}
+            {/* Error eyes */}
             <circle cx="24" cy="24" r="2.8" fill="none" stroke="var(--text-error, #C85A54)" strokeWidth="1.6" />
             <circle cx="40" cy="24" r="2.8" fill="none" stroke="var(--text-error, #C85A54)" strokeWidth="1.6" />
-            {/* Sweatdrop */}
+            {/* Error indicator */}
             <path d="M50 14 Q53 10 52 8 Q51 10 50 14" fill="#93C5FD" />
           </>
         )}
 
         {isFinished && (
           <>
-            {/* Proud joy eyes */}
+            {/* Finished eyes */}
             <path d="M21 25 Q24 21 27 25" stroke="var(--text-main, #3E342B)" strokeWidth="2" strokeLinecap="round" fill="none" />
             <path d="M37 25 Q40 21 43 25" stroke="var(--text-main, #3E342B)" strokeWidth="2" strokeLinecap="round" fill="none" />
           </>
         )}
 
-        {/* Cute Nose & Mouth */}
+        {/* Nose & mouth */}
         <polygon points="31,27 33,27 32,29" fill="#E28491" />
         <path d="M29 30 Q32 32 32 29 Q32 32 35 30" stroke="var(--text-main, #3E342B)" strokeWidth="1.2" strokeLinecap="round" fill="none" />
 
-        {/* Mini Laptop (Shown whenever test is running or typing) */}
+        {/* Mini laptop */}
         {(isRunning || isTyping) && (
           <g transform="translate(18, 36)">
-            {/* Laptop Base */}
+            {/* Laptop base */}
             <rect x="0" y="8" width="28" height="5" rx="1.5" fill="#C5BAA8" />
-            {/* Laptop Screen */}
+            {/* Laptop screen */}
             <rect x="3" y="0" width="22" height="9" rx="1" fill="#D6CDC0" stroke="#B8AC98" strokeWidth="0.8" />
             <circle cx="14" cy="4.5" r="1.5" fill={themeAccent} />
-            {/* Cute Little Paws (Alternate when typing, rest calmly when stopped) */}
+            {/* Paws */}
             <circle
               cx={isTyping ? (pawToggle ? "6" : "8") : "7"}
               cy={isTyping ? (pawToggle ? "6" : "9") : "8"}
@@ -213,7 +218,7 @@ function CatCompanion({ isTyping, status, isFast, hasError, isFinished, streak, 
           </g>
         )}
 
-        {/* Sleeping Zzz indicator (only when idle) */}
+        {/* Idle indicator */}
         {status === 'idle' && !isFinished && (
           <g opacity="0.6">
             <text x="50" y="12" fill="var(--text-sub, #A89988)" fontSize="9" fontFamily="sans-serif" fontWeight="bold">z</text>
@@ -254,13 +259,13 @@ function CoffeeCompanion({ isTyping, isFast, themeAccent }) {
           </g>
         )}
 
-        {/* Ceramic Mug Body */}
+        {/* Mug body */}
         <rect x="10" y="13" width="20" height="20" rx="4" fill="var(--surface, #F3EDE2)" stroke="var(--text-sub, #A89988)" strokeWidth="1.8" />
         
-        {/* Mug Handle */}
+        {/* Mug handle */}
         <path d="M30 17 Q37 17 37 23 Q37 29 30 29" stroke="var(--text-sub, #A89988)" strokeWidth="1.8" fill="none" strokeLinecap="round" />
         
-        {/* Coffee / Latte Art Top */}
+        {/* Latte top */}
         <ellipse cx="20" cy="14" rx="9" ry="2.5" fill="#784F35" />
         <path d="M18 14 Q20 12.5 22 14 Q20 15.5 18 14" fill="#FDF7EE" />
       </svg>
@@ -279,7 +284,7 @@ function PlantCompanion({ streak, themeAccent }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
       <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-        {/* Terracotta Pot */}
+        {/* Plant pot */}
         <polygon points="12,24 28,24 25,36 15,36" fill="#C87A5B" stroke="var(--text-sub, #A89988)" strokeWidth="1.4" />
         <rect x="10" y="22" width="20" height="3" rx="1.5" fill="#B36547" />
 

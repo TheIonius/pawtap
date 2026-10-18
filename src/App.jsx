@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import confetti from 'canvas-confetti';
 import { THEMES, FONTS } from './constants/themes';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -12,14 +12,15 @@ import { SettingsModal } from './components/SettingsModal';
 import { LanguageModal } from './components/LanguageModal';
 import { CustomTextModal } from './components/CustomTextModal';
 import { KeyboardVisualizer } from './components/KeyboardVisualizer';
-import { setAmbientSound, updateAmbientVolume, stopAmbientSound } from './audio/ambientEngine';
 import { getWordsTargetingKeys } from './constants/wordLists';
 import { DEFAULT_CUSTOM_TEXT } from './constants/codeSnippets';
-import { Keyboard } from 'lucide-react';
-import { GithubIcon } from './components/GithubIcon';
+import { DEFAULT_PROFILE } from './constants/profile';
+import { ProfileModal } from './components/ProfileModal';
+import { MusicPlayer } from './components/MusicPlayer';
+import { DEFAULT_MUSIC_URL } from './constants/music';
 
 export default function App() {
-  // 1. Persistent User Preferences
+  // User preferences
   const [activeThemeId, setThemeId] = useLocalStorage('pawtap_theme', 'boba-tea');
   const [activeFontId, setFontId] = useLocalStorage('pawtap_font', 'nunito');
   const [caretStyle, setCaretStyle] = useLocalStorage('pawtap_caret', 'underline');
@@ -27,17 +28,37 @@ export default function App() {
   const [companionType, setCompanionType] = useLocalStorage('pawtap_companion', 'cat');
   const [soundPreset, setSoundPreset] = useLocalStorage('pawtap_sound_preset', 'matcha');
   const [soundVolume, setSoundVolume] = useLocalStorage('pawtap_sound_vol', 0.65);
-  const [ambientSound, setAmbientSoundType] = useLocalStorage('pawtap_ambient_type', 'none');
-  const [ambientVolume, setAmbientVolume] = useLocalStorage('pawtap_ambient_vol', 0.25);
   const [showKeyboard, setShowKeyboard] = useLocalStorage('pawtap_show_keyboard', false);
   const [language, setLanguage] = useLocalStorage('pawtap_language', 'english');
   const [customText, setCustomText] = useLocalStorage('pawtap_custom_text', DEFAULT_CUSTOM_TEXT);
+  const [profile, setProfile] = useLocalStorage('pawtap_profile', DEFAULT_PROFILE);
+  const [hasOnboardedProfile, setHasOnboardedProfile] = useLocalStorage('pawtap_profile_onboarded', false);
+  const [musicUrl, setMusicUrl] = useLocalStorage('pawtap_music_url', DEFAULT_MUSIC_URL);
+  const [isMusicVisible, setIsMusicVisible] = useLocalStorage('pawtap_music_visible', true);
+  const [isMusicCollapsed, setIsMusicCollapsed] = useLocalStorage('pawtap_music_collapsed', true);
+  const [musicVolume, setMusicVolume] = useLocalStorage('pawtap_music_vol', 75);
 
-  // Statistics & History Persistence
-  const [, setTestsCompleted] = useLocalStorage('pawtap_tests_count', 0);
+  // Music player state initialization and legacy cleanup
+  useEffect(() => {
+    if (musicUrl && musicUrl.includes('jfKfPfyJRdk')) {
+      setMusicUrl('');
+    }
+    if (isMusicVisible === false) {
+      setIsMusicVisible(true);
+    }
+  }, [musicUrl, setMusicUrl, isMusicVisible, setIsMusicVisible]);
+
+  // Ensure profile has default values if missing from storage
+  const safeProfile = useMemo(() => ({
+    ...DEFAULT_PROFILE,
+    ...(profile && typeof profile === 'object' ? profile : {})
+  }), [profile]);
+
+  // Statistics persistence
+  const [testsCompleted, setTestsCompleted] = useLocalStorage('pawtap_tests_count', 0);
   const [personalBestWpm, setPersonalBestWpm] = useLocalStorage('pawtap_pb_wpm', 0);
 
-  // Active Test Configuration
+  // Test configuration
   const [mode, setMode] = useState('time');
   const [timeLimit, setTimeLimit] = useState(30);
   const [wordLimit, setWordLimit] = useState(25);
@@ -52,21 +73,33 @@ export default function App() {
       ? [challengeMods]
       : [];
 
-  // Modals & Results State
+  // Modal and result state
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
   const [lastResult, setLastResult] = useState(null);
 
-  // Full-Page Focus & Window Blur Tracking
+  // Focus tracking
   const [isFocused, setIsFocused] = useState(true);
   const typingInputRef = useRef(null);
 
-  // 2. Resolve Active Theme & Font
+  // Prompt profile modal on first visit
+  useEffect(() => {
+    if (!hasOnboardedProfile) {
+      const timer = setTimeout(() => {
+        setIsProfileModalOpen(true);
+        setIsFocused(true);
+      }, 600);
+      return () => clearTimeout(timer);
+    }
+  }, [hasOnboardedProfile, setIsFocused]);
+
+  // Theme and font resolution
   const activeTheme = THEMES[activeThemeId] || THEMES['boba-tea'] || THEMES['oat-latte'];
   const activeFont = FONTS.find(f => f.id === activeFontId) || FONTS[1];
 
-  // Apply CSS Variables to Document Root
+  // Apply CSS variables to document root
   useEffect(() => {
     const root = document.documentElement;
     Object.entries(activeTheme.colors).forEach(([key, val]) => {
@@ -76,57 +109,9 @@ export default function App() {
     root.style.setProperty('--font-active', activeFont.family);
   }, [activeTheme, activeFont]);
 
-  // Handle Ambient Audio Updates
-  const ambientVolumeRef = useRef(ambientVolume);
-  useEffect(() => {
-    ambientVolumeRef.current = ambientVolume;
-  }, [ambientVolume]);
-
-  useEffect(() => {
-    setAmbientSound(ambientSound, ambientVolumeRef.current);
-  }, [ambientSound]);
-
-  useEffect(() => {
-    updateAmbientVolume(ambientVolume);
-  }, [ambientVolume]);
-
-  // Audio Mute Memory & Unified Toggle
-  const prevSoundVolumeRef = useRef(soundVolume > 0 ? soundVolume : 0.65);
-  const prevAmbientVolumeRef = useRef(ambientVolume > 0 ? ambientVolume : 0.25);
-
-  useEffect(() => {
-    if (soundVolume > 0) prevSoundVolumeRef.current = soundVolume;
-  }, [soundVolume]);
-
-  useEffect(() => {
-    if (ambientVolume > 0) prevAmbientVolumeRef.current = ambientVolume;
-  }, [ambientVolume]);
-
-  const isAudioActive = soundVolume > 0 || (ambientSound !== 'none' && ambientVolume > 0);
-
-  const handleToggleSound = useCallback(() => {
-    if (isAudioActive) {
-      // Mute all sound
-      if (soundVolume > 0) prevSoundVolumeRef.current = soundVolume;
-      if (ambientVolume > 0) prevAmbientVolumeRef.current = ambientVolume;
-      setSoundVolume(0);
-      setAmbientVolume(0);
-      stopAmbientSound();
-    } else {
-      // Unmute and restore previous volumes
-      const restoredSound = prevSoundVolumeRef.current > 0 ? prevSoundVolumeRef.current : 0.65;
-      const restoredAmbient = prevAmbientVolumeRef.current > 0 ? prevAmbientVolumeRef.current : 0.25;
-      setSoundVolume(restoredSound);
-      setAmbientVolume(restoredAmbient);
-      if (ambientSound !== 'none') {
-        setAmbientSound(ambientSound, restoredAmbient);
-      }
-    }
-  }, [isAudioActive, soundVolume, ambientVolume, ambientSound, setSoundVolume, setAmbientVolume]);
-
-  // 3. Test Completion Callback
+  // Test completion handler
   const handleTestFinish = useCallback((result) => {
-    // Only celebrate if user achieves a valid WPM that beats their previous personal best
+    // Check if user set a new personal record
     const previousBest = personalBestWpm || 0;
     const isNewRecord = result.wpm > 0 && result.wpm > previousBest;
 
@@ -142,7 +127,7 @@ export default function App() {
     if (isNewRecord) {
       setPersonalBestWpm(result.wpm);
 
-      // Launch celebratory confetti ONLY when setting a new record / BPM (sound removed per user preference)
+      // Trigger confetti on new personal record
       try {
         confetti({
           particleCount: 65,
@@ -191,7 +176,7 @@ export default function App() {
     }
   }, [mode, wordLimit, customWords]);
 
-  // 4. Initialize Core Typing Engine (pauses when browser window/tab is unfocused)
+  // Initialize typing engine
   const engine = useTypingEngine({
     mode,
     timeLimit,
@@ -224,7 +209,7 @@ export default function App() {
     engine.initializeTest(parsed);
   }, [setCustomText, engine]);
 
-  // Restore focus helper for clicking anywhere or pressing any key
+  // Restore focus to typing input
   const restoreFocus = useCallback((e) => {
     if (e) {
       e.preventDefault();
@@ -234,44 +219,78 @@ export default function App() {
     if (typingInputRef.current) {
       typingInputRef.current.focus({ preventScroll: true });
     }
-  }, []);
+  }, [setIsFocused]);
 
-  // Browser Window Blur & Tab Switching Handlers
+  // Consolidated active modal state
+  const isAnyModalOpen = isSettingsOpen || isProfileModalOpen || isLanguageModalOpen || isCustomModalOpen;
+
+  // Window blur and visibility change handlers
   useEffect(() => {
+    const isMusicActive = isMusicVisible && !isMusicCollapsed;
+
     const handleWindowBlur = () => {
-      if (engine.status !== 'finished' && !isSettingsOpen && !isLanguageModalOpen && !isCustomModalOpen) {
+      // Do not trigger blur overlay if focus moved to an iframe or music player is active
+      if (isMusicActive || (document.activeElement && document.activeElement.tagName === 'IFRAME')) {
+        return;
+      }
+      // Do not trigger blur overlay if a modal is open
+      if (engine.status !== 'finished' && !isAnyModalOpen) {
         setIsFocused(false);
       }
     };
 
     const handleVisibilityChange = () => {
-      if (document.hidden && engine.status !== 'finished' && !isSettingsOpen && !isLanguageModalOpen && !isCustomModalOpen) {
+      if (document.hidden && engine.status !== 'finished' && !isAnyModalOpen && !isMusicActive) {
         setIsFocused(false);
       }
     };
 
+    const handleWindowFocus = () => {
+      if (isAnyModalOpen || isMusicActive) {
+        setIsFocused(true);
+      }
+    };
+
     window.addEventListener('blur', handleWindowBlur);
+    window.addEventListener('focus', handleWindowFocus);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
       window.removeEventListener('blur', handleWindowBlur);
+      window.removeEventListener('focus', handleWindowFocus);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [engine.status, isSettingsOpen, isLanguageModalOpen, isCustomModalOpen]);
+  }, [engine.status, isAnyModalOpen, isMusicVisible, isMusicCollapsed]);
 
-  // Global Pointer & Keydown Listeners to Re-Focus
+  // Global pointer and keydown listeners to restore focus
   useEffect(() => {
     const handleGlobalPointerDown = (e) => {
-      // Allow interaction with buttons, selects, modals, etc.
-      if (e.target.closest && e.target.closest('button, select, input, [role="dialog"], .modal-content, a, textarea')) {
+      // Minimize music player when clicking outside
+      if (isMusicVisible && !isMusicCollapsed) {
+        if (!e.target.closest || (!e.target.closest('.music-player-container') && !e.target.closest('.spotify-widget-container'))) {
+          setIsMusicCollapsed(true);
+        }
+      }
+
+      // Ignore interactive elements
+      if (e.target.closest && e.target.closest('button, select, input, [role="dialog"], .modal-content, a, textarea, .music-player-container, .spotify-widget-container, iframe')) {
         return;
       }
-      restoreFocus(e);
+      if (!isAnyModalOpen) {
+        restoreFocus(e);
+      }
     };
 
     const handleGlobalKeyDown = (e) => {
-      if (isSettingsOpen || isLanguageModalOpen || isCustomModalOpen) return;
+      if (isAnyModalOpen) return;
 
-      // Allow browser shortcuts (like Ctrl+R, Ctrl+W, Cmd+R) to pass through untouched
+      // Toggle visual keyboard shortcut: Alt+K or F2
+      if ((e.altKey && (e.key === 'k' || e.key === 'K')) || e.key === 'F2') {
+        e.preventDefault();
+        setShowKeyboard(prev => !prev);
+        return;
+      }
+
+      // Allow browser keyboard shortcuts to pass through untouched
       if ((e.ctrlKey || e.metaKey) && e.key !== 'Backspace') {
         return;
       }
@@ -299,15 +318,15 @@ export default function App() {
       window.removeEventListener('pointerdown', handleGlobalPointerDown);
       window.removeEventListener('keydown', handleGlobalKeyDown);
     };
-  }, [isFocused, isSettingsOpen, isLanguageModalOpen, isCustomModalOpen, restoreFocus, engine]);
+  }, [isFocused, isAnyModalOpen, isMusicVisible, isMusicCollapsed, setIsMusicCollapsed, restoreFocus, engine, setShowKeyboard]);
 
-  // Handle Practice Missed Words (all errors or specific target keys)
+  // Practice words containing errors from last test
   const handlePracticeErrors = useCallback((targetKeys = null) => {
     if (!lastResult || !lastResult.keyErrors) return;
     const errorKeys = targetKeys && targetKeys.length > 0 ? targetKeys : Object.keys(lastResult.keyErrors);
     if (errorKeys.length === 0) return;
 
-    // Save previous configuration so restarting restores previous mode (e.g. time 30s)
+    // Save previous configuration to restore on restart
     if (!savedModeConfigRef.current) {
       savedModeConfigRef.current = {
         mode,
@@ -330,12 +349,20 @@ export default function App() {
     engine.initializeTest(practiceWords);
   }, [lastResult, mode, timeLimit, wordLimit, quoteLength, punctuation, numbers, language, vocabularyMode, engine]);
 
-  // Keyboard Navigation: Esc to toggle Customizer & Themes modal (or close open modal)
+  // Handle Escape key to close open modal or toggle settings
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        if (isCustomModalOpen) {
+        if (isMusicVisible && !isMusicCollapsed) {
+          setIsMusicCollapsed(true);
+          restoreFocus();
+        } else if (isProfileModalOpen) {
+          setIsProfileModalOpen(false);
+          if (!isSettingsOpen) {
+            restoreFocus();
+          }
+        } else if (isCustomModalOpen) {
           setIsCustomModalOpen(false);
           restoreFocus();
         } else if (isLanguageModalOpen) {
@@ -351,9 +378,10 @@ export default function App() {
     };
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [isCustomModalOpen, isLanguageModalOpen, isSettingsOpen, restoreFocus]);
+  }, [isProfileModalOpen, isCustomModalOpen, isLanguageModalOpen, isSettingsOpen, isMusicVisible, isMusicCollapsed, setIsMusicCollapsed, restoreFocus]);
 
-  const shouldShowFullPageBlur = !isFocused && engine.status !== 'finished' && !isSettingsOpen && !isLanguageModalOpen && !isCustomModalOpen;
+  const isMusicActive = isMusicVisible && !isMusicCollapsed;
+  const shouldShowFullPageBlur = !isFocused && engine.status !== 'finished' && !isAnyModalOpen && !isMusicActive;
 
   return (
     <div
@@ -368,7 +396,7 @@ export default function App() {
         transition: 'background-color 0.25s ease'
       }}
     >
-      {/* Full-Page Content Wrapper (Receives Full-Page Blur When Unfocused) */}
+      {/* Main page layout */}
       <div
         className={shouldShowFullPageBlur ? 'page-blurred' : 'page-focused'}
         style={{
@@ -379,21 +407,22 @@ export default function App() {
           width: '100%'
         }}
       >
-        {/* 1. Header Navigation (Responsive for bigger screens) */}
+        {/* Header navigation */}
         <Header
           activeThemeId={activeThemeId}
           setThemeId={setThemeId}
-          activeFontId={activeFontId}
-          setFontId={setFontId}
-          soundPreset={soundPreset}
-          setSoundPreset={setSoundPreset}
-          soundVolume={soundVolume}
-          isAudioActive={isAudioActive}
-          onToggleSound={handleToggleSound}
-          onOpenSettings={() => setIsSettingsOpen(true)}
+          onOpenSettings={() => {
+            setIsSettingsOpen(true);
+            setIsFocused(true);
+          }}
+          profile={safeProfile}
+          onOpenProfile={() => {
+            setIsProfileModalOpen(true);
+            setIsFocused(true);
+          }}
         />
 
-        {/* 2. Main Content Sanctuary (Expanded for Bigger Screens & Ultrawide) */}
+        {/* Main test container */}
         <main
           style={{
             flex: 1,
@@ -411,7 +440,7 @@ export default function App() {
         >
           {engine.status !== 'finished' ? (
             <>
-              {/* Mode & Punctuation Controls Bar */}
+              {/* Test settings bar */}
               <TestSettingsBar
                 mode={mode}
                 setMode={(m) => {
@@ -443,10 +472,13 @@ export default function App() {
                 setNumbers={setNumbers}
                 vocabularyMode={vocabularyMode}
                 setVocabularyMode={setVocabularyMode}
-                onOpenCustomModal={() => setIsCustomModalOpen(true)}
+                onOpenCustomModal={() => {
+                  setIsCustomModalOpen(true);
+                  setIsFocused(true);
+                }}
               />
 
-              {/* Interactive Animated Companion (Mochi the Cat / Steaming Latte) */}
+              {/* Companion avatar */}
               <div style={{ marginBottom: '8px' }}>
                 <Companion
                   type={companionType}
@@ -456,10 +488,11 @@ export default function App() {
                   streak={engine.currentStreak}
                   hasError={engine.hasRecentError}
                   themeAccent={activeTheme.colors.accent}
+                  profile={safeProfile}
                 />
               </div>
 
-              {/* Core Typing Test Area (Responsive Big Screen Dimensions) */}
+              {/* Typing test engine */}
               <TypingTest
                 engine={engine}
                 mode={mode}
@@ -472,13 +505,18 @@ export default function App() {
                 inputRef={typingInputRef}
                 language={language}
                 challengeMods={normalizedChallengeMods}
-                onOpenLanguageModal={() => setIsLanguageModalOpen(true)}
+                onOpenLanguageModal={() => {
+                  setIsLanguageModalOpen(true);
+                  setIsFocused(true);
+                }}
                 onRestart={handleRestart}
                 paceCaret={paceCaret}
                 personalBestWpm={personalBestWpm}
+                showKeyboard={showKeyboard}
+                onToggleKeyboard={() => setShowKeyboard(prev => !prev)}
               />
 
-              {/* Optional On-Screen Aesthetic Keyboard */}
+              {/* On-screen visual keyboard */}
               {showKeyboard && (
                 <div style={{ marginTop: '24px' }}>
                   <KeyboardVisualizer />
@@ -486,16 +524,17 @@ export default function App() {
               )}
             </>
           ) : (
-            /* 3. Post-Test Results Sanctuary */
+            /* Results view */
             <ResultsView
               result={lastResult}
               onRestart={handleRestart}
               onPracticeErrors={handlePracticeErrors}
+              profile={safeProfile}
             />
           )}
         </main>
 
-        {/* 4. Footer & Aesthetic Credits (Responsive for bigger screens) */}
+        {/* Footer */}
         <footer
           style={{
             padding: '24px 36px',
@@ -518,50 +557,12 @@ export default function App() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <button
-              onClick={() => setShowKeyboard(prev => !prev)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                color: showKeyboard ? 'var(--accent)' : 'var(--text-sub)',
-                fontSize: '13px',
-                cursor: 'pointer'
-              }}
-              title="Toggle on-screen visual keyboard"
-            >
-              <Keyboard size={15} />
-              <span>{showKeyboard ? 'hide keyboard' : 'visual keyboard'}</span>
-            </button>
-            <span>•</span>
-            <a
-              href="https://github.com/TheIonius"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                color: 'var(--text-sub)',
-                fontSize: '13px',
-                textDecoration: 'none',
-                transition: 'color 0.15s ease'
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--accent)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-sub)'; }}
-              title="GitHub Profile @TheIonius"
-              aria-label="GitHub Profile @TheIonius"
-            >
-              <GithubIcon size={14} />
-              <span>@TheIonius</span>
-            </a>
-            <span>•</span>
-            <span>v1.0.1 pawtap</span>
+            <span>v1.1.0-dev pawtap</span>
           </div>
         </footer>
       </div>
 
-      {/* 5. Full-Screen Unfocused Blur Overlay (Clean Borderless Floating Text) */}
+      {/* Unfocused blur overlay */}
       {shouldShowFullPageBlur && (
         <div
           onPointerDown={restoreFocus}
@@ -577,7 +578,8 @@ export default function App() {
             backgroundColor: 'rgba(0, 0, 0, 0.04)',
             backdropFilter: 'blur(4px)',
             cursor: 'pointer',
-            userSelect: 'none'
+            userSelect: 'none',
+            animation: 'fadeIn 0.24s cubic-bezier(0.16, 1, 0.3, 1)'
           }}
         >
           <div
@@ -586,7 +588,7 @@ export default function App() {
               flexDirection: 'column',
               alignItems: 'center',
               gap: '8px',
-              animation: 'fadeInUp 0.2s ease-out'
+              animation: 'fadeInUp 0.28s cubic-bezier(0.16, 1, 0.3, 1)'
             }}
           >
             <span
@@ -609,7 +611,7 @@ export default function App() {
         </div>
       )}
 
-      {/* 6. Customizer Settings Modal */}
+      {/* Settings modal */}
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => {
@@ -628,10 +630,6 @@ export default function App() {
         setSoundPreset={setSoundPreset}
         soundVolume={soundVolume}
         setSoundVolume={setSoundVolume}
-        ambientSound={ambientSound}
-        setAmbientSoundType={setAmbientSoundType}
-        ambientVolume={ambientVolume}
-        setAmbientVolume={setAmbientVolume}
         vocabularyMode={vocabularyMode}
         setVocabularyMode={setVocabularyMode}
         challengeMods={normalizedChallengeMods}
@@ -639,9 +637,20 @@ export default function App() {
         paceCaret={paceCaret}
         setPaceCaret={setPaceCaret}
         personalBestWpm={personalBestWpm}
+        profile={safeProfile}
+        onOpenProfile={() => {
+          setIsProfileModalOpen(true);
+          setIsFocused(true);
+        }}
+        musicUrl={musicUrl}
+        setMusicUrl={setMusicUrl}
+        isMusicVisible={isMusicVisible}
+        setIsMusicVisible={setIsMusicVisible}
+        musicVolume={musicVolume}
+        setMusicVolume={setMusicVolume}
       />
 
-      {/* 7. Language Switcher Modal */}
+      {/* Language selection modal */}
       <LanguageModal
         isOpen={isLanguageModalOpen}
         onClose={() => {
@@ -657,7 +666,7 @@ export default function App() {
         }}
       />
 
-      {/* 8. Custom Text & Code Snippets Modal */}
+      {/* Custom text modal */}
       <CustomTextModal
         isOpen={isCustomModalOpen}
         onClose={() => {
@@ -666,6 +675,39 @@ export default function App() {
         }}
         customText={customText}
         onApplyCustomText={handleApplyCustomText}
+      />
+
+      {/* Profile modal */}
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => {
+          setHasOnboardedProfile(true);
+          setIsProfileModalOpen(false);
+          if (!isSettingsOpen) {
+            restoreFocus();
+          }
+        }}
+        profile={safeProfile}
+        setProfile={setProfile}
+        personalBestWpm={personalBestWpm}
+        testsCompleted={testsCompleted}
+        isFirstVisit={!hasOnboardedProfile}
+      />
+
+      {/* Music player widget */}
+      <MusicPlayer
+        musicUrl={musicUrl}
+        setMusicUrl={setMusicUrl}
+        isVisible={isMusicVisible}
+        onClose={() => {
+          setIsMusicCollapsed(true);
+          restoreFocus();
+        }}
+        isCollapsed={isMusicCollapsed}
+        setIsCollapsed={setIsMusicCollapsed}
+        musicVolume={musicVolume}
+        setMusicVolume={setMusicVolume}
+        onRestoreFocus={restoreFocus}
       />
     </div>
   );

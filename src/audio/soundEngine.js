@@ -1,7 +1,6 @@
 /**
- * Web Audio API Creamy Mechanical Keyboard & Tactile Synthesizer
- * Zero external audio files required — 100% synthesized in real time with zero latency.
- * Engineered for authentic lubed custom mechanical switch acoustics (thock, cream, pop).
+ * Web Audio API Keystroke Sound Synthesizer.
+ * Synthesizes keystroke audio effects in real time using Web Audio oscillators and filters.
  */
 
 let audioCtx = null;
@@ -78,7 +77,7 @@ export function playKeySound(preset = 'creamy', volume = 0.65, key = '') {
   masterGain.gain.setValueAtTime(Math.min(1, volume * 1.1), now);
   masterGain.connect(ctx.destination);
 
-  // Automatically disconnect masterGain once the brief switch acoustic decays to prevent audio graph accumulation
+  // Disconnect masterGain node after sound decay to prevent audio graph accumulation
   setTimeout(() => {
     try {
       masterGain.disconnect();
@@ -92,25 +91,17 @@ export function playKeySound(preset = 'creamy', volume = 0.65, key = '') {
   const isBackspace = key === 'Backspace';
   const isEnter = key === 'Enter';
 
-  // Organic micro-pitch variation (different keys on keyboard vibrate subtly differently)
+  // Micro-pitch variation per key type
   const pitchVar = isSpace
-    ? 0.72 // Spacebar has heavy deep stabilizer sound
+    ? 0.72 // Spacebar lower pitch
     : isBackspace || isEnter
-    ? 0.84 // Backspace and Enter are deeper
-    : 0.94 + Math.random() * 0.12; // Regular keys vary slightly
+    ? 0.84 // Modifiers pitch
+    : 0.94 + Math.random() * 0.12; // Standard keys variation
 
   switch (preset) {
     case 'creamy': {
-      /* =========================================================================
-         CREAMY MECHANICAL SWITCH (Lubed Gateron Milky Yellow / NovelKeys Cream)
-         Acoustics:
-         1. Bottom-Out Body Thock: Warm triangle swept 170Hz -> 65Hz through 360Hz LPF
-         2. Desk Resonance Sub-Body: Sine wave ~110Hz giving that deep, solid thud
-         3. Stem Slide Transient: Soft lubed noise pop filtered at 1300Hz
-         4. Upstroke Snap: Very quiet subtle key return tap 40ms later
-         ========================================================================= */
-
-      // 1. Bottom-Out Body Thock
+      // Multi-layer mechanical switch synthesis: body impact, sub resonance, noise transient, upstroke
+      // 1. Body impact oscillator
       const bodyOsc = ctx.createOscillator();
       const bodyGain = ctx.createGain();
       const bodyFilter = ctx.createBiquadFilter();
@@ -133,7 +124,7 @@ export function playKeySound(preset = 'creamy', volume = 0.65, key = '') {
       bodyFilter.connect(bodyGain);
       bodyGain.connect(masterGain);
 
-      // 2. Desk & Housing Resonance (Sub Bass Thud)
+      // 2. Low-frequency resonance
       const subOsc = ctx.createOscillator();
       const subGain = ctx.createGain();
       subOsc.type = 'sine';
@@ -146,7 +137,7 @@ export function playKeySound(preset = 'creamy', volume = 0.65, key = '') {
       subOsc.connect(subGain);
       subGain.connect(masterGain);
 
-      // 3. Stem Impact Transient (Soft Lubed Pop)
+      // 3. Transient noise click
       const noise = ctx.createBufferSource();
       noise.buffer = getCreamyNoiseBuffer(ctx);
 
@@ -163,7 +154,7 @@ export function playKeySound(preset = 'creamy', volume = 0.65, key = '') {
       noiseFilter.connect(noiseGain);
       noiseGain.connect(masterGain);
 
-      // 4. Subtle Key Return Upstroke (Simulates switch spring snapping back up)
+      // 4. Upstroke return click
       const upstrokeOsc = ctx.createOscillator();
       const upstrokeGain = ctx.createGain();
       const upstrokeFilter = ctx.createBiquadFilter();
@@ -198,7 +189,7 @@ export function playKeySound(preset = 'creamy', volume = 0.65, key = '') {
     }
 
     case 'matcha': {
-      // Crisp poppy linear clack
+      // Mid-frequency bandpass click
       const osc = ctx.createOscillator();
       const oscGain = ctx.createGain();
       const filter = ctx.createBiquadFilter();
@@ -224,7 +215,7 @@ export function playKeySound(preset = 'creamy', volume = 0.65, key = '') {
     }
 
     case 'bubble': {
-      // Bubble pop: Smooth rising frequency sweep
+      // Rising frequency sweep
       const osc = ctx.createOscillator();
       const oscGain = ctx.createGain();
 
@@ -244,7 +235,7 @@ export function playKeySound(preset = 'creamy', volume = 0.65, key = '') {
     }
 
     case 'typewriter': {
-      // Vintage typewriter mechanical clatter
+      // Typewriter click with square wave and bandpass filter
       const osc = ctx.createOscillator();
       const oscGain = ctx.createGain();
 
@@ -269,7 +260,7 @@ export function playKeySound(preset = 'creamy', volume = 0.65, key = '') {
     }
 
     case 'wood': {
-      // Soft organic wooden tap
+      // Woodblock tap synthesis
       const osc = ctx.createOscillator();
       const oscGain = ctx.createGain();
 
@@ -294,7 +285,7 @@ export function playKeySound(preset = 'creamy', volume = 0.65, key = '') {
 }
 
 /**
- * Plays a cheerful warm chime when a test completes
+ * Plays a completion chime when a test finishes.
  */
 export function playCompletionChime(volume = 0.6) {
   if (volume <= 0) return;
@@ -324,14 +315,14 @@ export function playCompletionChime(volume = 0.6) {
 }
 
 /**
- * Plays a triumphant, warm celebratory fanfare when a new Personal Record / Best WPM is achieved!
+ * Plays an arpeggio fanfare when a new personal record is achieved.
  */
 export function playRecordFanfare(volume = 0.65) {
   if (volume <= 0) return;
   const ctx = getAudioContext();
   if (!ctx) return;
 
-  // Uplifting triumphant arpeggio: C5, E5, G5, B5, C6, E6
+  // Fanfare notes: C5, E5, G5, B5, C6, E6
   const notes = [523.25, 659.25, 783.99, 987.77, 1046.50, 1318.51];
   const now = ctx.currentTime;
 
