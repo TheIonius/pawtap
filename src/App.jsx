@@ -20,7 +20,7 @@ import { MusicPlayer } from './components/MusicPlayer';
 import { DEFAULT_MUSIC_URL } from './constants/music';
 
 export default function App() {
-  // 1. Persistent User Preferences
+  // User preferences
   const [activeThemeId, setThemeId] = useLocalStorage('pawtap_theme', 'boba-tea');
   const [activeFontId, setFontId] = useLocalStorage('pawtap_font', 'nunito');
   const [caretStyle, setCaretStyle] = useLocalStorage('pawtap_caret', 'underline');
@@ -38,7 +38,7 @@ export default function App() {
   const [isMusicCollapsed, setIsMusicCollapsed] = useLocalStorage('pawtap_music_collapsed', true);
   const [musicVolume, setMusicVolume] = useLocalStorage('pawtap_music_vol', 75);
 
-  // Ensure the floating music player pill is visible and clean legacy stream
+  // Music player state initialization and legacy cleanup
   useEffect(() => {
     if (musicUrl && musicUrl.includes('jfKfPfyJRdk')) {
       setMusicUrl('');
@@ -48,17 +48,17 @@ export default function App() {
     }
   }, [musicUrl, setMusicUrl, isMusicVisible, setIsMusicVisible]);
 
-  // Fallback resilience: ensure profile always has valid defaults even if corrupted in localStorage
+  // Ensure profile has default values if missing from storage
   const safeProfile = useMemo(() => ({
     ...DEFAULT_PROFILE,
     ...(profile && typeof profile === 'object' ? profile : {})
   }), [profile]);
 
-  // Statistics & History Persistence
+  // Statistics persistence
   const [testsCompleted, setTestsCompleted] = useLocalStorage('pawtap_tests_count', 0);
   const [personalBestWpm, setPersonalBestWpm] = useLocalStorage('pawtap_pb_wpm', 0);
 
-  // Active Test Configuration
+  // Test configuration
   const [mode, setMode] = useState('time');
   const [timeLimit, setTimeLimit] = useState(30);
   const [wordLimit, setWordLimit] = useState(25);
@@ -73,18 +73,18 @@ export default function App() {
       ? [challengeMods]
       : [];
 
-  // Modals & Results State
+  // Modal and result state
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
   const [lastResult, setLastResult] = useState(null);
 
-  // Full-Page Focus & Window Blur Tracking
+  // Focus tracking
   const [isFocused, setIsFocused] = useState(true);
   const typingInputRef = useRef(null);
 
-  // Gentle delayed entrance on first visit (600ms breath to absorb the sanctuary atmosphere)
+  // Prompt profile modal on first visit
   useEffect(() => {
     if (!hasOnboardedProfile) {
       const timer = setTimeout(() => {
@@ -95,11 +95,11 @@ export default function App() {
     }
   }, [hasOnboardedProfile, setIsFocused]);
 
-  // 2. Resolve Active Theme & Font
+  // Theme and font resolution
   const activeTheme = THEMES[activeThemeId] || THEMES['boba-tea'] || THEMES['oat-latte'];
   const activeFont = FONTS.find(f => f.id === activeFontId) || FONTS[1];
 
-  // Apply CSS Variables to Document Root
+  // Apply CSS variables to document root
   useEffect(() => {
     const root = document.documentElement;
     Object.entries(activeTheme.colors).forEach(([key, val]) => {
@@ -109,7 +109,7 @@ export default function App() {
     root.style.setProperty('--font-active', activeFont.family);
   }, [activeTheme, activeFont]);
 
-  // Audio Mute Memory & Tactile Keypress Sound Toggle
+  // Sound volume and mute toggle
   const prevSoundVolumeRef = useRef(soundVolume > 0 ? soundVolume : 0.65);
 
   useEffect(() => {
@@ -128,9 +128,9 @@ export default function App() {
     }
   }, [isAudioActive, soundVolume, setSoundVolume]);
 
-  // 3. Test Completion Callback
+  // Test completion handler
   const handleTestFinish = useCallback((result) => {
-    // Only celebrate if user achieves a valid WPM that beats their previous personal best
+    // Check if user set a new personal record
     const previousBest = personalBestWpm || 0;
     const isNewRecord = result.wpm > 0 && result.wpm > previousBest;
 
@@ -146,7 +146,7 @@ export default function App() {
     if (isNewRecord) {
       setPersonalBestWpm(result.wpm);
 
-      // Launch celebratory confetti ONLY when setting a new record / BPM (sound removed per user preference)
+      // Trigger confetti on new personal record
       try {
         confetti({
           particleCount: 65,
@@ -195,7 +195,7 @@ export default function App() {
     }
   }, [mode, wordLimit, customWords]);
 
-  // 4. Initialize Core Typing Engine (pauses when browser window/tab is unfocused)
+  // Initialize typing engine
   const engine = useTypingEngine({
     mode,
     timeLimit,
@@ -228,7 +228,7 @@ export default function App() {
     engine.initializeTest(parsed);
   }, [setCustomText, engine]);
 
-  // Restore focus helper for clicking anywhere or pressing any key
+  // Restore focus to typing input
   const restoreFocus = useCallback((e) => {
     if (e) {
       e.preventDefault();
@@ -243,16 +243,16 @@ export default function App() {
   // Consolidated active modal state
   const isAnyModalOpen = isSettingsOpen || isProfileModalOpen || isLanguageModalOpen || isCustomModalOpen;
 
-  // Browser Window Blur & Tab Switching Handlers
+  // Window blur and visibility change handlers
   useEffect(() => {
     const isMusicActive = isMusicVisible && !isMusicCollapsed;
 
     const handleWindowBlur = () => {
-      // If focus moved to an embedded player iframe (like YouTube) or music player is active/expanded, do not trigger unfocused blur overlay
+      // Do not trigger blur overlay if focus moved to an iframe or music player is active
       if (isMusicActive || (document.activeElement && document.activeElement.tagName === 'IFRAME')) {
         return;
       }
-      // Do not trigger unfocused blur overlay if user is interacting with any panel/modal
+      // Do not trigger blur overlay if a modal is open
       if (engine.status !== 'finished' && !isAnyModalOpen) {
         setIsFocused(false);
       }
@@ -280,17 +280,17 @@ export default function App() {
     };
   }, [engine.status, isAnyModalOpen, isMusicVisible, isMusicCollapsed]);
 
-  // Global Pointer & Keydown Listeners to Re-Focus
+  // Global pointer and keydown listeners to restore focus
   useEffect(() => {
     const handleGlobalPointerDown = (e) => {
-      // If music player is open and expanded, clicking anywhere outside minimizes it to the bottom pill
+      // Minimize music player when clicking outside
       if (isMusicVisible && !isMusicCollapsed) {
         if (!e.target.closest || (!e.target.closest('.music-player-container') && !e.target.closest('.spotify-widget-container'))) {
           setIsMusicCollapsed(true);
         }
       }
 
-      // Allow interaction with buttons, selects, modals, music player, etc.
+      // Ignore interactive elements
       if (e.target.closest && e.target.closest('button, select, input, [role="dialog"], .modal-content, a, textarea, .music-player-container, .spotify-widget-container, iframe')) {
         return;
       }
@@ -309,7 +309,7 @@ export default function App() {
         return;
       }
 
-      // Allow browser shortcuts (like Ctrl+R, Ctrl+W, Cmd+R) to pass through untouched
+      // Allow browser keyboard shortcuts to pass through untouched
       if ((e.ctrlKey || e.metaKey) && e.key !== 'Backspace') {
         return;
       }
@@ -339,13 +339,13 @@ export default function App() {
     };
   }, [isFocused, isAnyModalOpen, isMusicVisible, isMusicCollapsed, setIsMusicCollapsed, restoreFocus, engine, setShowKeyboard]);
 
-  // Handle Practice Missed Words (all errors or specific target keys)
+  // Practice words containing errors from last test
   const handlePracticeErrors = useCallback((targetKeys = null) => {
     if (!lastResult || !lastResult.keyErrors) return;
     const errorKeys = targetKeys && targetKeys.length > 0 ? targetKeys : Object.keys(lastResult.keyErrors);
     if (errorKeys.length === 0) return;
 
-    // Save previous configuration so restarting restores previous mode (e.g. time 30s)
+    // Save previous configuration to restore on restart
     if (!savedModeConfigRef.current) {
       savedModeConfigRef.current = {
         mode,
@@ -368,7 +368,7 @@ export default function App() {
     engine.initializeTest(practiceWords);
   }, [lastResult, mode, timeLimit, wordLimit, quoteLength, punctuation, numbers, language, vocabularyMode, engine]);
 
-  // Keyboard Navigation: Esc to toggle Customizer & Themes modal (or close open modal)
+  // Handle Escape key to close open modal or toggle settings
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
       if (e.key === 'Escape') {
@@ -415,7 +415,7 @@ export default function App() {
         transition: 'background-color 0.25s ease'
       }}
     >
-      {/* Full-Page Content Wrapper (Receives Full-Page Blur When Unfocused) */}
+      {/* Main page layout */}
       <div
         className={shouldShowFullPageBlur ? 'page-blurred' : 'page-focused'}
         style={{
@@ -426,7 +426,7 @@ export default function App() {
           width: '100%'
         }}
       >
-        {/* 1. Header Navigation (Responsive for bigger screens) */}
+        {/* Header navigation */}
         <Header
           activeThemeId={activeThemeId}
           setThemeId={setThemeId}
@@ -448,7 +448,7 @@ export default function App() {
           }}
         />
 
-        {/* 2. Main Content Sanctuary (Expanded for Bigger Screens & Ultrawide) */}
+        {/* Main test container */}
         <main
           style={{
             flex: 1,
@@ -466,7 +466,7 @@ export default function App() {
         >
           {engine.status !== 'finished' ? (
             <>
-              {/* Mode & Punctuation Controls Bar */}
+              {/* Test settings bar */}
               <TestSettingsBar
                 mode={mode}
                 setMode={(m) => {
@@ -504,7 +504,7 @@ export default function App() {
                 }}
               />
 
-              {/* Interactive Animated Companion (Mochi the Cat / Steaming Latte) */}
+              {/* Companion avatar */}
               <div style={{ marginBottom: '8px' }}>
                 <Companion
                   type={companionType}
@@ -518,7 +518,7 @@ export default function App() {
                 />
               </div>
 
-              {/* Core Typing Test Area (Responsive Big Screen Dimensions) */}
+              {/* Typing test engine */}
               <TypingTest
                 engine={engine}
                 mode={mode}
@@ -542,7 +542,7 @@ export default function App() {
                 onToggleKeyboard={() => setShowKeyboard(prev => !prev)}
               />
 
-              {/* Optional On-Screen Aesthetic Keyboard */}
+              {/* On-screen visual keyboard */}
               {showKeyboard && (
                 <div style={{ marginTop: '24px' }}>
                   <KeyboardVisualizer />
@@ -550,7 +550,7 @@ export default function App() {
               )}
             </>
           ) : (
-            /* 3. Post-Test Results Sanctuary */
+            /* Results view */
             <ResultsView
               result={lastResult}
               onRestart={handleRestart}
@@ -560,7 +560,7 @@ export default function App() {
           )}
         </main>
 
-        {/* 4. Footer & Aesthetic Credits (Responsive for bigger screens) */}
+        {/* Footer */}
         <footer
           style={{
             padding: '24px 36px',
@@ -588,7 +588,7 @@ export default function App() {
         </footer>
       </div>
 
-      {/* 5. Full-Screen Unfocused Blur Overlay (Clean Borderless Floating Text) */}
+      {/* Unfocused blur overlay */}
       {shouldShowFullPageBlur && (
         <div
           onPointerDown={restoreFocus}
@@ -637,7 +637,7 @@ export default function App() {
         </div>
       )}
 
-      {/* 6. Customizer Settings Modal */}
+      {/* Settings modal */}
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => {
@@ -676,7 +676,7 @@ export default function App() {
         setMusicVolume={setMusicVolume}
       />
 
-      {/* 7. Language Switcher Modal */}
+      {/* Language selection modal */}
       <LanguageModal
         isOpen={isLanguageModalOpen}
         onClose={() => {
@@ -692,7 +692,7 @@ export default function App() {
         }}
       />
 
-      {/* 8. Custom Text & Code Snippets Modal */}
+      {/* Custom text modal */}
       <CustomTextModal
         isOpen={isCustomModalOpen}
         onClose={() => {
@@ -703,7 +703,7 @@ export default function App() {
         onApplyCustomText={handleApplyCustomText}
       />
 
-      {/* 9. Typist Profile Identity Modal */}
+      {/* Profile modal */}
       <ProfileModal
         isOpen={isProfileModalOpen}
         onClose={() => {
@@ -720,7 +720,7 @@ export default function App() {
         isFirstVisit={!hasOnboardedProfile}
       />
 
-      {/* 10. YouTube Music Sanctuary Floating Widget */}
+      {/* Music player widget */}
       <MusicPlayer
         musicUrl={musicUrl}
         setMusicUrl={setMusicUrl}

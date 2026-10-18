@@ -1,5 +1,5 @@
 /**
- * Curated Cozy YouTube Music Presets and URL Parser
+ * YouTube Music and video URL parser.
  * Supports:
  * - https://music.youtube.com/watch?v=ID
  * - https://music.youtube.com/playlist?list=ID
@@ -9,11 +9,11 @@
  * - Raw 11-char video ID
  */
 
-// Empty by default: user is prompted for their playlist/video link right away
+// Default empty URL
 export const DEFAULT_MUSIC_URL = '';
 
 /**
- * Parses any YouTube or YouTube Music link and returns clean video/playlist embed data.
+ * Parses a YouTube or YouTube Music link and returns embed configuration.
  * Supports:
  * - https://music.youtube.com/watch?v=ID
  * - https://music.youtube.com/playlist?list=ID

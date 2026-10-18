@@ -1,6 +1,6 @@
 /**
- * Curated Multilingual Cozy Literary, Philosophical & Aesthetic Quotes & Passages
- * Full multi-language support: English, Spanish, French, German, Italian, Portuguese,
+ * Multilingual literary and philosophical quote collections.
+ * Supports: English, Spanish, French, German, Italian, Portuguese,
  * Dutch, Polish, Russian, Japanese (Romaji), Indonesian, Swedish, Turkish, Korean, and Chinese (Pinyin).
  */
 

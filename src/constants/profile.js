@@ -1,5 +1,5 @@
 /**
- * Cozy Typist Profile Presets and Defaults
+ * User profile presets and default configuration.
  */
 
 export const DEFAULT_PROFILE = {

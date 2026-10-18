@@ -115,7 +115,7 @@ export function SettingsModal({
         padding: '20px'
       }}
     >
-      {/* 1. Fast GPU-efficient dimming backdrop scrim (zero rasterization lag on hover) */}
+      {/* Backdrop scrim */}
       <div
         onClick={onClose}
         style={{
@@ -127,7 +127,7 @@ export function SettingsModal({
         }}
       />
 
-      {/* 2. Isolated Modal Window */}
+      {/* Modal dialog container */}
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
@@ -149,7 +149,7 @@ export function SettingsModal({
           isolation: 'isolate'
         }}
       >
-        {/* Modal Header */}
+        {/* Modal header */}
         <div
           style={{
             padding: '20px 24px',
@@ -175,7 +175,7 @@ export function SettingsModal({
           </button>
         </div>
 
-        {/* Modal Body (Scrollable with hidden scrollbar & fluid performance) */}
+        {/* Modal body */}
         <div
           className="no-scrollbar"
           style={{
@@ -295,7 +295,7 @@ export function SettingsModal({
             </div>
           </div>
 
-          {/* 2. Typography & Fonts (Accommodated & Space-Efficient) */}
+          {/* Typography and fonts */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
               <Type size={16} color="var(--accent)" />
@@ -340,7 +340,7 @@ export function SettingsModal({
             </div>
           </div>
 
-          {/* 3. Difficulty & Challenge Mode */}
+          {/* Difficulty and challenge mods */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
               <Gauge size={16} color="var(--accent)" />
@@ -349,7 +349,7 @@ export function SettingsModal({
               </h3>
             </div>
 
-            {/* A. Typing Mechanics Challenge (osu! Style Multi-Select Modifiers) */}
+            {/* Challenge modifiers */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
               <div style={{ fontSize: '11.5px', color: 'var(--text-sub)', fontWeight: 500 }}>
                 osu! Difficulty Modifiers (Multi-Select)
@@ -514,7 +514,7 @@ export function SettingsModal({
             </div>
           </div>
 
-          {/* 4B. Pace Caret / Ghost Caret */}
+          {/* Pace caret */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -556,7 +556,7 @@ export function SettingsModal({
             </div>
           </div>
 
-          {/* 5. Cozy Companion */}
+          {/* Interactive companion */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
               <Cat size={16} color="var(--accent)" />
@@ -609,7 +609,7 @@ export function SettingsModal({
             </div>
           </div>
 
-          {/* 6. Sound & Atmosphere Controls */}
+          {/* Audio and key sound controls */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
               <Volume2 size={16} color="var(--accent)" />
@@ -656,7 +656,7 @@ export function SettingsModal({
             </div>
           </div>
 
-          {/* 7. YouTube Music Sanctuary */}
+          {/* YouTube Music controls */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

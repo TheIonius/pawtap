@@ -73,7 +73,7 @@ export function Header({
         zIndex: 50
       }}
     >
-      {/* 1. Brand & Subtitle */}
+      {/* Brand logo and title */}
       <div>
         <div>
           <h1
@@ -111,7 +111,7 @@ export function Header({
         </div>
       </div>
 
-      {/* 2. Two-Capsule Layout: Personal Identity + Sanctuary Controls */}
+      {/* Header controls */}
       <div
         style={{
           display: 'flex',
@@ -120,7 +120,7 @@ export function Header({
           flexWrap: 'wrap'
         }}
       >
-        {/* Capsule 1: Typist Identity Capsule */}
+        {/* User profile pill */}
         {profile && (
           <button
             onClick={onOpenProfile}
@@ -158,7 +158,7 @@ export function Header({
           </button>
         )}
 
-        {/* Capsule 2: Sanctuary Controls Capsule */}
+        {/* Controls bar */}
         <div
           ref={dockRef}
           style={{
@@ -177,7 +177,7 @@ export function Header({
             fontWeight: 500
           }}
         >
-          {/* A. Theme Selector Button & Floating Popover */}
+          {/* Theme selector popover */}
           <div style={{ position: 'relative' }}>
             <button
               onClick={() => toggleMenu('theme')}
@@ -215,7 +215,7 @@ export function Header({
                   backdropFilter: 'blur(16px)'
                 }}
               >
-                {/* 5-Column Grid of Original Accent Dots */}
+                {/* Theme grid */}
                 <div
                   style={{
                     display: 'grid',
@@ -273,7 +273,7 @@ export function Header({
                   })}
                 </div>
 
-                {/* Dynamic Theme Name Preview on Hover / Active */}
+                {/* Theme name preview */}
                 <div
                   style={{
                     marginTop: '8px',
@@ -298,7 +298,7 @@ export function Header({
           {/* Divider */}
           <div style={{ width: '1px', height: '14px', backgroundColor: 'var(--border)', opacity: 0.8 }} />
 
-          {/* B. Mute/Unmute Quick Button */}
+          {/* Sound toggle */}
           <button
             onClick={onToggleSound}
             className="pill-btn"
@@ -309,7 +309,7 @@ export function Header({
             {isAudioActive ? <Volume2 size={14} color="var(--accent)" /> : <VolumeX size={14} />}
           </button>
 
-          {/* C. Settings Modal Trigger */}
+          {/* Settings trigger */}
           <button
             onClick={onOpenSettings}
             className="pill-btn"
@@ -320,7 +320,7 @@ export function Header({
             <Sliders size={14} />
           </button>
 
-          {/* D. GitHub Profile Link */}
+          {/* GitHub link */}
           <a
             href="https://github.com/TheIonius"
             target="_blank"

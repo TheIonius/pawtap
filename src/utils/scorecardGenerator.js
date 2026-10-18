@@ -2,8 +2,7 @@ import { getCozyPerformanceTitle } from './metrics';
 import { getPresetAvatar } from '../constants/profile';
 
 /**
- * Generates an aesthetic, high-resolution PNG image scorecard of the test results.
- * Perfectly styled to match the active theme and typography.
+ * Generates a PNG scorecard image of typing test results using HTML5 Canvas.
  */
 export async function generateScorecardBlob(result, modeLabel, profile = null) {
   if (!result) return null;
@@ -57,7 +56,7 @@ export async function generateScorecardBlob(result, modeLabel, profile = null) {
     textError = getVal('--text-error') || textError;
   }
 
-  // Canvas dimensions (2x retina scale for ultra-crisp output)
+  // Canvas dimensions (2x scale for high-DPI rendering)
   const width = 960;
   const height = 520;
   const scale = 2;
@@ -81,7 +80,7 @@ export async function generateScorecardBlob(result, modeLabel, profile = null) {
   ctx.strokeRect(16, 16, width - 32, height - 32);
 
   // 2. Header Bar
-  // Left: Brand Logo & Mode Pill
+  // Left: Brand logo & mode badge
   ctx.fillStyle = accent;
   ctx.font = 'bold 24px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
   ctx.fillText('pawtap', 40, 56);
@@ -294,7 +293,7 @@ export async function generateScorecardBlob(result, modeLabel, profile = null) {
     : `correct: ${correctCount} • typos: ${incorrectCount} • total: ${totalCharacters} chars`;
   ctx.fillText(charSummary, 42, footerY);
 
-  // Right: Branding & warm tagline
+  // Right: App link and tagline
   const brandTag = 'pawtap.app • type gently ~';
   ctx.font = 'italic 12.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
   const brandWidth = ctx.measureText(brandTag).width;

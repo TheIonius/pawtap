@@ -1,7 +1,5 @@
 /**
- * Cozy & Aesthetic Theme Definitions
- * Inspired by cozy girl aesthetics, warm neutrals, matcha cafés, and lofi vibes.
- * Deepened background tones with warm multi-tone harmony to prevent eye glare.
+ * Theme color palettes, fonts, and UI style definitions.
  */
 
 export const THEMES = {

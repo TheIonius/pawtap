@@ -1,9 +1,7 @@
 import React from 'react';
 
 /**
- * Pixel-crisp vector SVG flags for supported languages.
- * Completely cross-platform (renders identical on Windows, macOS, Linux, iOS, Android).
- * Zero Unicode emoji dependency (respects 0-emoji design standard).
+ * SVG vector flags for supported languages.
  */
 export function FlagIcon({ langId, width = 24, height = 16, style = {} }) {
   const containerStyle = {
@@ -281,7 +279,7 @@ export function FlagIcon({ langId, width = 24, height = 16, style = {} }) {
       );
 
     default:
-      // Stylized international globe badge fallback
+      // Fallback globe icon
       return (
         <span style={containerStyle} title="Language">
           <svg viewBox="0 0 60 40" width="100%" height="100%">

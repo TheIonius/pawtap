@@ -545,7 +545,7 @@ export function MusicPlayer({
 
   return (
     <>
-      {/* 1. Minimized Floating Micro-Pill State (Visible by default when collapsed) */}
+      {/* Minimized player pill */}
       {isCollapsed && (
         <div
           className="music-player-container spotify-widget-container"
@@ -577,7 +577,7 @@ export function MusicPlayer({
             title="Expand YouTube Music Player"
             aria-label="Expand YouTube Music Player"
           >
-            {/* Red Pulse Indicator */}
+            {/* Playback indicator dot */}
             <span
               style={{
                 width: '7px',
@@ -589,7 +589,7 @@ export function MusicPlayer({
               }}
             />
 
-            {/* Small Current Song Thumbnail */}
+            {/* Current track thumbnail */}
             {displayThumbnail ? (
               <img
                 src={displayThumbnail}
@@ -620,7 +620,7 @@ export function MusicPlayer({
               {displayTitle || 'YT Music'}
             </span>
 
-            {/* Bouncing EQ indicator when playing */}
+            {/* Equalizer animation */}
             {isPlaying && (
               <div
                 style={{
@@ -651,7 +651,7 @@ export function MusicPlayer({
         </div>
       )}
 
-      {/* 2. Expanded Floating Audio-Only Player (Zero Video Frame) */}
+      {/* Expanded audio player window */}
       <div
         className="music-player-container spotify-widget-container"
         onPointerDown={(e) => e.stopPropagation()}
@@ -791,7 +791,7 @@ export function MusicPlayer({
           </div>
         </div>
 
-        {/* 3A. Setup View: Prompt for playlist link if none configured yet */}
+        {/* Setup view for unconfigured player */}
         {!parsed && (
           <div style={{ padding: '18px 16px', backgroundColor: '#141414' }}>
             <div style={{ textAlign: 'center', marginBottom: '14px' }}>
@@ -817,7 +817,7 @@ export function MusicPlayer({
               </p>
             </div>
 
-            {/* Link Input Form */}
+            {/* Link input form */}
             <form onSubmit={handleApplyCustomUrl} style={{ marginBottom: '14px' }}>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <input
@@ -894,10 +894,10 @@ export function MusicPlayer({
           </div>
         )}
 
-        {/* 3B. Active Audio Music Player View (Zero Video Frame) */}
+        {/* Active playback view */}
         {parsed && (
           <>
-            {/* Drawer to Change Link / Select Preset */}
+            {/* Link change drawer */}
             {isPickerOpen && (
               <div
                 style={{
@@ -1024,7 +1024,7 @@ export function MusicPlayer({
               </div>
             )}
 
-            {/* Now Playing Hero Section: Small Picture of Current Song + Playback Controls */}
+            {/* Current track details and playback controls */}
             <div
               style={{
                 display: 'flex',
@@ -1035,7 +1035,7 @@ export function MusicPlayer({
                 borderBottom: '1px solid rgba(255, 255, 255, 0.06)'
               }}
             >
-              {/* Small Picture of the Current Song */}
+              {/* Track cover thumbnail */}
               {displayThumbnail ? (
                 <div style={{ position: 'relative', flexShrink: 0 }}>
                   <img
@@ -1247,7 +1247,7 @@ export function MusicPlayer({
               </div>
             </div>
 
-            {/* Dedicated Volume Slider Bar */}
+            {/* Volume control bar */}
             <div
               style={{
                 display: 'flex',
@@ -1313,7 +1313,7 @@ export function MusicPlayer({
               </span>
             </div>
 
-            {/* Playlist Song List (Native Tracklist, Scrollable, Click to Play) */}
+            {/* Playlist tracklist */}
             <div style={{ padding: '10px 12px 14px 12px', backgroundColor: '#121212' }}>
               <div
                 style={{
@@ -1352,7 +1352,7 @@ export function MusicPlayer({
                 </span>
               </div>
 
-              {/* Scrollable Song List */}
+              {/* Track list */}
               <div
                 className="playlist-tracks-scroll"
                 style={{
@@ -1568,7 +1568,7 @@ export function MusicPlayer({
               </div>
             </div>
 
-            {/* Completely hidden audio playback iframe - zero visual video element */}
+            {/* Hidden audio playback iframe */}
             <div
               style={{
                 position: 'absolute',

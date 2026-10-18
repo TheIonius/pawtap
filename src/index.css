@@ -1,7 +1,5 @@
 /* ==========================================================================
-   Pawtap - Gentle Aesthetic Sanctuary Stylesheet
-   Warm Neutral, Multi-Tone Layered Depth, Upscaled Tactile Controls,
-   Full-Page Blur State & Large Screen / Ultrawide Responsive Typography
+   Pawtap Application Stylesheet
    ========================================================================== */
 
 :root {
@@ -22,11 +20,11 @@
   --font-mono: 'DM Mono', monospace;
   --font-active: 'Nunito', sans-serif;
 
-  /* Cute White Cat Paw Cursors */
+  /* Custom paw cursor variables */
   --cursor-paw: url('/cat-paw.svg') 5 5, auto;
   --cursor-paw-pointer: url('/cat-paw-pointer.svg') 4 4, pointer;
 
-  /* Fluid responsive typography for typing stream */
+  /* Typography variables for typing test */
   --test-font-size: clamp(28px, 2.2vw, 36px);
   --test-line-height: clamp(48px, 3.8vw, 60px);
 }
@@ -140,7 +138,7 @@ body {
   background: var(--text-sub);
 }
 
-/* Hide scrollbar utility (for clean customizer & language modals) */
+/* Hide scrollbar utility */
 .no-scrollbar {
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
@@ -157,7 +155,7 @@ body {
   transform: none !important;
 }
 
-/* Button & Pill Utilities with Cute Cat Paw Pointer Cursor */
+/* Button & pill styles */
 button,
 select,
 input[type="button"],
@@ -179,7 +177,7 @@ button {
   outline: none;
 }
 
-/* Tactile pill button */
+/* Pill button */
 .pill-btn {
   display: inline-flex;
   align-items: center;
@@ -326,7 +324,7 @@ button {
   animation: caretBlink 1.1s infinite cubic-bezier(0.4, 0, 0.6, 1);
 }
 
-/* Breathing & Steam Animations */
+/* Idle and steam animations */
 @keyframes cozyBreathing {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-3px); }
@@ -470,7 +468,7 @@ button {
 }
 
 /* ==========================================================================
-   Slick Seamless Minimalist Results View Styles
+   Results View Styles
    ========================================================================== */
 
 .seamless-results-container {
@@ -528,7 +526,7 @@ button {
 }
 
 /* ==========================================================================
-   YouTube Music Playlist Player & Equalizer Animations
+   Music Player & Equalizer Animations
    ========================================================================== */
 
 @keyframes eqBounce1 {

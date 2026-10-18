@@ -96,7 +96,7 @@ export function ProfileModal({
     reader.onload = (event) => {
       const img = new Image();
       img.onload = () => {
-        // Crop & resize to crisp 180x180 square for optimal localStorage footprint
+        // Crop and resize to 180x180 square for localStorage storage
         const canvas = document.createElement('canvas');
         const size = 180;
         canvas.width = size;
@@ -261,7 +261,7 @@ export function ProfileModal({
             gap: '20px'
           }}
         >
-          {/* 1. Live Identity Preview Card */}
+          {/* 1. Identity preview card */}
           <div
             className="stagger-item"
             style={{
@@ -329,7 +329,7 @@ export function ProfileModal({
             </div>
           </div>
 
-          {/* 2. Display Name Input */}
+          {/* 2. Display name input */}
           <div className="stagger-item" style={{ animationDelay: '65ms' }}>
             <div
               style={{
@@ -388,7 +388,7 @@ export function ProfileModal({
             />
           </div>
 
-          {/* 3. Preset Icons Grid */}
+          {/* 3. Preset icons grid */}
           <div className="stagger-item" style={{ animationDelay: '100ms' }}>
             <div
               style={{
@@ -444,7 +444,7 @@ export function ProfileModal({
             </div>
           </div>
 
-          {/* 4. Custom Photo Upload Section */}
+          {/* 4. Custom photo upload */}
           <div className="stagger-item" style={{ animationDelay: '135ms' }}>
             <div
               style={{

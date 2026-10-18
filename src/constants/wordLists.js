@@ -1,7 +1,5 @@
 /**
- * Curated Vocabulary Collections for Pawtap
- * Massive dictionary of 500+ cozy words, 1,000+ standard English words, and 300+ expert words.
- * Full non-repeating Fisher-Yates sampler guarantees zero word repetition per session.
+ * Word lists and vocabulary generators for typing tests.
  */
 
 export const COZY_WORDS = [
@@ -526,14 +524,14 @@ export function getRandomWords(count = 25, options = { punctuation: false, numbe
   for (let i = 0; i < count; i++) {
     let word;
 
-    // 1. Inject a number if numbers option is enabled (approx 12% of the time, not as first word of sentence)
+    // Inject numbers if enabled (approx 13% frequency, not first word of sentence)
     if (options.numbers && Math.random() < 0.13 && !newSentence) {
       word = String(Math.floor(Math.random() * 980) + 1);
     } else {
       word = pool[i % pool.length];
     }
 
-    // 2. Format with realistic punctuation & capitalization if punctuation option is enabled
+    // Format punctuation and capitalization if enabled
     if (options.punctuation) {
       // Capitalize first letter of sentence
       if (newSentence && typeof word === 'string' && word.length > 0) {

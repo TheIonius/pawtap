@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { getPresetAvatar } from '../constants/profile';
 
 /**
- * Reusable Avatar component supporting cozy emoji presets or custom uploaded photos.
+ * Avatar component supporting emoji presets and custom image uploads.
  */
 export function Avatar({
   profile,

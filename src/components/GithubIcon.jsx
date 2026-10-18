@@ -1,7 +1,7 @@
 import React from 'react';
 
 /**
- * Clean, pixel-perfect GitHub Octocat vector icon.
+ * GitHub Octocat SVG icon component.
  */
 export function GithubIcon({ size = 15, className = '', style = {} }) {
   return (

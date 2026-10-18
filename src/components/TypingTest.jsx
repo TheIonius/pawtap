@@ -58,7 +58,7 @@ export function TypingTest({
   const [isCapsLock, setIsCapsLock] = useState(false);
   const [, setResizeTick] = useState(0);
 
-  // Detect Caps Lock state globally to prevent accidental typos
+  // Track CapsLock state
   useEffect(() => {
     const handleKeyMod = (e) => {
       if (typeof e.getModifierState === 'function') {
@@ -73,7 +73,7 @@ export function TypingTest({
     };
   }, []);
 
-  // Re-calculate caret position on window resize
+  // Recalculate caret coordinates on window resize
   useEffect(() => {
     const handleResize = () => {
       setResizeTick(t => t + 1);
@@ -82,19 +82,19 @@ export function TypingTest({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Reset line cache when word set changes
+  // Invalidate line cache on words change
   useEffect(() => {
     lastActiveTopRef.current = -1;
   }, [words]);
 
-  // Focus input automatically on words change
+  // Auto-focus input when words change
   useEffect(() => {
     if (activeInputRef.current) {
       activeInputRef.current.focus({ preventScroll: true });
     }
   }, [words, activeInputRef]);
 
-  // Ghost Caret / Pace Caret Glide Calculation (Subpixel 60fps)
+  // Pace caret position update
   useEffect(() => {
     if (paceCaret === 'off' || !wordsContainerRef.current || words.length === 0) {
       setGhostCaretPos(null);
@@ -184,23 +184,22 @@ export function TypingTest({
     return () => cancelAnimationFrame(animId);
   }, [paceCaret, personalBestWpm, status, words, engine.startTime]);
 
-  // 1. Calculate precise caret position & butter-smooth dynamic line scrolling
+  // Calculate caret coordinates and line scroll offset
   useLayoutEffect(() => {
     if (!wordsContainerRef.current) return;
 
-    // Find the active character span or word element
+    // Find active word and character element
     const activeWordElem = wordsContainerRef.current.querySelector(`[data-word-index="${currentWordIndex}"]`);
     if (!activeWordElem) return;
 
     let targetCharElem = null;
     const charIndex = currentInput.length;
 
-    // Look for active letter span
     const charSpans = activeWordElem.querySelectorAll('.char');
     if (charIndex < charSpans.length) {
       targetCharElem = charSpans[charIndex];
     } else if (charSpans.length > 0) {
-      // Past the end of word: position immediately after last char
+      // Past word end: position after last character
       targetCharElem = charSpans[charSpans.length - 1];
     }
 
@@ -211,7 +210,7 @@ export function TypingTest({
       const isPastEnd = charIndex >= charSpans.length;
 
       const top = charRect.top - containerRect.top;
-      // Position line caret cleanly in the gap before the character (-2px) so it never sits on the letter stroke
+      // Offset caret 2px to the left of target character
       const left = (isPastEnd ? charRect.right : charRect.left) - containerRect.left - 2;
       const height = charRect.height;
       const width = charRect.width;
@@ -223,7 +222,7 @@ export function TypingTest({
         width: Math.max(2, width)
       });
 
-      // Smooth vertical line scrolling adapting to screen size
+      // Scroll container if caret advances past line 1
       const computedLineHeight = activeWordElem.offsetHeight || 54;
       const lineIndex = Math.floor(activeWordElem.offsetTop / computedLineHeight);
       if (lineIndex > 1) {
@@ -232,7 +231,7 @@ export function TypingTest({
         setLineOffsetY(0);
       }
     } else {
-      // Fallback: beginning of word
+      // Word start fallback
       const wordRect = activeWordElem.getBoundingClientRect();
       setCaretPos({
         top: wordRect.top - containerRect.top,
@@ -242,8 +241,7 @@ export function TypingTest({
       });
     }
 
-    // 2. Focused 3-Line Reading Depth (Visual Peripheral Guidance)
-    // Only execute DOM opacity pass when no challenge modifiers are active
+    // Apply line focus opacity to surrounding rows
     const computedLineHeight = activeWordElem.offsetHeight || 54;
     const activeTop = activeWordElem.offsetTop;
 
@@ -256,11 +254,11 @@ export function TypingTest({
           if (diff < -5) {
             el.style.opacity = '0.42'; // Scrolled past
           } else if (Math.abs(diff) <= 8) {
-            el.style.opacity = '1';    // Active line: crisp 100%
+            el.style.opacity = '1';    // Active line
           } else if (diff <= computedLineHeight + 10) {
-            el.style.opacity = '0.68'; // Next line: soft 68%
+            el.style.opacity = '0.68'; // Next line
           } else {
-            el.style.opacity = '0.36'; // 3rd line: gentle 36%
+            el.style.opacity = '0.36'; // Subsequent lines
           }
         });
       }
@@ -307,7 +305,7 @@ export function TypingTest({
         }}
       />
 
-      {/* Live Test Status & Countdown Header Bar */}
+      {/* Live test status bar */}
       <div
         style={{
           display: 'flex',
@@ -318,7 +316,7 @@ export function TypingTest({
           minHeight: '36px'
         }}
       >
-        {/* Left: Timer or Progress Counter (Only appears once typing has started!) */}
+        {/* Progress counter */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           {mode === 'time' && status === 'running' && isFocused && (
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', animation: 'fadeInUp 0.15s ease' }}>
@@ -392,7 +390,7 @@ export function TypingTest({
             </span>
           )}
 
-          {/* CapsLock Warning Badge */}
+          {/* CapsLock warning indicator */}
           {isCapsLock && (
             <div
               style={{
@@ -415,7 +413,7 @@ export function TypingTest({
             </div>
           )}
 
-          {/* Streak Flame Pill */}
+          {/* Streak indicator */}
           {currentStreak >= 10 && (
             <div
               style={{
@@ -438,7 +436,7 @@ export function TypingTest({
             </div>
           )}
 
-          {/* Active Challenge Modifiers (osu! Style Compact Colored Icons) */}
+          {/* Active challenge modifier badges */}
           {activeMods.length > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               {isSuddenDeath && (
@@ -502,7 +500,7 @@ export function TypingTest({
           )}
         </div>
 
-        {/* Right: Active Language Button (replaces restart button & hides live wpm/acc during test) */}
+        {/* Language selector button */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <button
             onClick={(e) => {
@@ -533,11 +531,11 @@ export function TypingTest({
         </div>
       </div>
 
-      {/* Main Words Area Container (Clean, Borderless Typography Canvas - Responsive for Bigger Screens) */}
+      {/* Main words display container */}
       <div
         style={{
           position: 'relative',
-          height: 'calc(var(--test-line-height, 54px) * 3)', // Exactly 3 visible lines adapting to screen
+          height: 'calc(var(--test-line-height, 54px) * 3)', // 3 visible lines
           overflow: 'hidden',
           padding: '0 4px',
           fontFamily: fontFamily,
@@ -546,7 +544,7 @@ export function TypingTest({
           letterSpacing: '0.015em'
         }}
       >
-        {/* Word Stream with Vertical Sliding Buffer */}
+        {/* Word stream */}
         <div
           ref={wordsContainerRef}
           style={{
@@ -558,7 +556,7 @@ export function TypingTest({
             transition: 'transform 0.2s cubic-bezier(0.2, 0.85, 0.3, 1)'
           }}
         >
-          {/* Animated Translucent Caret (Butter-Smooth 60fps GPU Hardware Acceleration) */}
+          {/* Active caret indicator */}
           {isFocused && status !== 'finished' && (
             <div
               className={`caret caret-${caretStyle} ${status === 'idle' ? 'caret-blink' : ''}`}
@@ -582,7 +580,7 @@ export function TypingTest({
             />
           )}
 
-          {/* Pace Caret / Ghost Caret (Butter-Smooth Subpixel Glide) */}
+          {/* Pace caret indicator */}
           {paceCaret !== 'off' && ghostCaretPos && (status === 'idle' || status === 'running') && (
             <div
               className="ghost-caret"
@@ -601,7 +599,7 @@ export function TypingTest({
                 boxShadow: '0 0 6px var(--accent)'
               }}
             >
-              {/* Minimalist Ghost Target Pill */}
+              {/* Pace target badge */}
               <div
                 style={{
                   position: 'absolute',
@@ -628,7 +626,7 @@ export function TypingTest({
             </div>
           )}
 
-          {/* osu! Flashlight Beam Spotlight Overlay */}
+          {/* Flashlight mode overlay */}
           {isFlashlight && isFocused && status !== 'finished' && (
             <div
               style={{
@@ -666,9 +664,9 @@ export function TypingTest({
               if (isCompleted) {
                 wordOpacity = 0.12;
               } else if (wIdx > currentWordIndex + 1) {
-                wordOpacity = 0; // Forces 1-word read-ahead horizon
+                wordOpacity = 0;
               } else if (wIdx === currentWordIndex + 1) {
-                wordOpacity = 0.55; // Read-ahead window
+                wordOpacity = 0.55;
               } else {
                 wordOpacity = 1;
               }
@@ -687,7 +685,7 @@ export function TypingTest({
                   transition: 'opacity 0.22s cubic-bezier(0.2, 0.8, 0.2, 1)'
                 }}
               >
-                {/* Render expected characters */}
+                {/* Render word characters */}
                 {word.split('').map((char, cIdx) => {
                   let charClass = 'char char-untyped';
                   let charColor = 'var(--text-sub)';
@@ -713,14 +711,14 @@ export function TypingTest({
                       charOpacity = distFromCaret <= 1 ? 0.8 : 0.25;
                     }
                   } else {
-                    // Un-typed characters in current word
+                    // Untyped characters in current word
                     if (isDisappearing && isCurrent) {
-                      // osu! Hidden: remaining letters vanish immediately once typing starts
+                      // Disappearing mode: hide remaining untyped letters
                       charOpacity = typedWord.length > 0 ? 0 : 0.35;
                     }
 
                     if (isFlashlight && isCurrent) {
-                      // osu! Flashlight: beam illumination based on distance from caret
+                      // Flashlight mode: distance-based illumination
                       const distFromCaret = cIdx - typedWord.length;
                       if (distFromCaret === 0) {
                         charOpacity = (isDisappearing && typedWord.length > 0) ? 0 : 1;
@@ -753,7 +751,7 @@ export function TypingTest({
                   );
                 })}
 
-                {/* Render extra overflow characters typed past the word length */}
+                {/* Render extra overflow characters */}
                 {typedWord.length > word.length && (
                   typedWord.slice(word.length).split('').map((extraChar, eIdx) => (
                     <span
@@ -778,7 +776,7 @@ export function TypingTest({
         </div>
       </div>
 
-      {/* Gentle Bottom Shortcut Guide */}
+      {/* Keyboard shortcut hints */}
       <div
         style={{
           display: 'flex',
