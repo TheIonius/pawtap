@@ -2,8 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   Palette,
   Sliders,
-  Volume2,
-  VolumeX,
   ChevronDown
 } from 'lucide-react';
 import { THEMES } from '../constants/themes';
@@ -13,8 +11,6 @@ import { Avatar } from './Avatar';
 export function Header({
   activeThemeId,
   setThemeId,
-  isAudioActive,
-  onToggleSound,
   onOpenSettings,
   profile,
   onOpenProfile
@@ -297,17 +293,6 @@ export function Header({
 
           {/* Divider */}
           <div style={{ width: '1px', height: '14px', backgroundColor: 'var(--border)', opacity: 0.8 }} />
-
-          {/* Sound toggle */}
-          <button
-            onClick={onToggleSound}
-            className="pill-btn"
-            style={{ padding: '6px 8px' }}
-            title={isAudioActive ? "Mute All Audio (Key Sounds & Music)" : "Unmute Audio"}
-            aria-label="Toggle Sound"
-          >
-            {isAudioActive ? <Volume2 size={14} color="var(--accent)" /> : <VolumeX size={14} />}
-          </button>
 
           {/* Settings trigger */}
           <button

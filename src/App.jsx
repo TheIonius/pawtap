@@ -109,25 +109,6 @@ export default function App() {
     root.style.setProperty('--font-active', activeFont.family);
   }, [activeTheme, activeFont]);
 
-  // Sound volume and mute toggle
-  const prevSoundVolumeRef = useRef(soundVolume > 0 ? soundVolume : 0.65);
-
-  useEffect(() => {
-    if (soundVolume > 0) prevSoundVolumeRef.current = soundVolume;
-  }, [soundVolume]);
-
-  const isAudioActive = soundVolume > 0;
-
-  const handleToggleSound = useCallback(() => {
-    if (isAudioActive) {
-      if (soundVolume > 0) prevSoundVolumeRef.current = soundVolume;
-      setSoundVolume(0);
-    } else {
-      const restoredSound = prevSoundVolumeRef.current > 0 ? prevSoundVolumeRef.current : 0.65;
-      setSoundVolume(restoredSound);
-    }
-  }, [isAudioActive, soundVolume, setSoundVolume]);
-
   // Test completion handler
   const handleTestFinish = useCallback((result) => {
     // Check if user set a new personal record
@@ -430,13 +411,6 @@ export default function App() {
         <Header
           activeThemeId={activeThemeId}
           setThemeId={setThemeId}
-          activeFontId={activeFontId}
-          setFontId={setFontId}
-          soundPreset={soundPreset}
-          setSoundPreset={setSoundPreset}
-          soundVolume={soundVolume}
-          isAudioActive={isAudioActive}
-          onToggleSound={handleToggleSound}
           onOpenSettings={() => {
             setIsSettingsOpen(true);
             setIsFocused(true);
