@@ -89,6 +89,7 @@ export function MusicPlayer({
   const iframeRef = useRef(null);
   const ytPlayerRef = useRef(null);
   const prevVolumeRef = useRef(musicVolume > 0 ? musicVolume : 75);
+  const fetchedTrackIdsRef = useRef(new Set());
 
   const parsed = useMemo(() => parseYouTubeUrl(musicUrl), [musicUrl]);
 
@@ -96,6 +97,7 @@ export function MusicPlayer({
   const [prevParsedUrl, setPrevParsedUrl] = useState(musicUrl);
   if (musicUrl !== prevParsedUrl) {
     setPrevParsedUrl(musicUrl);
+    setTrackMetaMap({});
     if (!parsed) {
       setPlaylistIds([]);
       setCurrentVideoId(null);
@@ -118,6 +120,11 @@ export function MusicPlayer({
       setIsPlaying(true);
     }
   }
+
+  // Reset track cache when musicUrl changes
+  useEffect(() => {
+    fetchedTrackIdsRef.current.clear();
+  }, [musicUrl]);
 
   // Keep track of non-zero volume for unmuting
   useEffect(() => {
@@ -167,8 +174,10 @@ export function MusicPlayer({
     if (!playlistIds || playlistIds.length === 0) return;
 
     let isMounted = true;
-    const missing = playlistIds.filter((id) => !trackMetaMap[id]);
+    const missing = playlistIds.filter((id) => !fetchedTrackIdsRef.current.has(id));
     if (missing.length === 0) return;
+
+    missing.forEach((id) => fetchedTrackIdsRef.current.add(id));
 
     missing.forEach((id) => {
       fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(`https://www.youtube.com/watch?v=${id}`)}&format=json`)
@@ -190,7 +199,7 @@ export function MusicPlayer({
     return () => {
       isMounted = false;
     };
-  }, [playlistIds, trackMetaMap]);
+  }, [playlistIds]);
 
   // Send control command to YouTube player (via postMessage and YT.Player object)
   const sendPlayerCommand = useCallback((func, args = []) => {
@@ -743,6 +752,7 @@ export function MusicPlayer({
                 e.currentTarget.style.color = '#B3B3B3';
               }}
               title="Minimize to Pill"
+              aria-label="Minimize to Pill"
             >
               <ChevronDown size={14} />
             </button>
@@ -774,6 +784,7 @@ export function MusicPlayer({
                 e.currentTarget.style.color = '#B3B3B3';
               }}
               title="Minimize to Floating Pill"
+              aria-label="Minimize to Floating Pill"
             >
               <X size={14} />
             </button>
@@ -1170,6 +1181,7 @@ export function MusicPlayer({
                     transition: 'all 0.15s ease'
                   }}
                   title="Previous Track"
+                  aria-label="Previous Track"
                 >
                   <SkipBack size={16} />
                 </button>
@@ -1200,6 +1212,7 @@ export function MusicPlayer({
                     e.currentTarget.style.transform = 'scale(1)';
                   }}
                   title={isPlaying ? 'Pause' : 'Play'}
+                  aria-label={isPlaying ? 'Pause' : 'Play'}
                 >
                   {isPlaying ? <Pause size={17} fill="#FFFFFF" /> : <Play size={17} fill="#FFFFFF" style={{ marginLeft: '2px' }} />}
                 </button>
@@ -1227,6 +1240,7 @@ export function MusicPlayer({
                     transition: 'all 0.15s ease'
                   }}
                   title="Next Track"
+                  aria-label="Next Track"
                 >
                   <SkipForward size={16} />
                 </button>
@@ -1258,6 +1272,7 @@ export function MusicPlayer({
                   justifyContent: 'center'
                 }}
                 title={musicVolume > 0 ? 'Mute Music' : 'Unmute Music'}
+                aria-label={musicVolume > 0 ? 'Mute Music' : 'Unmute Music'}
               >
                 {musicVolume === 0 ? (
                   <VolumeX size={15} color="#888888" />

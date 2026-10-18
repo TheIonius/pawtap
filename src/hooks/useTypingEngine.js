@@ -417,6 +417,11 @@ export function useTypingEngine({
       return;
     }
 
+    // Allow all Alt combinations (e.g. Alt+K to toggle visual keyboard) except Alt+Backspace
+    if (e.altKey && !e.ctrlKey && e.key !== 'Backspace') {
+      return;
+    }
+
     // 2. Restart shortcut: Tab
     if (e.key === 'Tab') {
       e.preventDefault();

@@ -9,42 +9,19 @@
  * - Raw 11-char video ID
  */
 
-export const YOUTUBE_PRESETS = [
-  {
-    id: 'lofi-girl',
-    name: 'Lofi Girl Live',
-    desc: '24/7 beats to relax, study, and type to',
-    icon: '☕',
-    url: 'https://www.youtube.com/watch?v=5qap5aO4i9A'
-  },
-  {
-    id: 'synthwave-chill',
-    name: 'Synthwave Chill',
-    desc: 'Calm retro synthwave & lofi beats',
-    icon: '🌆',
-    url: 'https://www.youtube.com/watch?v=4xDzrJKXOOY'
-  },
-  {
-    id: 'peaceful-piano',
-    name: 'Peaceful Piano',
-    desc: 'Gentle, soothing piano melodies',
-    icon: '🎹',
-    url: 'https://www.youtube.com/watch?v=lCOF9LN_Zxs'
-  },
-  {
-    id: 'coffee-shop',
-    name: 'Cozy Coffeehouse',
-    desc: 'Warm acoustic indie cafe atmosphere',
-    icon: '🥐',
-    url: 'https://www.youtube.com/watch?v=Dx5qFachd3A'
-  }
-];
-
 // Empty by default: user is prompted for their playlist/video link right away
 export const DEFAULT_MUSIC_URL = '';
 
 /**
  * Parses any YouTube or YouTube Music link and returns clean video/playlist embed data.
+ * Supports:
+ * - https://music.youtube.com/watch?v=ID
+ * - https://music.youtube.com/playlist?list=ID
+ * - https://www.youtube.com/watch?v=ID
+ * - https://youtu.be/ID
+ * - https://www.youtube.com/shorts/ID
+ * - https://www.youtube.com/playlist?list=ID
+ * - Raw 11-char video ID
  * Returns null if input is empty or invalid.
  */
 export function parseYouTubeUrl(input) {
@@ -60,6 +37,7 @@ export function parseYouTubeUrl(input) {
   let vidId = null;
   const watchMatch = trimmed.match(/[?&]v=([a-zA-Z0-9_-]{11})/i);
   const youtuBeMatch = trimmed.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/i);
+  const shortsMatch = trimmed.match(/\/shorts\/([a-zA-Z0-9_-]{11})/i);
   const embedMatch = trimmed.match(/\/embed\/([a-zA-Z0-9_-]{11})/i);
   const rawIdMatch = trimmed.match(/^[a-zA-Z0-9_-]{11}$/);
 
@@ -67,6 +45,8 @@ export function parseYouTubeUrl(input) {
     vidId = watchMatch[1];
   } else if (youtuBeMatch) {
     vidId = youtuBeMatch[1];
+  } else if (shortsMatch) {
+    vidId = shortsMatch[1];
   } else if (embedMatch) {
     vidId = embedMatch[1];
   } else if (rawIdMatch) {

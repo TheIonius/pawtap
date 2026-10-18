@@ -797,6 +797,7 @@ export function TypingTest({
         <button
           type="button"
           onClick={onToggleKeyboard}
+          onMouseDown={(e) => e.preventDefault()}
           style={{
             background: 'none',
             border: 'none',

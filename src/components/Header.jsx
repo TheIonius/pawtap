@@ -303,7 +303,7 @@ export function Header({
             onClick={onToggleSound}
             className="pill-btn"
             style={{ padding: '6px 8px' }}
-            title={isAudioActive ? "Mute All Audio (Key Sounds & Lo-Fi)" : "Unmute Audio"}
+            title={isAudioActive ? "Mute All Audio (Key Sounds & Music)" : "Unmute Audio"}
             aria-label="Toggle Sound"
           >
             {isAudioActive ? <Volume2 size={14} color="var(--accent)" /> : <VolumeX size={14} />}
