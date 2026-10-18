@@ -22,6 +22,7 @@ export function ResultsView({
   result,
   onRestart,
   onPracticeErrors,
+  onPracticeMissedWords,
   profile
 }) {
   const [copied, setCopied] = useState(false);
@@ -131,6 +132,8 @@ take a sip & type gently ~`;
     }
   }, [result, modeLabel, profile]);
 
+  const missedWords = useMemo(() => result?.missedWords || [], [result?.missedWords]);
+
   // Keyboard shortcuts: Tab/Enter restart, P for practice missed, S for share
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -139,9 +142,14 @@ take a sip & type gently ~`;
       if (e.key === 'Tab' || e.key === 'Enter') {
         e.preventDefault();
         onRestart();
-      } else if ((e.key === 'p' || e.key === 'P') && hasErrors && onPracticeErrors) {
-        e.preventDefault();
-        onPracticeErrors();
+      } else if (e.key === 'p' || e.key === 'P') {
+        if (missedWords.length > 0 && onPracticeMissedWords) {
+          e.preventDefault();
+          onPracticeMissedWords();
+        } else if (hasErrors && onPracticeErrors) {
+          e.preventDefault();
+          onPracticeErrors();
+        }
       } else if (e.key === 's' || e.key === 'S') {
         e.preventDefault();
         handleCopySummary();
@@ -149,7 +157,7 @@ take a sip & type gently ~`;
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onRestart, onPracticeErrors, hasErrors, handleCopySummary]);
+  }, [onRestart, onPracticeErrors, onPracticeMissedWords, hasErrors, missedWords, handleCopySummary]);
 
   if (!result) return null;
 
@@ -458,9 +466,31 @@ take a sip & type gently ~`;
             )}
           </button>
 
-          {hasErrors && onPracticeErrors && (
+          {missedWords.length > 0 && onPracticeMissedWords ? (
             <button
-              onClick={onPracticeErrors}
+              onClick={() => onPracticeMissedWords()}
+              className="action-btn"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '7px 14px',
+                borderRadius: '9px',
+                border: '1px solid rgba(var(--accent-rgb, 184, 120, 65), 0.35)',
+                backgroundColor: 'rgba(var(--accent-rgb, 184, 120, 65), 0.12)',
+                color: 'var(--accent)',
+                fontSize: '12.5px',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+              title="Practice words with typos from this test (P)"
+            >
+              <RotateCcw size={14} />
+              <span>Practice Missed Words ({missedWords.length})</span>
+            </button>
+          ) : hasErrors && onPracticeErrors ? (
+            <button
+              onClick={() => onPracticeErrors()}
               className="action-btn"
               style={{
                 display: 'inline-flex',
@@ -480,7 +510,7 @@ take a sip & type gently ~`;
               <Target size={14} />
               <span>Practice Missed</span>
             </button>
-          )}
+          ) : null}
 
           <button
             onClick={onRestart}
@@ -1050,10 +1080,78 @@ take a sip & type gently ~`;
                 );
               })}
             </div>
-          ) : (
+          ) : missedWords.length === 0 ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12.5px', color: 'var(--text-sub)' }}>
               <CheckCircle2 size={16} color="var(--accent)" />
               <span>Flawless precision — zero missed characters recorded.</span>
+            </div>
+          ) : null}
+
+          {/* Missed Words Tag Pills Drill */}
+          {missedWords.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: hasErrors ? '4px' : '0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    color: 'var(--text-sub)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.8px'
+                  }}
+                >
+                  missed words ({missedWords.length})
+                </span>
+                {onPracticeMissedWords && (
+                  <button
+                    onClick={() => onPracticeMissedWords()}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      fontSize: '11.5px',
+                      fontWeight: 600,
+                      color: 'var(--accent)',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <span>Practice all</span>
+                    <kbd className="kbd" style={{ fontSize: '9.5px', padding: '1px 5px' }}>P</kbd>
+                  </button>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+                {missedWords.map((word, idx) => (
+                  <button
+                    key={`${word}-${idx}`}
+                    onClick={() => onPracticeMissedWords && onPracticeMissedWords([word])}
+                    className="minimal-keycap"
+                    style={{
+                      backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                      border: '1px solid rgba(239, 68, 68, 0.22)',
+                      color: 'var(--text-error)',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      padding: '3px 8px',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontFamily: 'var(--font-mono)',
+                      transition: 'all 0.15s ease',
+                      outline: 'none'
+                    }}
+                    title={`Click to practice 15-word drill targeting "${word}"`}
+                  >
+                    <span>{word}</span>
+                    <span style={{ fontSize: '9px', opacity: 0.6 }}>drill ➔</span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>

@@ -349,6 +349,41 @@ export default function App() {
     engine.initializeTest(practiceWords);
   }, [lastResult, mode, timeLimit, wordLimit, quoteLength, punctuation, numbers, language, vocabularyMode, engine]);
 
+  // Practice the exact words mistyped during the last test
+  const handlePracticeMissedWords = useCallback((specificWords = null) => {
+    const rawWords = specificWords && specificWords.length > 0
+      ? specificWords
+      : lastResult?.missedWords;
+
+    if (!rawWords || rawWords.length === 0) {
+      handlePracticeErrors();
+      return;
+    }
+
+    if (!savedModeConfigRef.current) {
+      savedModeConfigRef.current = {
+        mode,
+        timeLimit,
+        wordLimit,
+        quoteLength
+      };
+    }
+
+    // Repeat words up to 10-15 words so the drill has solid practice length
+    let practiceList = [...rawWords];
+    while (practiceList.length < 10) {
+      practiceList = practiceList.concat(rawWords);
+    }
+    if (practiceList.length > 20) {
+      practiceList = practiceList.slice(0, 20);
+    }
+
+    setMode('words');
+    setWordLimit(practiceList.length);
+    setLastResult(null);
+    engine.initializeTest(practiceList);
+  }, [lastResult, mode, timeLimit, wordLimit, quoteLength, engine, handlePracticeErrors]);
+
   // Handle Escape key to close open modal or toggle settings
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
@@ -529,6 +564,7 @@ export default function App() {
               result={lastResult}
               onRestart={handleRestart}
               onPracticeErrors={handlePracticeErrors}
+              onPracticeMissedWords={handlePracticeMissedWords}
               profile={safeProfile}
             />
           )}
