@@ -472,10 +472,49 @@ export function MusicPlayer({
     setIsPlaying(true);
   };
 
-  const handleVolumeChange = (e) => {
-    const newVol = parseInt(e.target.value, 10);
-    setMusicVolume(newVol);
-    syncVolume(newVol);
+  const handleVolumeBarPointerDown = (e) => {
+    e.stopPropagation();
+    const bar = e.currentTarget;
+    const updateFromClientX = (clientX) => {
+      const rect = bar.getBoundingClientRect();
+      if (rect.width <= 0) return;
+      const rawRatio = (clientX - rect.left) / rect.width;
+      const clampedRatio = Math.max(0, Math.min(1, rawRatio));
+      const newVol = Math.round(clampedRatio * 100);
+      setMusicVolume(newVol);
+      syncVolume(newVol);
+    };
+
+    updateFromClientX(e.clientX);
+    setIsVolumeDragging(true);
+
+    const onPointerMove = (moveEvent) => {
+      updateFromClientX(moveEvent.clientX);
+    };
+
+    const onPointerUp = () => {
+      setIsVolumeDragging(false);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+    };
+
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+  };
+
+  const handleVolumeBarKeyDown = (e) => {
+    e.stopPropagation();
+    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const newVol = Math.min(100, musicVolume + 5);
+      setMusicVolume(newVol);
+      syncVolume(newVol);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      const newVol = Math.max(0, musicVolume - 5);
+      setMusicVolume(newVol);
+      syncVolume(newVol);
+    }
   };
 
   const handleToggleMute = () => {
@@ -1339,7 +1378,7 @@ export function MusicPlayer({
 
                   <div
                     style={{
-                      width: isVolumeVisible ? '86px' : '0px',
+                      width: isVolumeVisible ? '88px' : '0px',
                       opacity: isVolumeVisible ? 1 : 0,
                       overflow: 'hidden',
                       transition: 'width 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.18s ease',
@@ -1350,24 +1389,50 @@ export function MusicPlayer({
                       marginLeft: isVolumeVisible ? '2px' : '0px'
                     }}
                   >
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={musicVolume}
-                      onChange={handleVolumeChange}
-                      onPointerDown={() => setIsVolumeDragging(true)}
-                      onKeyDown={(e) => e.stopPropagation()}
+                    {/* Flat bar volume slider without circular dot */}
+                    <div
+                      role="slider"
+                      tabIndex={0}
+                      aria-label="Music Volume"
+                      aria-valuenow={musicVolume}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      onPointerDown={handleVolumeBarPointerDown}
+                      onKeyDown={handleVolumeBarKeyDown}
                       style={{
-                        width: '54px',
-                        height: '4px',
-                        borderRadius: '2px',
-                        accentColor: '#FF0000',
-                        cursor: 'pointer'
+                        width: '56px',
+                        height: '14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        outline: 'none',
+                        userSelect: 'none',
+                        touchAction: 'none'
                       }}
                       title={`Music Volume: ${musicVolume}%`}
-                      aria-label="Music Volume"
-                    />
+                    >
+                      <div
+                        style={{
+                          width: '100%',
+                          height: '5px',
+                          backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                          borderRadius: '2.5px',
+                          overflow: 'hidden',
+                          position: 'relative'
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: `${musicVolume}%`,
+                            height: '100%',
+                            backgroundColor: '#FF0000',
+                            borderRadius: '2.5px',
+                            transition: isVolumeDragging ? 'none' : 'width 0.1s ease'
+                          }}
+                        />
+                      </div>
+                    </div>
+
                     <span
                       style={{
                         fontSize: '10.5px',
