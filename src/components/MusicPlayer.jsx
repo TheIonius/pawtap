@@ -1113,11 +1113,12 @@ export function MusicPlayer({
               )}
 
               {/* Title & Artist & Counter Badge */}
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                 <div
                   style={{
                     fontSize: '13px',
                     fontWeight: 700,
+                    lineHeight: '17px',
                     color: '#FFFFFF',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
@@ -1131,25 +1132,43 @@ export function MusicPlayer({
                 <div
                   style={{
                     fontSize: '11px',
+                    lineHeight: '15px',
                     color: '#A0A0A0',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
-                    marginTop: '2px'
+                    marginTop: '1px'
                   }}
                   title={displayAuthor}
                 >
                   {displayAuthor}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    marginTop: '4px',
+                    minWidth: 0,
+                    overflow: 'hidden'
+                  }}
+                >
                   <span
                     style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      height: '18px',
+                      boxSizing: 'border-box',
                       fontSize: '9.5px',
+                      fontWeight: 600,
+                      lineHeight: 1,
                       color: '#FF6B6B',
                       backgroundColor: 'rgba(255, 0, 0, 0.12)',
-                      padding: '1.5px 6px',
+                      padding: '0 6px',
                       borderRadius: '4px',
-                      fontWeight: 600
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0
                     }}
                   >
                     {playlistIds.length > 1
@@ -1157,18 +1176,32 @@ export function MusicPlayer({
                       : 'Single Track'}
                   </span>
                   {playlistMeta?.title && playlistMeta.title !== displayTitle && (
-                    <span
-                      style={{
-                        fontSize: '10px',
-                        color: '#777777',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}
-                      title={playlistMeta.title}
-                    >
-                      • {playlistMeta.title}
-                    </span>
+                    <>
+                      <span
+                        style={{
+                          width: '3px',
+                          height: '3px',
+                          borderRadius: '50%',
+                          backgroundColor: '#666666',
+                          flexShrink: 0
+                        }}
+                      />
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          lineHeight: '18px',
+                          color: '#777777',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          minWidth: 0,
+                          flex: 1
+                        }}
+                        title={playlistMeta.title}
+                      >
+                        {playlistMeta.title}
+                      </span>
+                    </>
                   )}
                 </div>
               </div>
