@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useLayoutEffect } from 'react';
+import React, { useRef, useEffect, useState, useLayoutEffect, useMemo } from 'react';
 import { Sparkles, Skull, EyeOff, Flashlight } from 'lucide-react';
 import { SUPPORTED_LANGUAGES } from '../constants/wordLists';
 import { FlagIcon } from './FlagIcon';
