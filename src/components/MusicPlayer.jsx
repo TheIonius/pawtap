@@ -126,6 +126,16 @@ export function MusicPlayer({
     }
   }, [musicVolume]);
 
+  // Auto-close change link drawer whenever player is minimized or collapsed
+  const [prevCollapsedState, setPrevCollapsedState] = useState(isCollapsed);
+  if (isCollapsed !== prevCollapsedState) {
+    setPrevCollapsedState(isCollapsed);
+    if (isCollapsed) {
+      setIsPickerOpen(false);
+      setInputFeedback(null);
+    }
+  }
+
   // Fetch playlist-level metadata via oEmbed
   useEffect(() => {
     if (!parsed) return;
@@ -236,6 +246,7 @@ export function MusicPlayer({
           if (info.videoData) {
             if (info.videoData.video_id) {
               setCurrentVideoId(info.videoData.video_id);
+              setPlaylistIds((prev) => (prev.length === 0 ? [info.videoData.video_id] : prev));
             }
             if (info.videoData.title) {
               setCurrentTitle(info.videoData.title);
@@ -272,9 +283,11 @@ export function MusicPlayer({
     return () => window.removeEventListener('message', handleWindowMessage);
   }, []);
 
+  const embedUrl = parsed?.embedUrl;
+
   // Initialize YouTube Iframe Player API instance on iframe
   useEffect(() => {
-    if (!parsed) return;
+    if (!embedUrl) return;
 
     let isMounted = true;
     let pollInterval = null;
@@ -283,21 +296,13 @@ export function MusicPlayer({
       if (!isMounted || !iframeRef.current) return;
 
       try {
-        if (ytPlayerRef.current?.destroy) {
-          ytPlayerRef.current.destroy();
-        }
-      } catch {
-        // ignore
-      }
-
-      try {
         ytPlayerRef.current = new YT.Player(iframeRef.current, {
           events: {
             onReady: (event) => {
               if (!isMounted) return;
-              event.target.setVolume(musicVolume);
-
               try {
+                event.target.setVolume(prevVolumeRef.current);
+
                 const list = event.target.getPlaylist();
                 if (Array.isArray(list) && list.length > 0) {
                   setPlaylistIds(list);
@@ -308,7 +313,10 @@ export function MusicPlayer({
                 }
                 const vData = event.target.getVideoData();
                 if (vData) {
-                  if (vData.video_id) setCurrentVideoId(vData.video_id);
+                  if (vData.video_id) {
+                    setCurrentVideoId(vData.video_id);
+                    setPlaylistIds((prev) => (prev.length === 0 ? [vData.video_id] : prev));
+                  }
                   if (vData.title) setCurrentTitle(vData.title);
                   if (vData.author) setCurrentAuthor(vData.author);
                 }
@@ -331,7 +339,10 @@ export function MusicPlayer({
                 }
                 const vData = event.target.getVideoData();
                 if (vData) {
-                  if (vData.video_id) setCurrentVideoId(vData.video_id);
+                  if (vData.video_id) {
+                    setCurrentVideoId(vData.video_id);
+                    setPlaylistIds((prev) => (prev.length === 0 ? [vData.video_id] : prev));
+                  }
                   if (vData.title) setCurrentTitle(vData.title);
                   if (vData.author) setCurrentAuthor(vData.author);
                 }
@@ -345,29 +356,40 @@ export function MusicPlayer({
         // Polling to catch playlist IDs once buffering starts
         let polls = 0;
         pollInterval = setInterval(() => {
-          if (!isMounted || !ytPlayerRef.current) return;
+          if (!isMounted) return;
           polls += 1;
           try {
-            const list = ytPlayerRef.current.getPlaylist?.();
-            if (Array.isArray(list) && list.length > 0) {
-              setPlaylistIds(list);
-              const idx = ytPlayerRef.current.getPlaylistIndex?.();
-              if (typeof idx === 'number' && idx >= 0) {
-                setCurrentTrackIndex(idx);
+            // Handshake message to iframe to trigger infoDelivery stream
+            iframeRef.current?.contentWindow?.postMessage(
+              JSON.stringify({ event: 'listening' }),
+              '*'
+            );
+
+            if (ytPlayerRef.current) {
+              const list = ytPlayerRef.current.getPlaylist?.();
+              if (Array.isArray(list) && list.length > 0) {
+                setPlaylistIds(list);
+                const idx = ytPlayerRef.current.getPlaylistIndex?.();
+                if (typeof idx === 'number' && idx >= 0) {
+                  setCurrentTrackIndex(idx);
+                }
+                const vData = ytPlayerRef.current.getVideoData?.();
+                if (vData) {
+                  if (vData.video_id) {
+                    setCurrentVideoId(vData.video_id);
+                    setPlaylistIds((prev) => (prev.length === 0 ? [vData.video_id] : prev));
+                  }
+                  if (vData.title) setCurrentTitle(vData.title);
+                  if (vData.author) setCurrentAuthor(vData.author);
+                }
+                clearInterval(pollInterval);
               }
-              const vData = ytPlayerRef.current.getVideoData?.();
-              if (vData?.title) {
-                if (vData.video_id) setCurrentVideoId(vData.video_id);
-                if (vData.title) setCurrentTitle(vData.title);
-                if (vData.author) setCurrentAuthor(vData.author);
-              }
-              clearInterval(pollInterval);
             }
           } catch {
             // ignore
           }
-          if (polls > 12) clearInterval(pollInterval);
-        }, 500);
+          if (polls > 15) clearInterval(pollInterval);
+        }, 400);
       } catch {
         // ignore
       }
@@ -377,12 +399,25 @@ export function MusicPlayer({
       isMounted = false;
       if (pollInterval) clearInterval(pollInterval);
     };
-  }, [parsed, musicVolume]);
+  }, [embedUrl]);
+
+  // Sync volume without re-initializing player
+  useEffect(() => {
+    syncVolume(musicVolume);
+  }, [musicVolume, syncVolume]);
 
   const handleIframeLoad = () => {
+    const iframe = iframeRef.current;
+    if (iframe && iframe.contentWindow) {
+      try {
+        iframe.contentWindow.postMessage(JSON.stringify({ event: 'listening' }), '*');
+      } catch {
+        // ignore
+      }
+    }
     setTimeout(() => {
       syncVolume(musicVolume);
-    }, 500);
+    }, 400);
   };
 
   const handleTogglePlayPause = () => {
@@ -685,6 +720,7 @@ export function MusicPlayer({
             {/* Minimize to Pill */}
             <button
               onClick={() => {
+                setIsPickerOpen(false);
                 setIsCollapsed(true);
                 onRestoreFocus();
               }}
@@ -714,6 +750,7 @@ export function MusicPlayer({
             {/* Close / Minimize */}
             <button
               onClick={() => {
+                setIsPickerOpen(false);
                 setIsCollapsed(true);
                 onClose?.();
                 onRestoreFocus();
@@ -1486,13 +1523,31 @@ export function MusicPlayer({
                       color: '#888888',
                       fontSize: '11px',
                       display: 'flex',
+                      flexDirection: 'column',
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: '6px'
                     }}
                   >
-                    <Loader2 size={13} className="spin" />
-                    <span>Loading playlist tracks...</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Loader2 size={13} className="spin" />
+                      <span>{playlistMeta?.title ? 'Connecting to playlist tracks...' : 'Loading playlist tracks...'}</span>
+                    </div>
+                    {playlistMeta?.title && (
+                      <div
+                        style={{
+                          fontSize: '10px',
+                          color: '#777777',
+                          maxWidth: '260px',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
+                        title={playlistMeta.title}
+                      >
+                        {playlistMeta.title}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1514,6 +1569,7 @@ export function MusicPlayer({
               aria-hidden="true"
             >
               <iframe
+                key={parsed.embedUrl}
                 ref={iframeRef}
                 id="yt-hidden-audio-iframe"
                 title="YouTube Audio Stream"
