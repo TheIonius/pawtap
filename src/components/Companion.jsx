@@ -7,6 +7,7 @@ import { Heart } from 'lucide-react';
  */
 export function Companion({
   type = 'cat',
+  accessory = 'none',
   isTyping = false,
   status = 'idle',
   wpm = 0,
@@ -69,6 +70,7 @@ export function Companion({
 
       {type === 'cat' && (
         <CatCompanion
+          accessory={accessory}
           isTyping={isTyping}
           status={status}
           isFast={isFast}
@@ -81,6 +83,7 @@ export function Companion({
 
       {type === 'coffee' && (
         <CoffeeCompanion
+          accessory={accessory}
           isTyping={isTyping}
           isFast={isFast}
           themeAccent={themeAccent}
@@ -89,6 +92,7 @@ export function Companion({
 
       {type === 'plant' && (
         <PlantCompanion
+          accessory={accessory}
           streak={streak}
           themeAccent={themeAccent}
         />
@@ -97,7 +101,148 @@ export function Companion({
   );
 }
 
-function CatCompanion({ isTyping, status, isFast, hasError, isFinished, streak, themeAccent }) {
+function CatAccessory({ accessory, themeAccent }) {
+  if (!accessory || accessory === 'none') return null;
+
+  if (accessory === 'ribbon') {
+    return (
+      <g transform="translate(18, 14)">
+        <path d="M-1 -1 C-5 -4 -6 2 -2 2 Z" fill="#F472B6" stroke="#DB2777" strokeWidth="0.8" />
+        <path d="M1 -1 C5 -4 6 2 2 2 Z" fill="#F472B6" stroke="#DB2777" strokeWidth="0.8" />
+        <circle cx="0" cy="0" r="1.8" fill="#FBCFE8" stroke="#DB2777" strokeWidth="0.8" />
+        <path d="M-1 2 L-3 6 M1 2 L3 6" stroke="#DB2777" strokeWidth="0.9" strokeLinecap="round" />
+      </g>
+    );
+  }
+
+  if (accessory === 'glasses') {
+    return (
+      <g>
+        <circle cx="24" cy="24" r="5" fill="rgba(255, 255, 255, 0.22)" stroke="#475569" strokeWidth="1.2" />
+        <circle cx="40" cy="24" r="5" fill="rgba(255, 255, 255, 0.22)" stroke="#475569" strokeWidth="1.2" />
+        <path d="M29 23 Q32 21 35 23" stroke="#475569" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+        <path d="M19 23 L14 21 M45 23 L50 21" stroke="#475569" strokeWidth="1.2" strokeLinecap="round" />
+        <path d="M22 22 L24 22 M38 22 L40 22" stroke="#FFFFFF" strokeWidth="1" strokeLinecap="round" opacity="0.85" />
+      </g>
+    );
+  }
+
+  if (accessory === 'top_hat') {
+    return (
+      <g transform="translate(32, 6)">
+        <ellipse cx="0" cy="3" rx="10" ry="2.2" fill="#292524" stroke="#1C1917" strokeWidth="0.8" />
+        <rect x="-6" y="-10" width="12" height="13" rx="1.5" fill="#292524" stroke="#1C1917" strokeWidth="0.8" />
+        <rect x="-6" y="0" width="12" height="2.5" fill={themeAccent} />
+      </g>
+    );
+  }
+
+  if (accessory === 'crown') {
+    return (
+      <g transform="translate(32, 7)">
+        <path d="M-8 2 L-10 -7 L-4 -3 L0 -9 L4 -3 L10 -7 L8 2 Z" fill="#FBBF24" stroke="#D97706" strokeWidth="0.9" />
+        <rect x="-8" y="1" width="16" height="2" rx="0.5" fill="#F59E0B" />
+        <circle cx="0" cy="2" r="0.9" fill="#EF4444" />
+        <circle cx="-5" cy="2" r="0.8" fill="#3B82F6" />
+        <circle cx="5" cy="2" r="0.8" fill="#10B981" />
+        <circle cx="-10" cy="-7" r="1" fill="#FEF08A" />
+        <circle cx="0" cy="-9" r="1.2" fill="#FEF08A" />
+        <circle cx="10" cy="-7" r="1" fill="#FEF08A" />
+      </g>
+    );
+  }
+
+  if (accessory === 'coffee_mug') {
+    return (
+      <g transform="translate(48, 36)">
+        <rect x="0" y="3" width="7" height="9" rx="1.5" fill="var(--surface-hover, #E8DFD3)" stroke="var(--text-sub, #A89988)" strokeWidth="0.8" />
+        <path d="M7 5 C9 5 9 8 7 8" stroke="var(--text-sub, #A89988)" strokeWidth="0.8" fill="none" />
+        <circle cx="3.5" cy="7.5" r="1.2" fill={themeAccent} />
+        <path d="M2 1 Q3 -1 2 -3 M5 1 Q6 -1 5 -3" stroke="var(--text-sub, #A89988)" strokeWidth="0.6" strokeLinecap="round" fill="none" opacity="0.7" />
+      </g>
+    );
+  }
+
+  return null;
+}
+
+function CoffeeAccessory({ accessory, themeAccent }) {
+  if (!accessory || accessory === 'none') return null;
+  if (accessory === 'glasses') {
+    return (
+      <g transform="translate(0, 3)">
+        <circle cx="16" cy="20" r="3.5" fill="rgba(255,255,255,0.2)" stroke="#475569" strokeWidth="1" />
+        <circle cx="24" cy="20" r="3.5" fill="rgba(255,255,255,0.2)" stroke="#475569" strokeWidth="1" />
+        <path d="M19.5 20 L20.5 20" stroke="#475569" strokeWidth="1" />
+      </g>
+    );
+  }
+  if (accessory === 'top_hat') {
+    return (
+      <g transform="translate(20, 11)">
+        <ellipse cx="0" cy="2" rx="7" ry="1.6" fill="#292524" />
+        <rect x="-4" y="-7" width="8" height="9" rx="1" fill="#292524" />
+        <rect x="-4" y="0" width="8" height="1.8" fill={themeAccent} />
+      </g>
+    );
+  }
+  if (accessory === 'crown') {
+    return (
+      <g transform="translate(20, 11)">
+        <path d="M-6 2 L-7 -4 L-3 -2 L0 -6 L3 -2 L7 -4 L6 2 Z" fill="#FBBF24" stroke="#D97706" strokeWidth="0.8" />
+      </g>
+    );
+  }
+  if (accessory === 'ribbon') {
+    return (
+      <g transform="translate(34, 18)">
+        <circle cx="0" cy="0" r="2" fill="#F472B6" />
+        <path d="M-2 -2 L2 2 M-2 2 L2 -2" stroke="#DB2777" strokeWidth="0.8" />
+      </g>
+    );
+  }
+  return null;
+}
+
+function PlantAccessory({ accessory, themeAccent }) {
+  if (!accessory || accessory === 'none') return null;
+  if (accessory === 'glasses') {
+    return (
+      <g transform="translate(0, 10)">
+        <circle cx="16" cy="20" r="3.2" fill="rgba(255,255,255,0.2)" stroke="#475569" strokeWidth="1" />
+        <circle cx="24" cy="20" r="3.2" fill="rgba(255,255,255,0.2)" stroke="#475569" strokeWidth="1" />
+        <path d="M19.2 20 L20.8 20" stroke="#475569" strokeWidth="1" />
+      </g>
+    );
+  }
+  if (accessory === 'crown') {
+    return (
+      <g transform="translate(20, 8)">
+        <path d="M-5 2 L-6 -3 L-2.5 -1.5 L0 -5 L2.5 -1.5 L6 -3 L5 2 Z" fill="#FBBF24" stroke="#D97706" strokeWidth="0.7" />
+      </g>
+    );
+  }
+  if (accessory === 'top_hat') {
+    return (
+      <g transform="translate(20, 8)">
+        <ellipse cx="0" cy="2" rx="6" ry="1.5" fill="#292524" />
+        <rect x="-3.5" y="-6" width="7" height="8" rx="1" fill="#292524" />
+        <rect x="-3.5" y="0" width="7" height="1.6" fill={themeAccent} />
+      </g>
+    );
+  }
+  if (accessory === 'ribbon') {
+    return (
+      <g transform="translate(20, 23)">
+        <circle cx="0" cy="0" r="1.8" fill="#F472B6" />
+        <path d="M-2 -1.5 L2 1.5 M-2 1.5 L2 -1.5" stroke="#DB2777" strokeWidth="0.8" />
+      </g>
+    );
+  }
+  return null;
+}
+
+function CatCompanion({ accessory = 'none', isTyping, status, isFast, hasError, isFinished, streak, themeAccent }) {
   const isRunning = status === 'running';
   const [pawToggle, setPawToggle] = useState(false);
 
@@ -218,6 +363,9 @@ function CatCompanion({ isTyping, status, isFast, hasError, isFinished, streak, 
           </g>
         )}
 
+        {/* Unlockable Accessory Overlay */}
+        <CatAccessory accessory={accessory} themeAccent={themeAccent} />
+
         {/* Idle indicator */}
         {status === 'idle' && !isFinished && (
           <g opacity="0.6">
@@ -247,7 +395,7 @@ function CatCompanion({ isTyping, status, isFast, hasError, isFinished, streak, 
   );
 }
 
-function CoffeeCompanion({ isTyping, isFast, themeAccent }) {
+function CoffeeCompanion({ accessory = 'none', isTyping, isFast, themeAccent }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
       <svg width="42" height="42" viewBox="0 0 42 42" fill="none">
@@ -268,6 +416,9 @@ function CoffeeCompanion({ isTyping, isFast, themeAccent }) {
         {/* Latte top */}
         <ellipse cx="20" cy="14" rx="9" ry="2.5" fill="#784F35" />
         <path d="M18 14 Q20 12.5 22 14 Q20 15.5 18 14" fill="#FDF7EE" />
+
+        {/* Accessory Overlay */}
+        <CoffeeAccessory accessory={accessory} themeAccent={themeAccent} />
       </svg>
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-main)' }}>
@@ -279,7 +430,7 @@ function CoffeeCompanion({ isTyping, isFast, themeAccent }) {
   );
 }
 
-function PlantCompanion({ streak, themeAccent }) {
+function PlantCompanion({ accessory = 'none', streak, themeAccent }) {
   const leaves = streak > 40 ? 5 : streak > 20 ? 3 : 2;
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -296,6 +447,9 @@ function PlantCompanion({ streak, themeAccent }) {
         <path d="M20 15 Q26 11 27 15 Q24 17 20 15" fill="#78A682" />
         {leaves >= 3 && <path d="M20 12 Q13 8 15 12" fill="#8BB995" />}
         {leaves >= 5 && <circle cx="20" cy="9" r="2.5" fill={themeAccent} />}
+
+        {/* Accessory Overlay */}
+        <PlantAccessory accessory={accessory} themeAccent={themeAccent} />
       </svg>
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-main)' }}>

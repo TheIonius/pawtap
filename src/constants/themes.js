@@ -257,3 +257,12 @@ export const COMPANION_TYPES = [
   { id: 'plant', name: 'Sprouting Plant', description: 'Little succulent that sprouts leaves with speed' },
   { id: 'none', name: 'Off (Minimal)', description: 'Pure zen typing space without companions' },
 ];
+
+export const COMPANION_ACCESSORIES = [
+  { id: 'none', name: 'Natural', description: 'Clean & minimalist', requiredWords: 0, icon: '✨' },
+  { id: 'ribbon', name: 'Cozy Bow', description: 'Charming pastel ear ribbon', requiredWords: 100, icon: '🎀' },
+  { id: 'coffee_mug', name: 'Steamy Mug', description: 'Warm brew on desk', requiredWords: 500, icon: '☕' },
+  { id: 'glasses', name: 'Scholar Specs', description: 'Vintage wire glasses', requiredWords: 1500, icon: '👓' },
+  { id: 'top_hat', name: 'Dapper Top Hat', description: 'Gentleman ribbon hat', requiredWords: 5000, icon: '🎩' },
+  { id: 'crown', name: 'Golden Crown', description: 'Regal typist crown', requiredWords: 10000, icon: '👑' },
+];
