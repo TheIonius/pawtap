@@ -91,85 +91,115 @@ export function playKeySound(preset = 'creamy', volume = 0.65, key = '') {
   const isBackspace = key === 'Backspace';
   const isEnter = key === 'Enter';
 
-  // Micro-pitch variation per key type
+  // Dynamic finger velocity jitter (mimics human keystroke variation)
+  const velocityJitter = 0.94 + Math.random() * 0.12;
+
+  // Key-specific fundamental pitch variance & stabilizer acoustic weighting
   const pitchVar = isSpace
-    ? 0.72 // Spacebar lower pitch
-    : isBackspace || isEnter
-    ? 0.84 // Modifiers pitch
-    : 0.94 + Math.random() * 0.12; // Standard keys variation
+    ? 0.68 + Math.random() * 0.05 // Deeper hollow 6.25u spacebar chamber
+    : isEnter
+    ? 0.80 + Math.random() * 0.04 // 2.25u Enter stabilizer
+    : isBackspace
+    ? 0.83 + Math.random() * 0.04 // 2u Backspace stabilizer
+    : (0.95 + Math.random() * 0.10) * velocityJitter; // 1u Alpha key with micro-variation
 
   switch (preset) {
     case 'creamy': {
-      // Multi-layer mechanical switch synthesis: body impact, sub resonance, noise transient, upstroke
+      // Multi-layer mechanical switch synthesis: body impact, sub resonance, noise transient, upstroke, stabilizer thud
       // 1. Body impact oscillator
       const bodyOsc = ctx.createOscillator();
       const bodyGain = ctx.createGain();
       const bodyFilter = ctx.createBiquadFilter();
 
       bodyFilter.type = 'lowpass';
-      bodyFilter.frequency.setValueAtTime(isSpace ? 280 : 380, now);
-      bodyFilter.Q.setValueAtTime(1.8, now);
+      bodyFilter.frequency.setValueAtTime(isSpace ? 250 : isEnter ? 320 : 390, now);
+      bodyFilter.Q.setValueAtTime(isSpace ? 2.2 : 1.8, now);
 
       bodyOsc.type = 'triangle';
-      const startFreq = (isSpace ? 120 : 175) * pitchVar;
-      const endFreq = (isSpace ? 42 : 62);
+      const startFreq = (isSpace ? 110 : isEnter ? 145 : 178) * pitchVar;
+      const endFreq = isSpace ? 36 : isEnter ? 50 : 64;
       bodyOsc.frequency.setValueAtTime(startFreq, now);
-      bodyOsc.frequency.exponentialRampToValueAtTime(endFreq, now + (isSpace ? 0.065 : 0.045));
+      bodyOsc.frequency.exponentialRampToValueAtTime(endFreq, now + (isSpace ? 0.075 : 0.046));
 
-      const decayTime = isSpace ? 0.075 : 0.052;
-      bodyGain.gain.setValueAtTime(isSpace ? 0.95 : 0.8, now);
+      const decayTime = isSpace ? 0.088 : isEnter ? 0.065 : 0.052;
+      bodyGain.gain.setValueAtTime((isSpace ? 1.05 : 0.82) * velocityJitter, now);
       bodyGain.gain.exponentialRampToValueAtTime(0.001, now + decayTime);
 
       bodyOsc.connect(bodyFilter);
       bodyFilter.connect(bodyGain);
       bodyGain.connect(masterGain);
 
-      // 2. Low-frequency resonance
+      // 2. Low-frequency resonance (Deep spacebar stabilizer bar cavity)
       const subOsc = ctx.createOscillator();
       const subGain = ctx.createGain();
       subOsc.type = 'sine';
-      subOsc.frequency.setValueAtTime((isSpace ? 75 : 105) * pitchVar, now);
-      subOsc.frequency.exponentialRampToValueAtTime(40, now + 0.04);
+      subOsc.frequency.setValueAtTime((isSpace ? 62 : isEnter ? 85 : 108) * pitchVar, now);
+      subOsc.frequency.exponentialRampToValueAtTime(32, now + (isSpace ? 0.07 : 0.04));
 
-      subGain.gain.setValueAtTime(isSpace ? 0.6 : 0.45, now);
-      subGain.gain.exponentialRampToValueAtTime(0.001, now + (isSpace ? 0.06 : 0.04));
+      subGain.gain.setValueAtTime((isSpace ? 0.75 : isEnter ? 0.55 : 0.42) * velocityJitter, now);
+      subGain.gain.exponentialRampToValueAtTime(0.001, now + (isSpace ? 0.08 : 0.045));
 
       subOsc.connect(subGain);
       subGain.connect(masterGain);
 
-      // 3. Transient noise click
+      // 3. Stabilizer wire transient (exclusive to Spacebar, Enter, Backspace)
+      if (isSpace || isEnter || isBackspace) {
+        const wireOsc = ctx.createOscillator();
+        const wireGain = ctx.createGain();
+        const wireFilter = ctx.createBiquadFilter();
+
+        wireFilter.type = 'bandpass';
+        wireFilter.frequency.setValueAtTime(isSpace ? 480 : 620, now);
+        wireFilter.Q.setValueAtTime(3.0, now);
+
+        wireOsc.type = 'sine';
+        wireOsc.frequency.setValueAtTime(isSpace ? 180 : 240, now);
+        wireOsc.frequency.exponentialRampToValueAtTime(80, now + 0.025);
+
+        wireGain.gain.setValueAtTime(isSpace ? 0.35 : 0.22, now);
+        wireGain.gain.exponentialRampToValueAtTime(0.001, now + 0.028);
+
+        wireOsc.connect(wireFilter);
+        wireFilter.connect(wireGain);
+        wireGain.connect(masterGain);
+
+        wireOsc.start(now);
+        wireOsc.stop(now + 0.03);
+      }
+
+      // 4. Transient noise click (tactile stem bottom-out)
       const noise = ctx.createBufferSource();
       noise.buffer = getCreamyNoiseBuffer(ctx);
 
       const noiseFilter = ctx.createBiquadFilter();
       noiseFilter.type = 'bandpass';
-      noiseFilter.frequency.setValueAtTime((isSpace ? 950 : 1350) * pitchVar, now);
-      noiseFilter.Q.setValueAtTime(2.2, now);
+      noiseFilter.frequency.setValueAtTime((isSpace ? 880 : isEnter ? 1150 : 1380) * pitchVar, now);
+      noiseFilter.Q.setValueAtTime(2.4, now);
 
       const noiseGain = ctx.createGain();
-      noiseGain.gain.setValueAtTime(isSpace ? 0.45 : 0.35, now);
-      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.012);
+      noiseGain.gain.setValueAtTime((isSpace ? 0.48 : 0.36) * velocityJitter, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.014);
 
       noise.connect(noiseFilter);
       noiseFilter.connect(noiseGain);
       noiseGain.connect(masterGain);
 
-      // 4. Upstroke return click
+      // 5. Upstroke return click
       const upstrokeOsc = ctx.createOscillator();
       const upstrokeGain = ctx.createGain();
       const upstrokeFilter = ctx.createBiquadFilter();
 
-      const upstrokeTime = now + (isSpace ? 0.06 : 0.042);
+      const upstrokeTime = now + (isSpace ? 0.068 : 0.044);
       upstrokeOsc.type = 'triangle';
-      upstrokeOsc.frequency.setValueAtTime(320 * pitchVar, upstrokeTime);
-      upstrokeOsc.frequency.exponentialRampToValueAtTime(140, upstrokeTime + 0.02);
+      upstrokeOsc.frequency.setValueAtTime((isSpace ? 260 : 330) * pitchVar, upstrokeTime);
+      upstrokeOsc.frequency.exponentialRampToValueAtTime(130, upstrokeTime + 0.022);
 
       upstrokeFilter.type = 'lowpass';
-      upstrokeFilter.frequency.setValueAtTime(550, upstrokeTime);
+      upstrokeFilter.frequency.setValueAtTime(isSpace ? 460 : 560, upstrokeTime);
 
       upstrokeGain.gain.setValueAtTime(0.001, now);
-      upstrokeGain.gain.setValueAtTime(0.18, upstrokeTime);
-      upstrokeGain.gain.exponentialRampToValueAtTime(0.001, upstrokeTime + 0.02);
+      upstrokeGain.gain.setValueAtTime(isSpace ? 0.22 : 0.18, upstrokeTime);
+      upstrokeGain.gain.exponentialRampToValueAtTime(0.001, upstrokeTime + 0.022);
 
       upstrokeOsc.connect(upstrokeFilter);
       upstrokeFilter.connect(upstrokeGain);
@@ -182,35 +212,53 @@ export function playKeySound(preset = 'creamy', volume = 0.65, key = '') {
       upstrokeOsc.start(upstrokeTime);
 
       bodyOsc.stop(now + decayTime + 0.01);
-      subOsc.stop(now + 0.065);
-      noise.stop(now + 0.015);
-      upstrokeOsc.stop(upstrokeTime + 0.025);
+      subOsc.stop(now + 0.085);
+      noise.stop(now + 0.018);
+      upstrokeOsc.stop(upstrokeTime + 0.026);
       break;
     }
 
     case 'matcha': {
-      // Mid-frequency bandpass click
+      // Mid-frequency bandpass click with brass plate resonance
       const osc = ctx.createOscillator();
       const oscGain = ctx.createGain();
       const filter = ctx.createBiquadFilter();
 
       filter.type = 'bandpass';
-      filter.frequency.setValueAtTime(1450 * pitchVar, now);
-      filter.Q.setValueAtTime(1.8, now);
+      filter.frequency.setValueAtTime((isSpace ? 920 : 1450) * pitchVar, now);
+      filter.Q.setValueAtTime(isSpace ? 2.2 : 1.8, now);
 
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(820 * pitchVar, now);
-      osc.frequency.exponentialRampToValueAtTime(220, now + 0.035);
+      osc.type = isSpace ? 'triangle' : 'sine';
+      osc.frequency.setValueAtTime((isSpace ? 480 : 820) * pitchVar, now);
+      osc.frequency.exponentialRampToValueAtTime(isSpace ? 110 : 220, now + (isSpace ? 0.055 : 0.035));
 
-      oscGain.gain.setValueAtTime(0.65, now);
-      oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+      oscGain.gain.setValueAtTime((isSpace ? 0.85 : 0.65) * velocityJitter, now);
+      oscGain.gain.exponentialRampToValueAtTime(0.001, now + (isSpace ? 0.06 : 0.04));
 
       osc.connect(filter);
       filter.connect(oscGain);
       oscGain.connect(masterGain);
 
+      // Spacebar brass plate low thud
+      if (isSpace) {
+        const plateOsc = ctx.createOscillator();
+        const plateGain = ctx.createGain();
+        plateOsc.type = 'sine';
+        plateOsc.frequency.setValueAtTime(85 * pitchVar, now);
+        plateOsc.frequency.exponentialRampToValueAtTime(45, now + 0.05);
+
+        plateGain.gain.setValueAtTime(0.55 * velocityJitter, now);
+        plateGain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+
+        plateOsc.connect(plateGain);
+        plateGain.connect(masterGain);
+
+        plateOsc.start(now);
+        plateOsc.stop(now + 0.065);
+      }
+
       osc.start(now);
-      osc.stop(now + 0.045);
+      osc.stop(now + (isSpace ? 0.065 : 0.045));
       break;
     }
 
@@ -220,62 +268,80 @@ export function playKeySound(preset = 'creamy', volume = 0.65, key = '') {
       const oscGain = ctx.createGain();
 
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(340 * pitchVar, now);
-      osc.frequency.exponentialRampToValueAtTime(780 * pitchVar, now + 0.04);
+      osc.frequency.setValueAtTime((isSpace ? 220 : 340) * pitchVar, now);
+      osc.frequency.exponentialRampToValueAtTime((isSpace ? 520 : 780) * pitchVar, now + (isSpace ? 0.055 : 0.04));
 
-      oscGain.gain.setValueAtTime(0.7, now);
-      oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      oscGain.gain.setValueAtTime((isSpace ? 0.85 : 0.7) * velocityJitter, now);
+      oscGain.gain.exponentialRampToValueAtTime(0.001, now + (isSpace ? 0.065 : 0.05));
 
       osc.connect(oscGain);
       oscGain.connect(masterGain);
 
       osc.start(now);
-      osc.stop(now + 0.055);
+      osc.stop(now + (isSpace ? 0.07 : 0.055));
       break;
     }
 
     case 'typewriter': {
-      // Typewriter click with square wave and bandpass filter
+      // Typewriter click with square wave, bandpass filter, and carriage spring
       const osc = ctx.createOscillator();
       const oscGain = ctx.createGain();
 
       osc.type = 'square';
-      osc.frequency.setValueAtTime(450 * pitchVar, now);
-      osc.frequency.exponentialRampToValueAtTime(110, now + 0.03);
+      osc.frequency.setValueAtTime((isSpace ? 280 : 450) * pitchVar, now);
+      osc.frequency.exponentialRampToValueAtTime(isSpace ? 70 : 110, now + (isSpace ? 0.045 : 0.03));
 
       const filter = ctx.createBiquadFilter();
       filter.type = 'bandpass';
-      filter.frequency.setValueAtTime(2400, now);
+      filter.frequency.setValueAtTime(isSpace ? 1600 : 2400, now);
 
-      oscGain.gain.setValueAtTime(0.5, now);
-      oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+      oscGain.gain.setValueAtTime((isSpace ? 0.65 : 0.5) * velocityJitter, now);
+      oscGain.gain.exponentialRampToValueAtTime(0.001, now + (isSpace ? 0.05 : 0.035));
 
       osc.connect(filter);
       filter.connect(oscGain);
       oscGain.connect(masterGain);
 
+      // Carriage advance mechanical clunk for spacebar
+      if (isSpace) {
+        const clunkOsc = ctx.createOscillator();
+        const clunkGain = ctx.createGain();
+        clunkOsc.type = 'triangle';
+        clunkOsc.frequency.setValueAtTime(140 * pitchVar, now);
+        clunkOsc.frequency.exponentialRampToValueAtTime(50, now + 0.055);
+
+        clunkGain.gain.setValueAtTime(0.55 * velocityJitter, now);
+        clunkGain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+
+        clunkOsc.connect(clunkGain);
+        clunkGain.connect(masterGain);
+
+        clunkOsc.start(now);
+        clunkOsc.stop(now + 0.065);
+      }
+
       osc.start(now);
-      osc.stop(now + 0.04);
+      osc.stop(now + (isSpace ? 0.055 : 0.04));
       break;
     }
 
     case 'wood': {
-      // Woodblock tap synthesis
+      // Woodblock tap synthesis with hollow cavity
       const osc = ctx.createOscillator();
       const oscGain = ctx.createGain();
 
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(260 * pitchVar, now);
-      osc.frequency.exponentialRampToValueAtTime(80, now + 0.045);
+      osc.frequency.setValueAtTime((isSpace ? 170 : 260) * pitchVar, now);
+      osc.frequency.exponentialRampToValueAtTime(isSpace ? 55 : 80, now + (isSpace ? 0.06 : 0.045));
 
-      oscGain.gain.setValueAtTime(0.8, now);
-      oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      oscGain.gain.setValueAtTime((isSpace ? 0.95 : 0.8) * velocityJitter, now);
+      oscGain.gain.exponentialRampToValueAtTime(0.001, now + (isSpace ? 0.065 : 0.05));
 
       osc.connect(oscGain);
       oscGain.connect(masterGain);
 
       osc.start(now);
-      osc.stop(now + 0.055);
+      osc.stop(now + (isSpace ? 0.07 : 0.055));
       break;
     }
 
