@@ -53,7 +53,7 @@ export function TypingTest({
   const lastActiveTopRef = useRef(-1);
 
   const [caretPos, setCaretPos] = useState({ top: 0, left: 0, height: 32, width: 2 });
-  const [ghostCaretPos, setGhostCaretPos] = useState(null);
+  const ghostCaretRef = useRef(null);
   const [lineOffsetY, setLineOffsetY] = useState(0);
   const [isCapsLock, setIsCapsLock] = useState(false);
   const [, setResizeTick] = useState(0);
@@ -94,38 +94,48 @@ export function TypingTest({
     }
   }, [words, activeInputRef]);
 
-  // Pace caret position update
+  // Target pace in WPM
+  const targetWpm = useMemo(() => {
+    return paceCaret === 'pb' ? Math.max(20, personalBestWpm || 60) : (parseInt(paceCaret, 10) || 60);
+  }, [paceCaret, personalBestWpm]);
+
+  // Pace ghost caret RAF hardware-accelerated position update
   useEffect(() => {
     if (paceCaret === 'off' || !wordsContainerRef.current || words.length === 0) {
-      setGhostCaretPos(null);
+      if (ghostCaretRef.current) {
+        ghostCaretRef.current.style.display = 'none';
+      }
       return;
     }
 
-    const targetWpm = paceCaret === 'pb' ? Math.max(20, personalBestWpm || 60) : (parseInt(paceCaret, 10) || 60);
+    if (ghostCaretRef.current) {
+      ghostCaretRef.current.style.display = 'block';
+    }
 
     if (status === 'idle') {
       const firstWordElem = wordsContainerRef.current.querySelector('[data-word-index="0"]');
-      if (firstWordElem) {
+      if (firstWordElem && ghostCaretRef.current) {
         const containerRect = wordsContainerRef.current.getBoundingClientRect();
         const wordRect = firstWordElem.getBoundingClientRect();
-        setGhostCaretPos({
-          top: wordRect.top - containerRect.top,
-          left: wordRect.left - containerRect.left - 2,
-          height: wordRect.height || 32,
-          targetWpm
-        });
+        const left = wordRect.left - containerRect.left - 2;
+        const top = wordRect.top - containerRect.top;
+        const height = wordRect.height || 32;
+        ghostCaretRef.current.style.transform = `translate3d(${left}px, ${top}px, 0)`;
+        ghostCaretRef.current.style.height = `${height}px`;
       }
       return;
     }
 
     if (status !== 'running') {
-      setGhostCaretPos(null);
+      if (ghostCaretRef.current) {
+        ghostCaretRef.current.style.display = 'none';
+      }
       return;
     }
 
     let animId;
     const updateGhostPosition = () => {
-      if (!wordsContainerRef.current) return;
+      if (!wordsContainerRef.current || !ghostCaretRef.current) return;
       const startTime = engine.startTime || Date.now();
       const elapsed = Math.max(0, (Date.now() - startTime) / 1000);
       const targetChars = (targetWpm * 5 / 60) * elapsed;
@@ -152,29 +162,26 @@ export function TypingTest({
         const containerRect = wordsContainerRef.current.getBoundingClientRect();
         const charSpans = wordElem.querySelectorAll('.char');
 
+        let left = 0;
+        let top = 0;
+        let height = 32;
+
         if (targetCharIdx < charSpans.length) {
           const charSpan = charSpans[targetCharIdx];
           const charRect = charSpan.getBoundingClientRect();
-          const left = charRect.left - containerRect.left - 2 + (charFraction * charRect.width);
-          const top = charRect.top - containerRect.top;
-          setGhostCaretPos({
-            top,
-            left,
-            height: charRect.height || 32,
-            targetWpm
-          });
+          left = charRect.left - containerRect.left - 2 + (charFraction * charRect.width);
+          top = charRect.top - containerRect.top;
+          height = charRect.height || 32;
         } else if (charSpans.length > 0) {
           const lastSpan = charSpans[charSpans.length - 1];
           const lastRect = lastSpan.getBoundingClientRect();
-          const left = lastRect.right - containerRect.left;
-          const top = lastRect.top - containerRect.top;
-          setGhostCaretPos({
-            top,
-            left,
-            height: lastRect.height || 32,
-            targetWpm
-          });
+          left = lastRect.right - containerRect.left;
+          top = lastRect.top - containerRect.top;
+          height = lastRect.height || 32;
         }
+
+        ghostCaretRef.current.style.transform = `translate3d(${left}px, ${top}px, 0)`;
+        ghostCaretRef.current.style.height = `${height}px`;
       }
 
       animId = requestAnimationFrame(updateGhostPosition);
@@ -182,7 +189,7 @@ export function TypingTest({
 
     animId = requestAnimationFrame(updateGhostPosition);
     return () => cancelAnimationFrame(animId);
-  }, [paceCaret, personalBestWpm, status, words, engine.startTime]);
+  }, [paceCaret, targetWpm, status, words, engine.startTime]);
 
   // Calculate caret coordinates and line scroll offset
   useLayoutEffect(() => {
@@ -581,16 +588,16 @@ export function TypingTest({
           )}
 
           {/* Pace caret indicator */}
-          {paceCaret !== 'off' && ghostCaretPos && (status === 'idle' || status === 'running') && (
+          {paceCaret !== 'off' && (status === 'idle' || status === 'running') && (
             <div
+              ref={ghostCaretRef}
               className="ghost-caret"
               style={{
                 position: 'absolute',
                 top: 0,
                 left: 0,
-                transform: `translate3d(${ghostCaretPos.left}px, ${ghostCaretPos.top}px, 0)`,
                 willChange: 'transform',
-                height: `${ghostCaretPos.height}px`,
+                height: '32px',
                 width: '2px',
                 backgroundColor: 'var(--accent)',
                 opacity: 0.45,
@@ -621,7 +628,7 @@ export function TypingTest({
                   boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
                 }}
               >
-                {paceCaret === 'pb' ? `PB ${ghostCaretPos.targetWpm}` : `${ghostCaretPos.targetWpm} wpm`}
+                {paceCaret === 'pb' ? `PB ${targetWpm}` : `${targetWpm} wpm`}
               </div>
             </div>
           )}

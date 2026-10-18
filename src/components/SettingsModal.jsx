@@ -532,14 +532,16 @@ export function SettingsModal({
               A translucent ghost caret glides at your target speed across words so you know if you are ahead or behind.
             </p>
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
               {[
                 { id: 'off', label: 'Off' },
                 { id: 'pb', label: `Personal Best (${personalBestWpm > 0 ? personalBestWpm : 60} wpm)` },
+                { id: '40', label: '40 wpm' },
                 { id: '60', label: '60 wpm' },
                 { id: '80', label: '80 wpm' },
                 { id: '100', label: '100 wpm' },
-                { id: '120', label: '120 wpm' }
+                { id: '120', label: '120 wpm' },
+                { id: '140', label: '140 wpm' }
               ].map((opt) => {
                 const isActive = paceCaret === opt.id;
                 return (
@@ -553,6 +555,48 @@ export function SettingsModal({
                   </button>
                 );
               })}
+
+              {/* Custom target pace input */}
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '4px 10px',
+                  borderRadius: '8px',
+                  border: (!['off', 'pb', '40', '60', '80', '100', '120', '140'].includes(paceCaret))
+                    ? '1px solid var(--accent)'
+                    : '1px solid var(--border)',
+                  backgroundColor: (!['off', 'pb', '40', '60', '80', '100', '120', '140'].includes(paceCaret))
+                    ? 'rgba(var(--accent-rgb, 184, 120, 65), 0.12)'
+                    : 'var(--surface)',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <span style={{ fontSize: '12px', color: 'var(--text-sub)' }}>custom:</span>
+                <input
+                  type="number"
+                  min="10"
+                  max="300"
+                  placeholder="e.g. 75"
+                  value={!['off', 'pb', '40', '60', '80', '100', '120', '140'].includes(paceCaret) ? paceCaret : ''}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9]/g, '');
+                    if (val) setPaceCaret(val);
+                  }}
+                  style={{
+                    width: '54px',
+                    background: 'none',
+                    border: 'none',
+                    outline: 'none',
+                    color: 'var(--text-main)',
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '12.5px',
+                    fontWeight: 600
+                  }}
+                />
+                <span style={{ fontSize: '11px', color: 'var(--text-sub)' }}>wpm</span>
+              </div>
             </div>
           </div>
 
